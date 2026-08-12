@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>my farm — إدارة القطيع</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=Tajawal:wght@400;500;700&display=swap');
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #F3ECDD; }
+  body { font-family: 'Tajawal', sans-serif; }
+  ::placeholder { color: #8C8064; opacity: .7; }
+  button { font-family: inherit; }
+  #root { min-height: 100vh; padding-top: 62px; padding-bottom: 0; }
+  #boot-msg { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; font-size: 15px; color: #3B3324; }
+  #static-nav { position: fixed; top: 0; left: 0; right: 0; background: #fff; border-bottom: 1px solid #E1D6BB; display: flex; z-index: 40; }
+  #static-nav button { flex: 1; background: none; border: none; padding: 10px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 18px; cursor: pointer; font-family: 'Tajawal', sans-serif; }
+  #static-nav button span { font-size: 11px; color: #8C8064; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+</head>
+<body>
+<div id="root"><div id="boot-msg">جاري تحميل التطبيق...</div></div>
+<div id="static-nav">
+  <button><span>🏠</span><span>الرئيسية</span></button>
+  <button><span>🧱</span><span>الحظائر</span></button>
+  <button><span>💰</span><span>المالية</span></button>
+  <button><span>📊</span><span>التقارير</span></button>
+</div>
+<script>
+  setTimeout(function () {
+    var root = document.getElementById("root");
+    if (root && root.children.length === 1 && document.getElementById("boot-msg")) {
+      root.innerHTML = '<div id="boot-msg">تعذّر تحميل التطبيق. تأكد من اتصالك بالإنترنت وحاول تحديث الصفحة. إذا استمرت المشكلة، جرب فتحه من متصفح آخر (كروم أو سفاري).</div>';
+    }
+  }, 8000);
+</script>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useCallback, useEffect } = React;
+
+// ---------------- design tokens (بيج فاتح) ----------------
+const C = {
+  bg: "#F3ECDD", surface: "#FFFFFF", surface2: "#EBE1CB", text: "#3B3324",
+  muted: "#8C8064", border: "#E1D6BB", olive: "#6E7B45", gold: "#C79A3E",
+  brick: "#A8503A", blue: "#4472A8",
+};
+
+const TAG_COLORS = [
+  { v: "أحمر", hex: "#C0392B" }, { v: "أزرق", hex: "#2E6E9E" }, { v: "أصفر", hex: "#D4B106" },
+  { v: "أخضر", hex: "#4C7A3D" }, { v: "برتقالي", hex: "#CC7A2E" }, { v: "أبيض", hex: "#F5F1E6" },
+  { v: "أسود", hex: "#2B2620" }, { v: "وردي", hex: "#C97B9C" }, { v: "بنفسجي", hex: "#7A5FA0" },
+];
+
+const EXPENSE_CATEGORIES = ["حلال", "مكعب", "حشائش", "أدوية", "فيتامينات", "ماء", "رواتب", "صيانة", "بنزين", "إيجار", "تطعيمات", "أخرى"];
+
+function uid() { return Math.random().toString(36).slice(2, 9); }
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function fmtDate(iso) { if (!iso) return "—"; return new Date(iso).toLocaleDateString("ar", { day: "numeric", month: "short", year: "numeric" }); }
+function daysBetween(a, b) { return Math.floor((b - a) / 86400000); }
+function tagHex(color) { return (TAG_COLORS.find((t) => t.v === color) || {}).hex || C.muted; }
+
+function seed() { return { animals: [], pens: [], expenses: [], sales: [], notes: [], vaccineReminders: [], birthCounters: { twinMotherIds: [], singleMotherIds: [] } }; }
+
+const STORAGE_KEY = "myFarmData_v1";
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.animals)) {
+        const bc = (parsed.birthCounters && Array.isArray(parsed.birthCounters.twinMotherIds)) ? parsed.birthCounters : { twinMotherIds: [], singleMotherIds: [] };
+        return { ...seed(), ...parsed, notes: parsed.notes || [], vaccineReminders: parsed.vaccineReminders || [], birthCounters: bc };
+      }
+    }
+  } catch (e) {}
+  return seed();
+}
+
+// ---------------- shared UI ----------------
+const inputStyle = { background: C.bg, border: `1px solid ${C.border}`, color: C.text, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none", fontFamily: "inherit", width: "100%" };
+const btnPrimary = { background: C.olive, color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" };
+const btnGhost = { background: "none", color: C.text, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" };
+const iconBtn = { background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 6, flexShrink: 0 };
+
+function Field({ label, children }) {
+  return <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: C.muted }}>{label}{children}</label>;
+}
+function Chip({ color, children }) {
+  return <span style={{ background: `${color}1F`, color, border: `1px solid ${color}55`, padding: "3px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{children}</span>;
+}
+function TagBadge({ number, color }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: C.surface2, borderRadius: 999, padding: "3px 10px 3px 4px", fontSize: 13, fontWeight: 700 }}>
+      <span style={{ width: 14, height: 14, borderRadius: "50%", background: tagHex(color), border: color === "أبيض" ? `1px solid ${C.border}` : "none" }} />
+      #{number}
+    </span>
+  );
+}
+function ColorPicker({ value, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {TAG_COLORS.map((t) => {
+        const active = value === t.v;
+        return (
+          <button key={t.v} type="button" onClick={() => onChange(t.v)} title={t.v} style={{
+            width: 32, height: 32, borderRadius: "50%", background: t.hex, padding: 0, cursor: "pointer",
+            border: active ? `3px solid ${C.olive}` : t.v === "أبيض" ? `1px solid ${C.border}` : "1px solid transparent",
+            boxShadow: active ? `0 0 0 2px ${C.surface}` : "none",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            {active && <span style={{ color: t.v === "أبيض" || t.v === "أصفر" ? C.text : "#fff", fontSize: 14, fontWeight: 700 }}>✓</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+function Modal({ title, onClose, children, width = 420 }) {
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(59,51,36,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60, padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: C.surface, borderRadius: 16, width: "100%", maxWidth: width, padding: 22, boxShadow: "0 20px 50px rgba(59,51,36,0.3)", maxHeight: "88vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontFamily: "'El Messiri', serif", fontSize: 18, color: C.text }}>{title}</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 18 }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+function StatCard({ label, value, color, sub }) {
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px", flex: 1, minWidth: 100 }}>
+      <div style={{ fontSize: 24, fontWeight: 700, color: color || C.text, fontFamily: "'El Messiri', serif" }}>{value}</div>
+      <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{label}</div>
+      {sub && <div style={{ fontSize: 11, color, marginTop: 2 }}>{sub}</div>}
+    </div>
+  );
+}
+function IconStat({ icon, label, value, color, onClick }) {
+  return (
+    <button onClick={onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: 1, minWidth: 76, background: "none", border: "none", cursor: "pointer", padding: 4, fontFamily: "inherit" }}>
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}1A`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19 }}>{icon}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{value}</div>
+      <div style={{ fontSize: 10.5, color: C.muted, textAlign: "center" }}>{label}</div>
+    </button>
+  );
+}
+function EmptyState({ text }) {
+  return <div style={{ textAlign: "center", padding: "36px 16px", color: C.muted, background: C.surface, border: `1px dashed ${C.border}`, borderRadius: 14, fontSize: 13 }}>{text}</div>;
+}
+function MiniBar({ value, max, color }) {
+  const pct = max > 0 ? Math.max(3, Math.round((value / max) * 100)) : 0;
+  return <div style={{ height: 8, borderRadius: 4, background: C.bg, overflow: "hidden" }}><div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 4 }} /></div>;
+}
+
+// ---------------- bell ----------------
+function AlertBell({ alerts, open, setOpen, onDismiss, onOpenAnimal, onOpenVaccines }) {
+  return (
+    <div style={{ position: "relative" }}>
+      <button onClick={() => setOpen((o) => !o)} style={{ position: "relative", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 }}>
+        🔔
+        {alerts.length > 0 && (
+          <span style={{ position: "absolute", top: -5, left: -5, background: C.brick, color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 999, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${C.bg}` }}>{alerts.length}</span>
+        )}
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: 48, right: 0, width: 300, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, boxShadow: "0 14px 40px rgba(59,51,36,0.25)", zIndex: 55, overflow: "hidden" }}>
+          <div style={{ padding: "12px 14px", borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 14 }}>التنبيهات ({alerts.length})</div>
+          <div style={{ maxHeight: 280, overflowY: "auto" }}>
+            {alerts.length === 0 ? (
+              <div style={{ padding: 20, color: C.muted, fontSize: 13, textAlign: "center" }}>لا توجد تنبيهات حالياً</div>
+            ) : alerts.map((a) => (
+              <div key={a.id} onClick={() => (a.kind === "pen" ? a.animalId && onOpenAnimal(a.animalId) : onOpenVaccines())} style={{ padding: "10px 14px", borderBottom: `1px solid ${C.border}`, display: "flex", gap: 8, alignItems: "flex-start", cursor: "pointer" }}>
+                <span style={{ fontSize: 14 }}>{a.kind === "pen" ? "🧱" : "💉"}</span>
+                <div style={{ flex: 1, fontSize: 12.5 }}>{a.text}</div>
+                <button onClick={(e) => { e.stopPropagation(); onDismiss(a.id); }} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", padding: 2 }}>✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================================================================
+// APP
+// ==================================================================
+function App() {
+  const initial = useMemo(loadSaved, []);
+  const [animals, setAnimals] = useState(initial.animals);
+  const [pens, setPens] = useState(initial.pens);
+  const [expenses, setExpenses] = useState(initial.expenses);
+  const [sales, setSales] = useState(initial.sales);
+  const [notes, setNotes] = useState(initial.notes);
+  const [vaccineReminders, setVaccineReminders] = useState(initial.vaccineReminders);
+  const [birthCounters, setBirthCounters] = useState(initial.birthCounters);
+
+  useEffect(() => {
+    const data = { animals, pens, expenses, sales, notes, vaccineReminders, birthCounters };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+  }, [animals, pens, expenses, sales, notes, vaccineReminders, birthCounters]);
+
+  const [page, setPage] = useState("home");
+  const [selectedId, setSelectedId] = useState(null);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [dismissed, setDismissed] = useState([]);
+
+  const [showAddPen, setShowAddPen] = useState(false);
+  const [addToPen, setAddToPen] = useState(null);
+  const [showOffspring, setShowOffspring] = useState(false);
+  const [showExpense, setShowExpense] = useState(false);
+  const [showSale, setShowSale] = useState(false);
+  const [editPen, setEditPen] = useState(null);
+  const [showSell, setShowSell] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [showVaccineReminders, setShowVaccineReminders] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+
+  const [toast, setToast] = useState(null);
+  const notify = useCallback((msg, type = "success") => {
+    setToast({ msg, type });
+    clearTimeout(notify._t);
+    notify._t = setTimeout(() => setToast(null), 2600);
+  }, []);
+
+  const now = new Date();
+
+  const alerts = useMemo(() => {
+    const list = [];
+    animals.forEach((a) => {
+      if (!a.alive) return;
+      if (a.penId) {
+        const pen = pens.find((p) => p.id === a.penId);
+        if (pen && pen.alertEnabled !== false && pen.alertDays && a.penEnteredAt) {
+          const d = daysBetween(new Date(a.penEnteredAt), now);
+          if (d >= pen.alertDays) list.push({ id: `pen-${a.id}`, kind: "pen", animalId: a.id, text: `الكائن #${a.number} (${a.color}) في "${pen.name}" منذ ${d} يوم` });
+        }
+      }
+    });
+    vaccineReminders.forEach((v) => {
+      if (!v.date) return;
+      const alertFrom = new Date(v.date);
+      alertFrom.setDate(alertFrom.getDate() - (v.reminderDays || 0));
+      if (now >= alertFrom) {
+        const due = new Date(v.date) <= now;
+        list.push({ id: `vac-${v.id}`, kind: "vaccine", text: due ? `تطعيم "${v.type}" مستحق` : `تطعيم "${v.type}" قادم — ${fmtDate(v.date)}` });
+      }
+    });
+    return list.filter((a) => !dismissed.includes(a.id));
+  }, [animals, pens, vaccineReminders, dismissed]);
+
+  const selected = animals.find((a) => a.id === selectedId) || null;
+
+  const addAnimal = (data) => {
+    const dup = animals.some((a) => a.number === data.number && a.color === data.color);
+    if (dup) { notify(`الرقم ${data.number} باللون ${data.color} مستخدم مسبقاً`, "error"); return; }
+    setAnimals((p) => [...p, { id: uid(), category: "mother", gender: "أنثى", alive: true, twinned: false, penId: null, penEnteredAt: null, addedAt: new Date().toISOString(), ...data }]);
+    notify("تمت الإضافة");
+  };
+
+  const addOffspring = (list) => {
+    for (const o of list) {
+      const dupExisting = animals.some((a) => a.number === o.number && a.color === o.color);
+      const dupBatch = list.filter((x) => x !== o).some((x) => x.number === o.number && x.color === o.color);
+      if (dupExisting || dupBatch) { notify(`الرقم ${o.number} باللون ${o.color} مستخدم مسبقاً`, "error"); return; }
+    }
+    const created = list.map((o) => ({ id: uid(), category: "newborn", gender: o.gender, number: o.number, color: o.color, alive: true, twinned: false, birthDate: o.birthDate || null, penId: null, penEnteredAt: null, motherId: selected.id, addedAt: new Date().toISOString() }));
+    let motherIsNowTwinned = false;
+    setAnimals((p) => {
+      const merged = [...p, ...created];
+      const totalForMother = merged.filter((a) => a.motherId === selected.id).length;
+      motherIsNowTwinned = totalForMother >= 2;
+      return motherIsNowTwinned ? merged.map((a) => (a.id === selected.id ? { ...a, twinned: true } : a)) : merged;
+    });
+    setShowOffspring(false);
+    setBirthCounters((c) => {
+      const twinSet = new Set(c.twinMotherIds);
+      const singleSet = new Set(c.singleMotherIds);
+      if (motherIsNowTwinned) {
+        twinSet.add(selected.id);
+        singleSet.delete(selected.id);
+      } else {
+        singleSet.add(selected.id);
+      }
+      return { twinMotherIds: [...twinSet], singleMotherIds: [...singleSet] };
+    });
+    notify("تمت الإضافة");
+  };
+
+  const updateAnimal = (id, patch) => setAnimals((p) => p.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+
+  const addVaccineReminder = (type, date, reminderDays, notes) => {
+    setVaccineReminders((p) => [...p, { id: uid(), type, date, reminderDays: reminderDays || 0, notes: notes || "" }]);
+    notify("تمت الإضافة");
+  };
+  const updateVaccineReminder = (id, patch) => {
+    setVaccineReminders((p) => p.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+    notify("تم حفظ التعديل");
+  };
+  const deleteVaccineReminder = (id) => {
+    setVaccineReminders((p) => p.filter((v) => v.id !== id));
+    notify("تم الحذف");
+  };
+
+  const sellAnimal = (id, sale) => {
+    const animal = animals.find((a) => a.id === id);
+    if (!animal) return;
+    setSales((p) => [...p, { id: uid(), desc: sale.desc || `بيع كائن #${animal.number} (${animal.color})`, amount: sale.amount, date: sale.date }]);
+    setAnimals((p) => p.filter((a) => a.id !== id));
+    setShowSell(false);
+    setPage("home");
+    setSelectedId(null);
+    notify("تم تسجيل البيع وحذف الكائن");
+  };
+
+  const deleteAnimal = (id, deleteOffspringToo) => {
+    setAnimals((p) => {
+      if (deleteOffspringToo) {
+        return p.filter((a) => a.id !== id && a.motherId !== id);
+      }
+      return p.filter((a) => a.id !== id).map((a) => (a.motherId === id ? { ...a, motherId: null } : a));
+    });
+    setPage("home");
+    setSelectedId(null);
+    notify("تم حذف الكائن");
+  };
+  const deleteMultipleAnimals = (ids, deleteOffspringToo) => {
+    setAnimals((p) => {
+      if (deleteOffspringToo) {
+        return p.filter((a) => !ids.includes(a.id) && !ids.includes(a.motherId));
+      }
+      return p.filter((a) => !ids.includes(a.id)).map((a) => (ids.includes(a.motherId) ? { ...a, motherId: null } : a));
+    });
+    notify(ids.length > 1 ? `تم حذف ${ids.length} كائنات` : "تم حذف الكائن");
+  };
+  const resetDeaths = () => { setAnimals((p) => p.filter((a) => a.alive)); notify("تم تصفير سجل النفوق"); };
+  const resetBirthCounters = () => { setBirthCounters({ twinMotherIds: [], singleMotherIds: [] }); notify("تم تصفير عداد الولادات"); };
+
+  const exportData = () => {
+    const data = { animals, pens, expenses, sales, notes, vaccineReminders, birthCounters };
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "myfarm-backup.json"; a.click();
+    URL.revokeObjectURL(url);
+    notify("تم تصدير البيانات");
+  };
+
+  const importData = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data.animals)) { notify("ملف غير صالح", "error"); return; }
+        const bc = (data.birthCounters && Array.isArray(data.birthCounters.twinMotherIds)) ? data.birthCounters : { twinMotherIds: [], singleMotherIds: [] };
+        setAnimals(data.animals || []);
+        setPens(data.pens || []);
+        setExpenses(data.expenses || []);
+        setSales(data.sales || []);
+        setNotes(data.notes || []);
+        setVaccineReminders(data.vaccineReminders || []);
+        setBirthCounters(bc);
+        notify("تم استيراد البيانات بنجاح");
+      } catch (e) { notify("خطأ في قراءة الملف", "error"); }
+    };
+    reader.readAsText(file);
+  };
+
+  const addPen = (data) => { setPens((p) => [...p, { id: uid(), alertEnabled: true, ...data }]); setShowAddPen(false); notify("تمت الإضافة"); };
+  const updatePen = (id, patch) => setPens((p) => p.map((pn) => (pn.id === id ? { ...pn, ...patch } : pn)));
+  const deletePen = (id) => {
+    setPens((p) => p.filter((pn) => pn.id !== id));
+    setAnimals((p) => p.map((a) => (a.penId === id ? { ...a, penId: null, penEnteredAt: null } : a)));
+  };
+
+  const assignToPen = (animalIds, penId) => {
+    const ids = Array.isArray(animalIds) ? animalIds : [animalIds];
+    const now = new Date().toISOString();
+    setAnimals((p) => p.map((a) => (ids.includes(a.id) ? { ...a, penId, penEnteredAt: now } : a)));
+    setAddToPen(null);
+    notify(ids.length > 1 ? `تمت إضافة ${ids.length} كائنات` : "تمت الإضافة");
+  };
+  const removeFromPen = (animalId) => updateAnimal(animalId, { penId: null, penEnteredAt: null });
+  const transferAnimal = (animalIds, penId) => {
+    const ids = Array.isArray(animalIds) ? animalIds : [animalIds];
+    const now = new Date().toISOString();
+    setAnimals((p) => p.map((a) => (ids.includes(a.id) ? { ...a, penId, penEnteredAt: now } : a)));
+    setShowTransfer(false);
+    notify(ids.length > 1 ? `تم نقل ${ids.length} كائنات` : "تم النقل");
+  };
+
+  const addExpense = (data) => { setExpenses((p) => [...p, { id: uid(), ...data }]); setShowExpense(false); notify("تمت الإضافة"); };
+  const addSale = (data) => { setSales((p) => [...p, { id: uid(), ...data }]); setShowSale(false); notify("تمت الإضافة"); };
+  const resetFinance = () => { setExpenses([]); setSales([]); notify("تم تصفير المصروفات والمبيعات لسنة مالية جديدة"); };
+  const addNote = (data) => { setNotes((p) => [...p, { id: uid(), ...data }]); notify("تمت الإضافة"); };
+  const deleteNote = (id) => setNotes((p) => p.filter((n) => n.id !== id));
+
+  const openAnimal = (id) => { setSelectedId(id); setPage("animal"); };
+
+  if (loading) return (
+    <div dir="rtl" style={{ minHeight: "100vh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, fontFamily: "'Tajawal', sans-serif" }}>
+      <div style={{ fontSize: 40 }}>🐑</div>
+      <div style={{ fontSize: 16, color: C.text, fontWeight: 700 }}>جاري تحميل بياناتك...</div>
+      <div style={{ fontSize: 12, color: C.muted }}>يتم جلب البيانات من السحابة</div>
+    </div>
+  );
+
+  return (
+    <div dir="rtl" lang="ar" style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'Tajawal', sans-serif", paddingTop: 62 }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "18px 16px 8px" }}>
+        {page === "home" && (
+          <HomePage animals={animals} pens={pens} alerts={alerts} bellOpen={bellOpen} setBellOpen={setBellOpen}
+            onDismiss={(id) => setDismissed((d) => [...d, id])}
+            onAddAnimal={addAnimal} onOpenAnimal={openAnimal}
+            onOpenNotes={() => setShowNotes(true)} notesCount={notes.length}
+            onOpenVaccines={() => setShowVaccineReminders(true)} vaccinesCount={vaccineReminders.length}
+            onResetDeaths={resetDeaths} onExport={exportData} onImport={importData} />
+        )}
+        {page === "pens" && (
+          <PensPage pens={pens} animals={animals} onAddPen={() => setShowAddPen(true)}
+            onAddToPen={(pen) => setAddToPen(pen)} onOpenAnimal={openAnimal}
+            onRemoveFromPen={removeFromPen} onEditPen={(pen) => setEditPen(pen)} onTransfer={transferAnimal}
+            onDeleteMultiple={deleteMultipleAnimals} />
+        )}
+        {page === "finance" && (
+          <FinancePage expenses={expenses} sales={sales} onAddExpense={() => setShowExpense(true)} onAddSale={() => setShowSale(true)}
+            onDeleteExpense={(id) => setExpenses((p) => p.filter((e) => e.id !== id))}
+            onDeleteSale={(id) => setSales((p) => p.filter((s) => s.id !== id))}
+            onResetFinance={resetFinance} />
+        )}
+        {page === "reports" && <ReportsPage animals={animals} pens={pens} expenses={expenses} sales={sales} vaccineReminders={vaccineReminders} birthCounters={birthCounters} onResetBirthCounters={resetBirthCounters} />}
+        {page === "animal" && selected && (
+          <AnimalDetailPage animal={selected} mother={animals.find((a) => a.id === selected.motherId)}
+            offspring={animals.filter((a) => a.motherId === selected.id)} pen={pens.find((p) => p.id === selected.penId)}
+            onBack={() => setPage("home")} onUpdate={(patch) => updateAnimal(selected.id, patch)}
+            onAddOffspring={() => setShowOffspring(true)} onOpenAnimal={openAnimal}
+            onSell={() => setShowSell(true)} onTransfer={() => setShowTransfer(true)} onDelete={(deleteOffspringToo) => deleteAnimal(selected.id, deleteOffspringToo)} />
+        )}
+      </div>
+
+      <BottomNav page={page} setPage={(p) => { setPage(p); setBellOpen(false); }} />
+
+      {toast && (
+        <div style={{ position: "fixed", bottom: 88, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? C.brick : C.text, color: "#fff", borderRadius: 999, padding: "10px 20px", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 8, zIndex: 70, boxShadow: "0 10px 30px rgba(59,51,36,0.35)", maxWidth: "90vw", textAlign: "center" }}>
+          {toast.type === "error" ? "✕" : "✓"} {toast.msg}
+        </div>
+      )}
+
+      {showAddPen && <AddPenModal onSave={addPen} onClose={() => setShowAddPen(false)} />}
+      {editPen && (
+        <EditPenModal pen={editPen}
+          onSave={(patch) => { updatePen(editPen.id, patch); setEditPen(null); }}
+          onDelete={() => { deletePen(editPen.id); setEditPen(null); }}
+          onClose={() => setEditPen(null)} />
+      )}
+      {addToPen && <AddToPenModal pen={addToPen} animals={animals.filter((a) => a.alive && !a.penId)} onAssign={assignToPen} onClose={() => setAddToPen(null)} />}
+      {showOffspring && selected && <OffspringModal mother={selected} animals={animals} onSave={addOffspring} onClose={() => setShowOffspring(false)} />}
+      {showSell && selected && <SellAnimalModal animal={selected} onSell={(sale) => sellAnimal(selected.id, sale)} onClose={() => setShowSell(false)} />}
+      {showTransfer && selected && (
+        <PenTransferModal animal={selected} pens={pens} currentPenId={selected.penId}
+          onTransfer={(penId) => transferAnimal(selected.id, penId)}
+          onRemove={() => { removeFromPen(selected.id); setShowTransfer(false); notify("تم الإخراج من الحظيرة"); }}
+          onClose={() => setShowTransfer(false)} />
+      )}
+      {showExpense && <ExpenseModal onSave={addExpense} onClose={() => setShowExpense(false)} />}
+      {showSale && <SaleModal onSave={addSale} onClose={() => setShowSale(false)} />}
+      {showVaccineReminders && (
+        <VaccineRemindersModal reminders={vaccineReminders} onAdd={addVaccineReminder}
+          onUpdate={updateVaccineReminder} onDelete={deleteVaccineReminder}
+          onClose={() => setShowVaccineReminders(false)} />
+      )}
+      {showNotes && <NotesModal notes={notes} onAdd={addNote} onDelete={deleteNote} onClose={() => setShowNotes(false)} />}
+    </div>
+  );
+}
+
+// ---------------- bottom nav ----------------
+function BottomNav({ page, setPage }) {
+  const items = [
+    { id: "home", label: "الرئيسية", icon: "🏠" },
+    { id: "pens", label: "الحظائر", icon: "🧱" },
+    { id: "finance", label: "المالية", icon: "💰" },
+    { id: "reports", label: "التقارير", icon: "📊" },
+  ];
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", zIndex: 40 }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", width: "100%" }}>
+        {items.map((it) => {
+          const active = page === it.id || (page === "animal" && it.id === "home");
+          return (
+            <button key={it.id} onClick={() => setPage(it.id)} style={{ flex: 1, background: "none", border: "none", padding: "10px 4px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", color: active ? C.olive : C.muted }}>
+              <span style={{ fontSize: 19 }}>{it.icon}</span>
+              <span style={{ fontSize: 11, fontWeight: active ? 700 : 500 }}>{it.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ==================================================================
+// PAGE 1 — HOME
+// ==================================================================
+function HomePage({ animals, pens, alerts, bellOpen, setBellOpen, onDismiss, onAddAnimal, onOpenAnimal, onOpenNotes, notesCount, onOpenVaccines, vaccinesCount, onResetDeaths, onExport, onImport }) {
+  const [searchNum, setSearchNum] = useState("");
+  const [searchColor, setSearchColor] = useState("الكل");
+  const [catModal, setCatModal] = useState(null);
+
+  const mothers = animals.filter((a) => a.category === "mother" && a.alive);
+  const newborns = animals.filter((a) => a.category === "newborn" && a.alive);
+  const newbornMales = newborns.filter((n) => n.gender === "ذكر").length;
+  const newbornFemales = newborns.filter((n) => n.gender === "أنثى").length;
+  const dead = animals.filter((a) => !a.alive);
+  const producing = mothers.filter((m) => animals.some((o) => o.motherId === m.id && o.category === "newborn"));
+  const nonProducing = mothers.filter((m) => !animals.some((o) => o.motherId === m.id && o.category === "newborn"));
+  const twinning = mothers.filter((m) => m.twinned);
+  const unassigned = animals.filter((a) => a.alive && !a.penId);
+
+  const results = (searchNum || searchColor !== "الكل")
+    ? animals.filter((a) => a.alive && (!searchNum || a.number === searchNum) && (searchColor === "الكل" || a.color === searchColor))
+    : [];
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <h1 style={{ margin: 0, fontFamily: "'El Messiri', serif", fontSize: 23 }}>my farm</h1>
+          <p style={{ margin: 0, fontSize: 12, color: C.muted }}>نظرة عامة على القطيع</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={onOpenVaccines} style={{ position: "relative", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 }}>
+            💉
+            {vaccinesCount > 0 && (
+              <span style={{ position: "absolute", top: -5, left: -5, background: C.blue, color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 999, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${C.bg}` }}>{vaccinesCount}</span>
+            )}
+          </button>
+          <button onClick={onOpenNotes} style={{ position: "relative", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 }}>
+            📓
+            {notesCount > 0 && (
+              <span style={{ position: "absolute", top: -5, left: -5, background: C.olive, color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 999, minWidth: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${C.bg}` }}>{notesCount}</span>
+            )}
+          </button>
+          <AlertBell alerts={alerts} open={bellOpen} setOpen={setBellOpen} onDismiss={onDismiss}
+            onOpenAnimal={(id) => { setBellOpen(false); onOpenAnimal(id); }}
+            onOpenVaccines={() => { setBellOpen(false); onOpenVaccines(); }} />
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <StatCard label="الأمهات" value={mothers.length} color={C.olive} />
+        <StatCard label="المواليد" value={newborns.length} color={C.blue} sub={`${newbornFemales} أنثى · ${newbornMales} ذكر`} />
+        <StatCard label="النفوق" value={dead.length} color={C.brick} />
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>إضافة حلال</div>
+        <InlineAddAnimal onSave={onAddAnimal} animals={animals} pens={pens} />
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>🔍 البحث عن كائن</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <input style={{ ...inputStyle, flex: 1, minWidth: 100 }} placeholder="الرقم" value={searchNum} onChange={(e) => setSearchNum(e.target.value)} />
+          <select style={{ ...inputStyle, flex: 1, minWidth: 120 }} value={searchColor} onChange={(e) => setSearchColor(e.target.value)}>
+            <option>الكل</option>
+            {TAG_COLORS.map((t) => <option key={t.v} value={t.v}>{t.v}</option>)}
+          </select>
+        </div>
+        {(searchNum || searchColor !== "الكل") && (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+            {results.length === 0 ? <div style={{ fontSize: 12, color: C.muted }}>لا نتائج مطابقة</div> :
+              results.map((r) => (
+                <button key={r.id} onClick={() => onOpenAnimal(r.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>
+                  <TagBadge number={r.number} color={r.color} />
+                  <span style={{ fontSize: 12, color: C.muted }}>{r.category === "mother" ? "أم" : "مولود"}</span>
+                </button>
+              ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", background: C.surface2, borderRadius: 14, padding: 14 }}>
+        <IconStat icon="❤️" label="أمهات منتجة" value={producing.length} color={C.olive} onClick={() => setCatModal({ title: "الأمهات المنتجة", list: producing, kind: "withPen" })} />
+        <IconStat icon="❤️" label="أمهات غير منتجة" value={nonProducing.length} color={C.muted} onClick={() => setCatModal({ title: "الأمهات غير المنتجة", list: nonProducing, kind: "withPen" })} />
+        <IconStat icon="👶" label="متأومة" value={twinning.length} color={C.gold} onClick={() => setCatModal({ title: "الأمهات المتأومة", list: twinning })} />
+        <IconStat icon="💀" label="النفوق" value={dead.length} color={C.brick} onClick={() => setCatModal({ title: "النفوق", list: dead, kind: "dead" })} />
+        <IconStat icon="🧱" label="بدون حظيرة" value={unassigned.length} color={C.blue} onClick={() => setCatModal({ title: "كائنات بدون حظيرة", list: unassigned })} />
+      </div>
+
+      {catModal && (
+        <Modal title={`${catModal.title} (${catModal.list.length})`} onClose={() => setCatModal(null)}>
+          {catModal.kind === "dead" && catModal.list.length > 0 && (
+            <ResetDeathsControl onReset={onResetDeaths} onDone={() => setCatModal(null)} />
+          )}
+          {catModal.list.length === 0 ? <EmptyState text="لا توجد كائنات ضمن هذه الفئة." /> : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {catModal.list.map((a) => (
+                <button key={a.id} onClick={() => { setCatModal(null); onOpenAnimal(a.id); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
+                  <TagBadge number={a.number} color={a.color} />
+                  <span style={{ fontSize: 12, color: C.muted }}>
+                    {catModal.kind === "withPen"
+                      ? (pens.find((p) => p.id === a.penId)?.name || "بدون")
+                      : (a.category === "mother" ? "أم" : "مولود")}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </Modal>
+      )}
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginTop: 14 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>💾 نسخ احتياطي للبيانات</div>
+        <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>لنقل بياناتك لجهاز آخر: صدّر ملف JSON ثم استورده بالجهاز الثاني.</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={onExport} style={{ ...btnPrimary, flex: 1, justifyContent: "center" }}>📤 تصدير البيانات</button>
+          <label style={{ ...btnGhost, flex: 1, justifyContent: "center", cursor: "pointer" }}>
+            📥 استيراد البيانات
+            <input type="file" accept=".json" style={{ display: "none" }} onChange={(e) => e.target.files[0] && onImport(e.target.files[0])} />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotesModal({ notes, onAdd, onDelete, onClose }) {
+  const [type, setType] = useState("مرض");
+  const [title, setTitle] = useState("");
+  const [details, setDetails] = useState("");
+  const [treatment, setTreatment] = useState("");
+  const [date, setDate] = useState(todayStr());
+
+  const submit = () => {
+    if (!title.trim()) return;
+    onAdd({ type, title: title.trim(), details, treatment, date });
+    setTitle(""); setDetails(""); setTreatment("");
+  };
+
+  const sorted = notes.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  return (
+    <Modal title="الملاحظات" onClose={onClose} width={480}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18, background: C.bg, borderRadius: 12, padding: 14 }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Field label="النوع">
+            <select style={inputStyle} value={type} onChange={(e) => setType(e.target.value)}>
+              <option value="مرض">مرض</option>
+              <option value="مشكلة">مشكلة</option>
+            </select>
+          </Field>
+          <Field label="التاريخ"><input type="date" style={inputStyle} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+        </div>
+        <Field label={type === "مرض" ? "اسم المرض" : "عنوان المشكلة"}>
+          <input style={inputStyle} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={type === "مرض" ? "مثال: التهاب الضرع" : "مثال: سوء تهوية بالحظيرة"} />
+        </Field>
+        <Field label={type === "مرض" ? "الأعراض" : "تفاصيل المشكلة"}>
+          <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} value={details} onChange={(e) => setDetails(e.target.value)} />
+        </Field>
+        <Field label={type === "مرض" ? "العلاج" : "الحل / ما تم عمله"}>
+          <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} value={treatment} onChange={(e) => setTreatment(e.target.value)} />
+        </Field>
+        <button onClick={submit} disabled={!title.trim()} style={{ ...btnPrimary, justifyContent: "center", opacity: title.trim() ? 1 : 0.5 }}>＋ إضافة ملاحظة</button>
+      </div>
+
+      {sorted.length === 0 ? <EmptyState text="لا توجد ملاحظات مسجلة بعد." /> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {sorted.map((n) => (
+            <div key={n.id} style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                <div>
+                  <Chip color={n.type === "مرض" ? C.brick : C.gold}>{n.type}</Chip>
+                  <span style={{ fontWeight: 700, fontSize: 14, marginInlineStart: 8 }}>{n.title}</span>
+                </div>
+                <button onClick={() => onDelete(n.id)} style={{ ...iconBtn, color: C.brick }}>🗑</button>
+              </div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 8 }}>{fmtDate(n.date)}</div>
+              {n.details && <div style={{ fontSize: 12.5, marginBottom: 6 }}><b style={{ color: C.muted }}>{n.type === "مرض" ? "الأعراض: " : "التفاصيل: "}</b>{n.details}</div>}
+              {n.treatment && <div style={{ fontSize: 12.5 }}><b style={{ color: C.muted }}>{n.type === "مرض" ? "العلاج: " : "الحل: "}</b>{n.treatment}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function VaccineRemindersModal({ reminders, onAdd, onUpdate, onDelete, onClose }) {
+  const [type, setType] = useState("");
+  const [date, setDate] = useState(todayStr());
+  const [reminderDays, setReminderDays] = useState(0);
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null);
+
+  const submit = () => {
+    if (!type.trim()) { setError("لازم تكتب نوع التطعيم أولاً"); return; }
+    onAdd(type.trim(), date, Number(reminderDays) || 0, notes.trim());
+    setType(""); setDate(todayStr()); setReminderDays(0); setNotes(""); setError("");
+  };
+
+  const sorted = reminders.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  return (
+    <Modal title="مواعيد التطعيم" onClose={onClose} width={480}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18, background: C.bg, borderRadius: 12, padding: 14 }}>
+        <Field label="نوع التطعيم"><input style={inputStyle} value={type} onChange={(e) => { setType(e.target.value); setError(""); }} placeholder="مثال: حمى قلاعية" /></Field>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Field label="تاريخ التطعيم"><input type="date" style={inputStyle} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+          <Field label="تنبيه قبل كم يوم"><input type="number" min="0" style={inputStyle} value={reminderDays} onChange={(e) => setReminderDays(e.target.value)} /></Field>
+        </div>
+        <Field label="ملاحظات (اختياري)"><textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أي تفاصيل إضافية..." /></Field>
+        {error && <div style={{ color: C.brick, fontSize: 12 }}>{error}</div>}
+        <button onClick={submit} style={btnPrimary}>＋ إضافة موعد تطعيم</button>
+      </div>
+
+      {sorted.length === 0 ? <EmptyState text="لا توجد مواعيد تطعيم مسجلة بعد." /> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {sorted.map((v) => (
+            editingId === v.id
+              ? <VaccineReminderEditRow key={v.id} reminder={v} onSave={(patch) => { onUpdate(v.id, patch); setEditingId(null); }} onCancel={() => setEditingId(null)} />
+              : (
+                <div key={v.id} style={{ border: `1px solid ${new Date(v.date) <= new Date() ? C.brick + "55" : C.border}`, borderRadius: 10, padding: "10px 12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{v.type}</div>
+                      <div style={{ fontSize: 11, color: new Date(v.date) <= new Date() ? C.brick : C.muted }}>
+                        {fmtDate(v.date)}{new Date(v.date) <= new Date() ? " · مستحق" : ""}{v.reminderDays ? ` · تنبيه قبل ${v.reminderDays} يوم` : ""}
+                      </div>
+                      {v.notes && <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{v.notes}</div>}
+                    </div>
+                    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                      <button onClick={() => setEditingId(v.id)} style={iconBtn}>✎</button>
+                      <button onClick={() => onDelete(v.id)} style={{ ...iconBtn, color: C.brick }}>🗑</button>
+                    </div>
+                  </div>
+                </div>
+              )
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function VaccineReminderEditRow({ reminder, onSave, onCancel }) {
+  const [type, setType] = useState(reminder.type);
+  const [date, setDate] = useState(reminder.date ? reminder.date.slice(0, 10) : todayStr());
+  const [reminderDays, setReminderDays] = useState(reminder.reminderDays || 0);
+  const [notes, setNotes] = useState(reminder.notes || "");
+  return (
+    <div style={{ border: `1px solid ${C.olive}`, borderRadius: 10, padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+      <input style={inputStyle} value={type} onChange={(e) => setType(e.target.value)} placeholder="نوع التطعيم" />
+      <div style={{ display: "flex", gap: 8 }}>
+        <input type="date" style={inputStyle} value={date} onChange={(e) => setDate(e.target.value)} />
+        <input type="number" min="0" style={inputStyle} value={reminderDays} onChange={(e) => setReminderDays(e.target.value)} />
+      </div>
+      <textarea style={{ ...inputStyle, minHeight: 50, resize: "vertical" }} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="ملاحظات (اختياري)" />
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={() => type.trim() && onSave({ type: type.trim(), date, reminderDays: Number(reminderDays) || 0, notes: notes.trim() })} style={{ ...btnPrimary, flex: 1, justifyContent: "center" }}>حفظ</button>
+        <button onClick={onCancel} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>إلغاء</button>
+      </div>
+    </div>
+  );
+}
+
+function ResetDeathsControl({ onReset, onDone }) {
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <div style={{ marginBottom: 14 }}>
+      {!confirm ? (
+        <button onClick={() => setConfirm(true)} style={{ ...btnGhost, color: C.brick, width: "100%", justifyContent: "center" }}>🗑 تصفير سجل النفوق</button>
+      ) : (
+        <div style={{ border: `1px solid ${C.brick}55`, background: `${C.brick}10`, borderRadius: 10, padding: 12, textAlign: "center" }}>
+          <div style={{ fontSize: 12.5, marginBottom: 10 }}>سيتم حذف كل سجلات النفوق نهائياً. هل أنت متأكد؟</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => { onReset(); onDone(); }} style={{ ...btnPrimary, background: C.brick, flex: 1, justifyContent: "center" }}>تأكيد التصفير</button>
+            <button onClick={() => setConfirm(false)} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>تراجع</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InlineAddAnimal({ onSave, animals, pens }) {
+  const [number, setNumber] = useState("");
+  const [color, setColor] = useState(TAG_COLORS[0].v);
+  const [penId, setPenId] = useState("");
+  const [error, setError] = useState("");
+  const canSave = number.trim().length > 0;
+  const submit = () => {
+    if (!canSave) return;
+    const trimmed = number.trim();
+    const dup = animals.some((a) => a.number === trimmed && a.color === color);
+    if (dup) { setError(`الرقم ${trimmed} باللون ${color} مستخدم مسبقاً`); return; }
+    setError("");
+    const data = { number: trimmed, color };
+    if (penId) { data.penId = penId; data.penEnteredAt = new Date().toISOString(); }
+    onSave(data);
+    setNumber("");
+  };
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        <input style={{ ...inputStyle, flex: 1, minWidth: 90 }} placeholder="الرقم" value={number} onChange={(e) => { setNumber(e.target.value); setError(""); }} />
+        <button onClick={submit} disabled={!canSave} style={{ ...btnPrimary, opacity: canSave ? 1 : 0.5 }}>＋ إضافة</button>
+      </div>
+      <div style={{ marginBottom: 8 }}>
+        <ColorPicker value={color} onChange={setColor} />
+      </div>
+      {pens.length > 0 && (
+        <select style={{ ...inputStyle, marginTop: 8 }} value={penId} onChange={(e) => setPenId(e.target.value)}>
+          <option value="">بدون حظيرة</option>
+          {pens.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      )}
+      {error && <div style={{ color: C.brick, fontSize: 12, marginTop: 8 }}>{error}</div>}
+    </div>
+  );
+}
+
+// ==================================================================
+// ANIMAL DETAIL
+// ==================================================================
+function AnimalDetailPage({ animal, mother, offspring, pen, onBack, onUpdate, onAddOffspring, onOpenAnimal, onSell, onTransfer, onDelete }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteOffspringToo, setDeleteOffspringToo] = useState(false);
+  const [showDeathForm, setShowDeathForm] = useState(false);
+  const [deathCause, setDeathCause] = useState("");
+  const submitDeath = () => {
+    onUpdate({ alive: false, deathAt: new Date().toISOString(), deathCause: deathCause.trim() });
+    setShowDeathForm(false);
+    setDeathCause("");
+  };
+  return (
+    <div>
+      <button onClick={onBack} style={{ ...btnGhost, marginBottom: 16 }}>‹ رجوع</button>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <TagBadge number={animal.number} color={animal.color} />
+            <div style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>{animal.category === "mother" ? "أم" : "مولود"} · {animal.gender}</div>
+            {mother && <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>الأم: #{mother.number} ({mother.color})</div>}
+            {animal.category === "newborn" && animal.birthDate && <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>تاريخ الميلاد: {fmtDate(animal.birthDate)}</div>}
+            {pen && <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>الحظيرة: {pen.name}</div>}
+            {!animal.alive && animal.deathCause && <div style={{ fontSize: 12, color: C.brick, marginTop: 2 }}>سبب النفوق: {animal.deathCause}</div>}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+            {!animal.alive ? <Chip color={C.brick}>نافق</Chip> : <Chip color={C.olive}>حي</Chip>}
+            {animal.category === "mother" && animal.twinned && <Chip color={C.gold}>متأومة (توأمة)</Chip>}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 18 }}>
+          {animal.alive ? (
+            <button onClick={() => setShowDeathForm(true)} style={{ ...btnGhost, color: C.brick }}>💀 تسجيل نفوق</button>
+          ) : (
+            <button onClick={() => onUpdate({ alive: true, deathAt: undefined, deathCause: undefined })} style={{ ...btnGhost, color: C.olive }}>💀 إلغاء تسجيل النفوق</button>
+          )}
+          <button onClick={onSell} style={{ ...btnGhost, color: C.blue }}>💰 بيع الكائن</button>
+          <button onClick={onTransfer} style={{ ...btnGhost, color: C.olive }}>🧱 {pen ? "نقل إلى حظيرة أخرى" : "إضافة إلى حظيرة"}</button>
+          {animal.category === "newborn" && animal.gender === "أنثى" && (
+            <button onClick={() => onUpdate({ category: "mother" })} style={{ ...btnGhost, color: C.gold }}>❤️ تحويلها إلى أم</button>
+          )}
+          <button onClick={() => setConfirmDelete(true)} style={{ ...btnGhost, color: C.brick }}>🗑 حذف الكائن</button>
+        </div>
+
+        {showDeathForm && (
+          <div style={{ border: `1px solid ${C.brick}55`, background: `${C.brick}10`, borderRadius: 10, padding: 12, marginTop: 14 }}>
+            <div style={{ fontSize: 12.5, marginBottom: 8 }}>سبب النفوق (اختياري)</div>
+            <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical", marginBottom: 10 }} value={deathCause} onChange={(e) => setDeathCause(e.target.value)} placeholder="مثال: مرض مفاجئ، حادث..." />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={submitDeath} style={{ ...btnPrimary, background: C.brick, flex: 1, justifyContent: "center" }}>تأكيد تسجيل النفوق</button>
+              <button onClick={() => { setShowDeathForm(false); setDeathCause(""); }} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>تراجع</button>
+            </div>
+          </div>
+        )}
+
+        {confirmDelete && (
+          <div style={{ border: `1px solid ${C.brick}55`, background: `${C.brick}10`, borderRadius: 10, padding: 12, marginTop: 14 }}>
+            <div style={{ fontSize: 12.5, marginBottom: 10, textAlign: "center" }}>سيتم حذف الكائن #{animal.number} نهائياً ولا يمكن التراجع عن ذلك. هل أنت متأكد؟</div>
+            {animal.category === "mother" && offspring.length > 0 && (
+              <div style={{ background: C.surface, borderRadius: 10, padding: 10, marginBottom: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>لهذه الأم {offspring.length} مولود:</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                  {offspring.map((o) => <TagBadge key={o.id} number={o.number} color={o.color} />)}
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, cursor: "pointer" }}>
+                  <input type="checkbox" checked={deleteOffspringToo} onChange={(e) => setDeleteOffspringToo(e.target.checked)} />
+                  حذف كل المواليد التابعين لها أيضاً
+                </label>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>
+                  {deleteOffspringToo ? "سيتم حذف الأم وجميع مواليدها نهائياً." : "سيتم حذف الأم فقط، وتبقى مواليدها مسجّلة بدون ربطها بأم."}
+                </div>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => onDelete(deleteOffspringToo)} style={{ ...btnPrimary, background: C.brick, flex: 1, justifyContent: "center" }}>تأكيد الحذف</button>
+              <button onClick={() => { setConfirmDelete(false); setDeleteOffspringToo(false); }} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>تراجع</button>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {animal.category === "mother" && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>المواليد ({offspring.filter((o) => o.alive).length})</div>
+            <button onClick={onAddOffspring} style={btnPrimary}>＋ إضافة مواليد</button>
+          </div>
+          {offspring.length === 0 ? <EmptyState text="لا يوجد مواليد مسجلين لهذه الأم بعد." /> : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {offspring.map((o) => (
+                <button key={o.id} onClick={() => onOpenAnimal(o.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>
+                  <TagBadge number={o.number} color={o.color} />
+                  <span style={{ fontSize: 12, color: C.muted }}>{o.gender}{o.birthDate ? ` · ${fmtDate(o.birthDate)}` : ""} {!o.alive && "· نافق"}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <AnimalNotesSection animal={animal} onUpdate={onUpdate} />
+    </div>
+  );
+}
+
+function AnimalNotesSection({ animal, onUpdate }) {
+  const notes = animal.animalNotes || [];
+  const [text, setText] = useState("");
+  const addNote = () => {
+    if (!text.trim()) return;
+    const updated = [...notes, { id: uid(), text: text.trim(), date: todayStr() }];
+    onUpdate({ animalNotes: updated });
+    setText("");
+  };
+  const deleteNote = (id) => onUpdate({ animalNotes: notes.filter((n) => n.id !== id) });
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginTop: 14 }}>
+      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>📓 ملاحظات الكائن ({notes.length})</div>
+      {notes.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+          {notes.map((n) => (
+            <div key={n.id} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+              <div>
+                <div style={{ fontSize: 13 }}>{n.text}</div>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 3 }}>{fmtDate(n.date)}</div>
+              </div>
+              <button onClick={() => deleteNote(n.id)} style={{ ...iconBtn, color: C.brick, flexShrink: 0 }}>🗑</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8 }}>
+        <textarea style={{ ...inputStyle, flex: 1, minHeight: 50, resize: "vertical" }} value={text} onChange={(e) => setText(e.target.value)} placeholder="اكتب ملاحظة..." />
+        <button onClick={addNote} disabled={!text.trim()} style={{ ...btnPrimary, alignSelf: "flex-start", opacity: text.trim() ? 1 : 0.5 }}>＋ إضافة</button>
+      </div>
+    </div>
+  );
+}
+
+function OffspringModal({ mother, animals, onSave, onClose }) {
+  const [rows, setRows] = useState([{ gender: "أنثى", number: "", color: TAG_COLORS[0].v }]);
+  const [birthDate, setBirthDate] = useState(todayStr());
+  const [error, setError] = useState("");
+  const update = (i, patch) => { setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row))); setError(""); };
+  const addRow = () => rows.length < 3 && setRows((r) => [...r, { gender: "أنثى", number: "", color: TAG_COLORS[0].v }]);
+  const removeRow = (i) => setRows((r) => r.filter((_, idx) => idx !== i));
+  const valid = rows.every((r) => r.number.trim());
+  const submit = () => {
+    if (!valid) return;
+    const trimmedRows = rows.map((r) => ({ ...r, number: r.number.trim(), birthDate }));
+    for (let i = 0; i < trimmedRows.length; i++) {
+      const r = trimmedRows[i];
+      const dupExisting = animals.some((a) => a.number === r.number && a.color === r.color);
+      const dupWithinBatch = trimmedRows.some((r2, j) => j !== i && r2.number === r.number && r2.color === r.color);
+      if (dupExisting || dupWithinBatch) { setError(`الرقم ${r.number} باللون ${r.color} مستخدم مسبقاً`); return; }
+    }
+    onSave(trimmedRows);
+  };
+  return (
+    <Modal title={`إضافة مواليد — أم #${mother.number}`} onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Field label="تاريخ الميلاد"><input type="date" style={inputStyle} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} /></Field>
+        {rows.map((r, i) => (
+          <div key={i} style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.muted }}>مولود {i + 1}</span>
+              {rows.length > 1 && <button onClick={() => removeRow(i)} style={{ ...iconBtn, color: C.brick }}>✕</button>}
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+              <select style={{ ...inputStyle, flex: 1, minWidth: 90 }} value={r.gender} onChange={(e) => update(i, { gender: e.target.value })}>
+                <option>أنثى</option><option>ذكر</option>
+              </select>
+              <input style={{ ...inputStyle, flex: 1, minWidth: 80 }} placeholder="الرقم" value={r.number} onChange={(e) => update(i, { number: e.target.value })} />
+            </div>
+            <ColorPicker value={r.color} onChange={(c) => update(i, { color: c })} />
+          </div>
+        ))}
+        {rows.length < 3 && <button onClick={addRow} style={btnGhost}>＋ إضافة مولود آخر (حتى ٣)</button>}
+        {error && <div style={{ color: C.brick, fontSize: 12 }}>{error}</div>}
+        <button onClick={submit} disabled={!valid} style={{ ...btnPrimary, justifyContent: "center", opacity: valid ? 1 : 0.5 }}>حفظ المواليد</button>
+      </div>
+    </Modal>
+  );
+}
+
+function PenTransferModal({ animal, pens, currentPenId, onTransfer, onRemove, onClose }) {
+  const options = pens.filter((p) => p.id !== currentPenId);
+  return (
+    <Modal title={`نقل الكائن #${animal.number}`} onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {currentPenId && (
+          <button onClick={onRemove} style={{ display: "flex", alignItems: "center", gap: 8, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer", color: C.brick }}>
+            🚪 إخراج من الحظيرة الحالية بدون نقل
+          </button>
+        )}
+        {options.length === 0 ? (
+          <EmptyState text="لا توجد حظائر أخرى متاحة للنقل إليها." />
+        ) : options.map((p) => (
+          <button key={p.id} onClick={() => onTransfer(p.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
+            <span style={{ fontWeight: 700, fontSize: 13 }}>{p.name}</span>
+            <span style={{ fontSize: 12, color: C.muted }}>{p.alertEnabled !== false ? `تنبيه بعد ${p.alertDays} يوم` : "بلا تنبيه"}</span>
+          </button>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+function SellAnimalModal({ animal, onSell, onClose }) {
+  const [amount, setAmount] = useState("");
+  const [desc, setDesc] = useState("");
+  const [date, setDate] = useState(todayStr());
+  return (
+    <Modal title={`بيع الكائن #${animal.number}`} onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ background: `${C.brick}14`, border: `1px solid ${C.brick}40`, borderRadius: 10, padding: 10, fontSize: 12, color: C.brick }}>
+          سيتم تسجيل عملية بيع في صفحة المالية، وحذف هذا الكائن نهائياً من القطيع.
+        </div>
+        <Field label="مبلغ البيع (﷼) — اختياري"><input type="number" style={inputStyle} value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+        <Field label="شرح العملية"><input style={inputStyle} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={`بيع كائن #${animal.number} (${animal.color})`} /></Field>
+        <Field label="تاريخ البيع"><input type="date" style={inputStyle} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+        <button onClick={() => onSell({ amount: amount || 0, desc, date })} style={{ ...btnPrimary, background: C.blue, justifyContent: "center" }}>تأكيد البيع</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ==================================================================
+// PAGE 2 — PENS
+// ==================================================================
+function PensPage({ pens, animals, onAddPen, onAddToPen, onOpenAnimal, onRemoveFromPen, onEditPen, onTransfer, onDeleteMultiple }) {
+  const [viewPen, setViewPen] = useState(null);
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h1 style={{ margin: 0, fontFamily: "'El Messiri', serif", fontSize: 21 }}>الحظائر</h1>
+        <button onClick={onAddPen} style={btnPrimary}>＋ حظيرة جديدة</button>
+      </div>
+      {pens.length === 0 ? <EmptyState text="لا توجد حظائر بعد. أنشئ أول حظيرة." /> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {pens.map((pen) => {
+            const inPen = animals.filter((a) => a.penId === pen.id && a.alive);
+            return (
+              <div key={pen.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <button onClick={() => setViewPen(pen)} style={{ background: "none", border: "none", cursor: "pointer", textAlign: "start", padding: 0, flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 16, fontFamily: "'El Messiri', serif" }}>{pen.name}</div>
+                    <div style={{ fontSize: 12, color: C.muted }}>{inPen.length} كائن · {pen.alertEnabled !== false ? `تنبيه بعد ${pen.alertDays} يوم` : "التنبيه متوقف"}</div>
+                  </button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => onEditPen(pen)} title="تعديل الحظيرة" style={iconBtn}>✎</button>
+                    <button onClick={() => onAddToPen(pen)} style={btnGhost}>＋ إضافة حيوان</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {viewPen && (
+        <PenViewModal pen={viewPen} pens={pens} animals={animals.filter((a) => a.penId === viewPen.id && a.alive)} allAnimals={animals}
+          onOpenAnimal={(id) => { setViewPen(null); onOpenAnimal(id); }}
+          onRemoveFromPen={onRemoveFromPen} onTransfer={onTransfer} onDeleteMultiple={onDeleteMultiple} onClose={() => setViewPen(null)} />
+      )}
+    </div>
+  );
+}
+
+function PenViewModal({ pen, pens, animals, allAnimals, onOpenAnimal, onRemoveFromPen, onTransfer, onDeleteMultiple, onClose }) {
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [pickingTarget, setPickingTarget] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteOffspringToo, setDeleteOffspringToo] = useState(false);
+  const toggle = (id) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const affectedOffspring = allAnimals.filter((a) => selected.includes(a.motherId) && !selected.includes(a.id));
+
+  if (pickingTarget) {
+    const options = pens.filter((p) => p.id !== pen.id);
+    return (
+      <Modal title={`نقل ${selected.length} كائن إلى...`} onClose={() => setPickingTarget(false)}>
+        {options.length === 0 ? <EmptyState text="لا توجد حظائر أخرى متاحة." /> : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {options.map((p) => (
+              <button key={p.id} onClick={() => { onTransfer(selected, p.id); onClose(); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
+                <span style={{ fontWeight: 700, fontSize: 13 }}>{p.name}</span>
+                <span style={{ fontSize: 12, color: C.muted }}>{p.alertEnabled !== false ? `تنبيه بعد ${p.alertDays} يوم` : "بلا تنبيه"}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal title={`${pen.name} (${animals.length})`} onClose={onClose}>
+      {animals.length === 0 ? <EmptyState text="لا توجد كائنات بهذه الحظيرة حالياً." /> : (
+        <div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+            <button onClick={() => { setSelectMode((s) => !s); setSelected([]); setConfirmDelete(false); }} style={btnGhost}>
+              {selectMode ? "إلغاء التحديد" : "✓ تحديد"}
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: selectMode ? 14 : 0 }}>
+            {animals.map((a) => {
+              const checked = selected.includes(a.id);
+              return (
+                <div key={a.id} onClick={() => selectMode && toggle(a.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: checked ? `${C.olive}14` : C.bg, border: `1px solid ${checked ? C.olive : C.border}`, borderRadius: 10, padding: "10px 12px", cursor: selectMode ? "pointer" : "default" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {selectMode && (
+                      <span style={{ width: 18, height: 18, borderRadius: 5, border: `1.5px solid ${checked ? C.olive : C.border}`, background: checked ? C.olive : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, flexShrink: 0 }}>{checked ? "✓" : ""}</span>
+                    )}
+                    {selectMode ? <TagBadge number={a.number} color={a.color} /> : (
+                      <button onClick={() => onOpenAnimal(a.id)} style={{ background: "none", border: "none", cursor: "pointer" }}><TagBadge number={a.number} color={a.color} /></button>
+                    )}
+                  </div>
+                  {!selectMode && <button onClick={() => onRemoveFromPen(a.id)} title="إخراج من الحظيرة" style={iconBtn}>🚪</button>}
+                </div>
+              );
+            })}
+          </div>
+          {selectMode && !confirmDelete && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button onClick={() => selected.length && setPickingTarget(true)} disabled={selected.length === 0} style={{ ...btnPrimary, justifyContent: "center", width: "100%", opacity: selected.length ? 1 : 0.5 }}>
+                نقل المحدد {selected.length > 0 ? `(${selected.length})` : ""} إلى حظيرة أخرى
+              </button>
+              <button onClick={() => selected.length && setConfirmDelete(true)} disabled={selected.length === 0} style={{ ...btnGhost, color: C.brick, justifyContent: "center", width: "100%", opacity: selected.length ? 1 : 0.5 }}>
+                🗑 حذف المحدد {selected.length > 0 ? `(${selected.length})` : ""}
+              </button>
+            </div>
+          )}
+          {confirmDelete && (
+            <div style={{ border: `1px solid ${C.brick}55`, background: `${C.brick}10`, borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 12.5, marginBottom: 10, textAlign: "center" }}>سيتم حذف {selected.length} كائن نهائياً ولا يمكن التراجع عن ذلك. هل أنت متأكد؟</div>
+              {affectedOffspring.length > 0 && (
+                <div style={{ background: C.surface, borderRadius: 10, padding: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>من ضمن المحدد أمهات لهن {affectedOffspring.length} مولود:</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                    {affectedOffspring.map((o) => <TagBadge key={o.id} number={o.number} color={o.color} />)}
+                  </div>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, cursor: "pointer" }}>
+                    <input type="checkbox" checked={deleteOffspringToo} onChange={(e) => setDeleteOffspringToo(e.target.checked)} />
+                    حذف كل هؤلاء المواليد أيضاً
+                  </label>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>
+                    {deleteOffspringToo ? "سيتم حذف الأمهات وجميع مواليدهن نهائياً." : "سيتم حذف الأمهات فقط، وتبقى مواليدهن مسجّلة بدون ربطهم بأم."}
+                  </div>
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => { onDeleteMultiple(selected, deleteOffspringToo); onClose(); }} style={{ ...btnPrimary, background: C.brick, flex: 1, justifyContent: "center" }}>تأكيد الحذف</button>
+                <button onClick={() => { setConfirmDelete(false); setDeleteOffspringToo(false); }} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>تراجع</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function AlertToggle({ enabled, onChange }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, borderRadius: 10, padding: "10px 12px" }}>
+      <span style={{ fontSize: 13 }}>تفعيل تنبيه مدة البقاء</span>
+      <button onClick={() => onChange(!enabled)} style={{ width: 44, height: 26, borderRadius: 999, background: enabled ? C.olive : C.border, border: "none", cursor: "pointer", position: "relative" }}>
+        <span style={{ position: "absolute", top: 3, left: enabled ? 21 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff" }} />
+      </button>
+    </div>
+  );
+}
+
+function AddPenModal({ onSave, onClose }) {
+  const [name, setName] = useState("");
+  const [alertDays, setAlertDays] = useState(7);
+  const [alertEnabled, setAlertEnabled] = useState(true);
+  return (
+    <Modal title="إضافة حظيرة" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <Field label="اسم الحظيرة"><input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: حظيرة ٢" /></Field>
+        <Field label="تنبيه بعد كم يوم من دخول الحيوان؟"><input type="number" style={inputStyle} value={alertDays} onChange={(e) => setAlertDays(Number(e.target.value))} /></Field>
+        <AlertToggle enabled={alertEnabled} onChange={setAlertEnabled} />
+        <button onClick={() => name && onSave({ name, alertDays, alertEnabled })} disabled={!name} style={{ ...btnPrimary, justifyContent: "center", opacity: name ? 1 : 0.5 }}>حفظ</button>
+      </div>
+    </Modal>
+  );
+}
+
+function EditPenModal({ pen, onSave, onDelete, onClose }) {
+  const [name, setName] = useState(pen.name);
+  const [alertDays, setAlertDays] = useState(pen.alertDays);
+  const [alertEnabled, setAlertEnabled] = useState(pen.alertEnabled !== false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  return (
+    <Modal title="تعديل الحظيرة" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <Field label="اسم الحظيرة"><input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+        <Field label="تنبيه بعد كم يوم من دخول الحيوان؟"><input type="number" style={inputStyle} value={alertDays} onChange={(e) => setAlertDays(Number(e.target.value))} /></Field>
+        <AlertToggle enabled={alertEnabled} onChange={setAlertEnabled} />
+        <button onClick={() => name && onSave({ name, alertDays, alertEnabled })} disabled={!name} style={{ ...btnPrimary, justifyContent: "center", opacity: name ? 1 : 0.5 }}>حفظ التعديلات</button>
+        {!confirmDelete ? (
+          <button onClick={() => setConfirmDelete(true)} style={{ ...btnGhost, color: C.brick, justifyContent: "center" }}>🗑 حذف الحظيرة</button>
+        ) : (
+          <div style={{ border: `1px solid ${C.brick}55`, borderRadius: 10, padding: 12, textAlign: "center" }}>
+            <div style={{ fontSize: 12.5, marginBottom: 10 }}>سيتم حذف الحظيرة وإخراج جميع الحيوانات منها. هل أنت متأكد؟</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={onDelete} style={{ ...btnPrimary, background: C.brick, flex: 1, justifyContent: "center" }}>تأكيد الحذف</button>
+              <button onClick={() => setConfirmDelete(false)} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>تراجع</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function AddToPenModal({ pen, animals, onAssign, onClose }) {
+  const [selected, setSelected] = useState([]);
+  const toggle = (id) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const submit = () => { if (selected.length) onAssign(selected, pen.id); };
+  return (
+    <Modal title={`إضافة حيوانات إلى ${pen.name}`} onClose={onClose}>
+      {animals.length === 0 ? <EmptyState text="لا توجد حيوانات غير مرتبطة بحظيرة." /> : (
+        <div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+            {animals.map((a) => {
+              const checked = selected.includes(a.id);
+              return (
+                <button key={a.id} onClick={() => toggle(a.id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: checked ? `${C.olive}14` : C.bg, border: `1px solid ${checked ? C.olive : C.border}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 18, height: 18, borderRadius: 5, border: `1.5px solid ${checked ? C.olive : C.border}`, background: checked ? C.olive : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, flexShrink: 0 }}>{checked ? "✓" : ""}</span>
+                    <TagBadge number={a.number} color={a.color} />
+                  </div>
+                  <span style={{ fontSize: 12, color: C.muted }}>{a.category === "mother" ? "أم" : "مولود"}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={submit} disabled={selected.length === 0} style={{ ...btnPrimary, justifyContent: "center", width: "100%", opacity: selected.length ? 1 : 0.5 }}>
+            إضافة {selected.length > 0 ? `(${selected.length})` : ""}
+          </button>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ==================================================================
+// PAGE 3 — FINANCE
+// ==================================================================
+function FinancePage({ expenses, sales, onAddExpense, onAddSale, onDeleteExpense, onDeleteSale, onResetFinance }) {
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("الكل");
+  const [saleSearch, setSaleSearch] = useState("");
+  const [confirmReset, setConfirmReset] = useState(false);
+  const inRange = (d) => (!from || d >= from) && (!to || d <= to);
+  const fExp = expenses.filter((e) => inRange(e.date) && (categoryFilter === "الكل" || e.category === categoryFilter));
+  const fSales = sales.filter((s) => inRange(s.date) && (!saleSearch.trim() || (s.desc || "").includes(saleSearch.trim())));
+  const totalExpense = fExp.reduce((a, b) => a + Number(b.amount), 0);
+  const totalSales = fSales.reduce((a, b) => a + Number(b.amount), 0);
+  const net = totalSales - totalExpense;
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h1 style={{ margin: 0, fontFamily: "'El Messiri', serif", fontSize: 21 }}>المالية</h1>
+        <button onClick={() => setConfirmReset(true)} style={{ ...btnGhost, color: C.brick }}>📅 سنة مالية جديدة</button>
+      </div>
+
+      {confirmReset && (
+        <div style={{ border: `1px solid ${C.brick}55`, background: `${C.brick}10`, borderRadius: 12, padding: 14, marginBottom: 16, textAlign: "center" }}>
+          <div style={{ fontSize: 13, marginBottom: 10 }}>سيتم تصفير كل المصروفات والمبيعات المسجلة نهائياً لبدء سنة مالية جديدة. هل أنت متأكد؟</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => { onResetFinance(); setConfirmReset(false); }} style={{ ...btnPrimary, background: C.brick, flex: 1, justifyContent: "center" }}>تأكيد التصفير</button>
+            <button onClick={() => setConfirmReset(false)} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>تراجع</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, textAlign: "center", marginBottom: 14 }}>
+        <div style={{ fontSize: 12, color: C.muted }}>الصافي (مبيعات − مصروفات)</div>
+        <div style={{ fontSize: 34, fontWeight: 700, color: net >= 0 ? C.olive : C.brick, fontFamily: "'El Messiri', serif" }}>{net.toLocaleString()} ﷼</div>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+        <StatCard label="المبيعات" value={`${totalSales.toLocaleString()} ﷼`} color={C.olive} />
+        <StatCard label="المصروفات" value={`${totalExpense.toLocaleString()} ﷼`} color={C.brick} />
+      </div>
+
+      <div style={{ background: C.surface2, borderRadius: 12, padding: 12, display: "flex", gap: 8, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 12, color: C.muted }}>📅 تقرير لفترة:</span>
+        <input type="date" style={{ ...inputStyle, width: "auto", flex: 1, minWidth: 130 }} value={from} onChange={(e) => setFrom(e.target.value)} />
+        <span style={{ color: C.muted, fontSize: 12 }}>إلى</span>
+        <input type="date" style={{ ...inputStyle, width: "auto", flex: 1, minWidth: 130 }} value={to} onChange={(e) => setTo(e.target.value)} />
+        {(from || to) && <button onClick={() => { setFrom(""); setTo(""); }} style={{ ...iconBtn }}>✕</button>}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" }}>
+        <div style={{ fontWeight: 700, fontSize: 14 }}>المصروفات</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select style={{ ...inputStyle, width: "auto", fontSize: 12, padding: "6px 10px" }} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option>الكل</option>
+            {EXPENSE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <button onClick={onAddExpense} style={btnGhost}>＋ مصروف</button>
+        </div>
+      </div>
+      {categoryFilter !== "الكل" && (
+        <div style={{ fontSize: 11, color: C.muted, marginTop: -6, marginBottom: 10 }}>عرض مصروفات "{categoryFilter}" فقط · {fExp.length} عملية</div>
+      )}
+      {fExp.length === 0 ? <EmptyState text="لا توجد مصروفات ضمن هذه الفترة." /> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+          {[...fExp].reverse().map((e) => (
+            <div key={e.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+              <span>📉</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{e.desc || e.category}</div>
+                <div style={{ fontSize: 11, color: C.muted }}>{e.category} · {fmtDate(e.date)}</div>
+              </div>
+              <div style={{ fontWeight: 700, color: C.brick, fontSize: 13 }}>-{Number(e.amount).toLocaleString()}</div>
+              <button onClick={() => onDeleteExpense(e.id)} style={{ ...iconBtn, color: C.brick }}>🗑</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" }}>
+        <div style={{ fontWeight: 700, fontSize: 14 }}>المبيعات</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input style={{ ...inputStyle, width: "auto", fontSize: 12, padding: "6px 10px" }} placeholder="بحث بالوصف" value={saleSearch} onChange={(e) => setSaleSearch(e.target.value)} />
+          <button onClick={onAddSale} style={btnGhost}>＋ مبيعة</button>
+        </div>
+      </div>
+      {fSales.length === 0 ? <EmptyState text="لا توجد مبيعات ضمن هذه الفترة." /> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[...fSales].reverse().map((s) => (
+            <div key={s.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+              <span>📈</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{s.desc || "بيع حلال"}</div>
+                <div style={{ fontSize: 11, color: C.muted }}>{fmtDate(s.date)}</div>
+              </div>
+              <div style={{ fontWeight: 700, color: C.olive, fontSize: 13 }}>+{Number(s.amount).toLocaleString()}</div>
+              <button onClick={() => onDeleteSale(s.id)} style={{ ...iconBtn, color: C.brick }}>🗑</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExpenseModal({ onSave, onClose }) {
+  const [f, setF] = useState({ category: EXPENSE_CATEGORIES[0], desc: "", amount: "", date: todayStr() });
+  return (
+    <Modal title="إضافة مصروف" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <Field label="نوع المصروف">
+          <select style={inputStyle} value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}>
+            {EXPENSE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+        </Field>
+        <Field label="شرح العملية"><input style={inputStyle} value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} placeholder="تفاصيل إضافية (اختياري)" /></Field>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Field label="المبلغ (﷼)"><input type="number" style={inputStyle} value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></Field>
+          <Field label="تاريخ العملية"><input type="date" style={inputStyle} value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        </div>
+        <button onClick={() => f.amount && onSave(f)} disabled={!f.amount} style={{ ...btnPrimary, justifyContent: "center", opacity: f.amount ? 1 : 0.5 }}>حفظ</button>
+      </div>
+    </Modal>
+  );
+}
+
+function SaleModal({ onSave, onClose }) {
+  const [f, setF] = useState({ desc: "", amount: "", date: todayStr() });
+  return (
+    <Modal title="إضافة مبيعة" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <Field label="شرح العملية"><input style={inputStyle} value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })} placeholder="مثال: بيع خروف" /></Field>
+        <div style={{ display: "flex", gap: 10 }}>
+          <Field label="المبلغ (﷼)"><input type="number" style={inputStyle} value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></Field>
+          <Field label="تاريخ العملية"><input type="date" style={inputStyle} value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></Field>
+        </div>
+        <button onClick={() => f.amount && onSave(f)} disabled={!f.amount} style={{ ...btnPrimary, justifyContent: "center", opacity: f.amount ? 1 : 0.5 }}>حفظ</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ==================================================================
+// PAGE 4 — REPORTS
+// ==================================================================
+function ReportsPage({ animals, pens, expenses, sales, vaccineReminders, birthCounters, onResetBirthCounters }) {
+  const [confirmResetBirths, setConfirmResetBirths] = useState(false);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [categorySearch, setCategorySearch] = useState("الكل");
+  const inRange = (d) => (!from || d >= from) && (!to || d <= to);
+  const fExp = expenses.filter((e) => inRange(e.date));
+  const fSales = sales.filter((s) => inRange(s.date));
+  const totalExpense = fExp.reduce((a, b) => a + Number(b.amount), 0);
+  const totalSales = fSales.reduce((a, b) => a + Number(b.amount), 0);
+
+  const searchedCategoryEntries = categorySearch === "الكل" ? [] : fExp.filter((e) => e.category === categorySearch);
+  const searchedCategoryTotal = searchedCategoryEntries.reduce((a, b) => a + Number(b.amount), 0);
+
+  const monthKey = (d) => d.slice(0, 7);
+  const months = Array.from(new Set([...fExp, ...fSales].map((x) => monthKey(x.date)))).sort();
+  const monthly = months.map((m) => ({
+    name: m,
+    sales: fSales.filter((s) => monthKey(s.date) === m).reduce((a, b) => a + Number(b.amount), 0),
+    expenses: fExp.filter((e) => monthKey(e.date) === m).reduce((a, b) => a + Number(b.amount), 0),
+  }));
+  const maxMonthly = Math.max(1, ...monthly.map((m) => Math.max(m.sales, m.expenses)));
+
+  const mothers = animals.filter((a) => a.category === "mother" && a.alive);
+  const newbornsInRange = animals.filter((a) => a.category === "newborn" && a.alive && a.addedAt && inRange(a.addedAt.slice(0, 10)));
+  const deathsInRange = animals.filter((a) => !a.alive && a.deathAt && inRange(a.deathAt.slice(0, 10)));
+  const producing = mothers.filter((m) => animals.some((o) => o.motherId === m.id && o.category === "newborn"));
+  const producingPct = mothers.length ? Math.round((producing.length / mothers.length) * 100) : 0;
+  const twinning = mothers.filter((m) => m.twinned);
+  const twinningPct = producing.length ? Math.round((twinning.length / producing.length) * 100) : 0;
+
+  const upcomingVax = vaccineReminders.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const penSummary = pens.map((p) => {
+    const list = animals.filter((a) => a.penId === p.id && a.alive);
+    const avgDays = list.length ? Math.round(list.reduce((a, an) => a + daysBetween(new Date(an.penEnteredAt), new Date()), 0) / list.length) : 0;
+    return { ...p, count: list.length, avgDays };
+  });
+
+  return (
+    <div>
+      <h1 style={{ margin: "0 0 16px", fontFamily: "'El Messiri', serif", fontSize: 21 }}>التقارير الشاملة</h1>
+
+      <div style={{ background: C.surface2, borderRadius: 12, padding: 12, display: "flex", gap: 8, alignItems: "center", marginBottom: 18, flexWrap: "wrap" }}>
+        <span>📅</span>
+        <input type="date" style={{ ...inputStyle, width: "auto", flex: 1, minWidth: 130 }} value={from} onChange={(e) => setFrom(e.target.value)} />
+        <span style={{ color: C.muted, fontSize: 12 }}>إلى</span>
+        <input type="date" style={{ ...inputStyle, width: "auto", flex: 1, minWidth: 130 }} value={to} onChange={(e) => setTo(e.target.value)} />
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 22, flexWrap: "wrap" }}>
+        <StatCard label="صافي الربح" value={`${(totalSales - totalExpense).toLocaleString()} ﷼`} color={totalSales - totalExpense >= 0 ? C.olive : C.brick} />
+        <StatCard label="المبيعات" value={`${totalSales.toLocaleString()} ﷼`} color={C.olive} />
+        <StatCard label="المصروفات" value={`${totalExpense.toLocaleString()} ﷼`} color={C.brick} />
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>🔍 البحث عن نوع مصروف معيّن</div>
+        <select style={inputStyle} value={categorySearch} onChange={(e) => setCategorySearch(e.target.value)}>
+          <option>الكل</option>
+          {EXPENSE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+        </select>
+        {categorySearch !== "الكل" && (
+          <div style={{ marginTop: 14 }}>
+            <StatCard label={`إجمالي مصروفات "${categorySearch}"`} value={`${searchedCategoryTotal.toLocaleString()} ﷼`} color={C.brick} sub={`${searchedCategoryEntries.length} عملية`} />
+            {searchedCategoryEntries.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                {searchedCategoryEntries.map((e) => (
+                  <div key={e.id} style={{ display: "flex", justifyContent: "space-between", background: C.bg, borderRadius: 10, padding: "8px 12px", fontSize: 12.5 }}>
+                    <span>{e.desc || e.category}</span>
+                    <span style={{ color: C.muted }}>{fmtDate(e.date)} · {Number(e.amount).toLocaleString()} ﷼</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {monthly.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>المبيعات مقابل المصروفات شهرياً</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {monthly.map((m) => (
+              <div key={m.name}>
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>{m.name}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}><span style={{ color: C.olive }}>مبيعات</span><span>{m.sales.toLocaleString()}</span></div>
+                <MiniBar value={m.sales} max={maxMonthly} color={C.olive} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, margin: "6px 0 3px" }}><span style={{ color: C.brick }}>مصروفات</span><span>{m.expenses.toLocaleString()}</span></div>
+                <MiniBar value={m.expenses} max={maxMonthly} color={C.brick} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>إحصائيات القطيع (خلال الفترة)</div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <StatCard label="مواليد جدد" value={newbornsInRange.length} color={C.blue} />
+          <StatCard label="نفوق" value={deathsInRange.length} color={C.brick} />
+          <StatCard label="نسبة الأمهات المنتجة" value={`${producingPct}%`} color={C.olive} />
+          <StatCard label="الأمهات المتأومة" value={twinning.length} color={C.gold} sub={`${twinningPct}% من الأمهات المنتجة`} />
+        </div>
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>عداد الولادات (عام، لا يتأثر بالفترة ولا البيع أو الحذف)</div>
+          <button onClick={() => setConfirmResetBirths(true)} style={{ ...btnGhost, color: C.brick }}>🗑 تصفير</button>
+        </div>
+        {confirmResetBirths && (
+          <div style={{ border: `1px solid ${C.brick}55`, background: `${C.brick}10`, borderRadius: 10, padding: 12, marginBottom: 12, textAlign: "center" }}>
+            <div style={{ fontSize: 12.5, marginBottom: 10 }}>سيتم تصفير عداد الأمهات المتأومة وغير المتأومة لبدء فترة جديدة. هل أنت متأكد؟</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { onResetBirthCounters(); setConfirmResetBirths(false); }} style={{ ...btnPrimary, background: C.brick, flex: 1, justifyContent: "center" }}>تأكيد التصفير</button>
+              <button onClick={() => setConfirmResetBirths(false)} style={{ ...btnGhost, flex: 1, justifyContent: "center" }}>تراجع</button>
+            </div>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <StatCard label="الأمهات المتأومة" value={birthCounters.twinMotherIds.length} color={C.gold} />
+          <StatCard label="الأمهات غير المتأومة" value={birthCounters.singleMotherIds.length} color={C.blue} />
+        </div>
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>التطعيمات القادمة</div>
+        {upcomingVax.length === 0 ? <div style={{ fontSize: 12, color: C.muted }}>لا توجد مواعيد تطعيم مسجلة.</div> : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {upcomingVax.map((v) => (
+              <div key={v.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.bg, borderRadius: 10, padding: "8px 12px" }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{v.type}</span>
+                <span style={{ fontSize: 12, color: new Date(v.date) <= new Date() ? C.brick : C.muted }}>{fmtDate(v.date)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>ملخص الحظائر</div>
+        {penSummary.length === 0 ? <div style={{ fontSize: 12, color: C.muted }}>لا توجد حظائر.</div> : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {penSummary.map((p) => (
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", background: C.bg, borderRadius: 10, padding: "8px 12px", fontSize: 12.5 }}>
+                <span style={{ fontWeight: 700 }}>{p.name}</span>
+                <span style={{ color: C.muted }}>{p.count} كائن · متوسط {p.avgDays} يوم</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+setTimeout(function() {
+  var sn = document.getElementById("static-nav");
+  if (sn) sn.style.display = "none";
+}, 1500);
+</script>
+</body>
+</html>
