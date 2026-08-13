@@ -8,6 +8,12 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Tajawal',sans-serif;background:#F3ECDD;color:#3B3324;padding-bottom:70px}
+#lock{position:fixed;inset:0;background:#F3ECDD;z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:24px}
+#lock h1{font-size:24px;font-weight:700}
+#lock p{color:#8C8064;font-size:13px}
+#lock input{background:#fff;border:1px solid #E1D6BB;border-radius:12px;padding:14px 16px;font-size:18px;text-align:center;letter-spacing:6px;width:100%;max-width:260px;font-family:'Tajawal',sans-serif}
+#lock button{background:#6E7B45;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer;width:100%;max-width:260px}
+#lock .err{color:#A8503A;font-size:13px;display:none}
 button{font-family:'Tajawal',sans-serif;cursor:pointer}
 input,select,textarea{font-family:'Tajawal',sans-serif}
 #nav{position:fixed;top:0;left:0;right:0;background:#fff;border-bottom:1px solid #E1D6BB;display:flex;z-index:100;height:56px}
@@ -64,6 +70,15 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 </style>
 </head>
 <body>
+<div id="lock">
+  <div style="font-size:48px">🌿</div>
+  <h1>my farm</h1>
+  <p>أدخل كلمة المرور للمتابعة</p>
+  <input type="password" id="pw" placeholder="••••" maxlength="10" onkeydown="if(event.key==='Enter')chkPw()">
+  <button onclick="chkPw()">دخول</button>
+  <div class="err" id="pw-err">كلمة المرور غير صحيحة</div>
+</div>
+<div id="app" style="display:none">
 <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>الحظائر</span></button>
@@ -204,6 +219,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <div id="ovl" onclick="closeMdl()"><div class="mdl" onclick="event.stopPropagation()" id="mbox"></div></div>
 <div id="tst"></div>
+</div><!-- end #app -->
 
 <script type="importmap">
 {"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"}}
@@ -801,7 +817,26 @@ function openMdl(title,body,ko){
 }
 function closeMdl(){document.getElementById('ovl').classList.remove('open');curAnimal=null;atpSel=[];pvSel=[];}
 
-rHome();
+function chkPw(){
+  const v=document.getElementById('pw').value;
+  if(v==='1621'){
+    sessionStorage.setItem('auth','1');
+    document.getElementById('lock').style.display='none';
+    document.getElementById('app').style.display='block';
+    rHome();
+  } else {
+    const e=document.getElementById('pw-err');
+    e.style.display='block';
+    document.getElementById('pw').value='';
+    setTimeout(()=>e.style.display='none',2000);
+  }
+}
+// Auto-unlock if already authenticated in this session
+if(sessionStorage.getItem('auth')==='1'){
+  document.getElementById('lock').style.display='none';
+  document.getElementById('app').style.display='block';
+  rHome();
+}
 </script>
 </body>
 </html>
