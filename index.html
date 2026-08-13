@@ -168,17 +168,60 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 <div id="ovl" onclick="closeMdl()"><div class="mdl" onclick="event.stopPropagation()" id="mbox"></div></div>
 <div id="tst"></div>
 
+<script type="importmap">
+{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"}}
+</script>
+<script type="module">
+import{initializeApp}from"firebase/app";
+import{getFirestore,doc,setDoc,onSnapshot,getDoc}from"firebase/firestore";
+const cfg={apiKey:"AIzaSyBd927XtdlUdO-v_vMfWrhjYNtnNLZ65v4",authDomain:"nayf-bdfb5.firebaseapp.com",projectId:"nayf-bdfb5",storageBucket:"nayf-bdfb5.firebasestorage.app",messagingSenderId:"993174601842",appId:"1:993174601842:web:57e03bf00e3ac674c502eb"};
+const app=initializeApp(cfg);
+const fdb=getFirestore(app);
+const ref=doc(fdb,"myfarm","data");
+
+window.__fbSave=async(data)=>{try{await setDoc(ref,JSON.parse(JSON.stringify(data)));}catch(e){console.warn('fbSave:',e);}};
+
+// Listen for remote changes and push to app
+onSnapshot(ref,snap=>{
+  if(!snap.exists())return;
+  const data=snap.data();
+  if(!data||!Array.isArray(data.animals))return;
+  if(window._fbSync)return;
+  window._fbSync=true;
+  // Only update if remote has more data or no local data
+  const localRaw=localStorage.getItem('myFarm_v3');
+  const local=localRaw?JSON.parse(localRaw):null;
+  const localCount=local&&Array.isArray(local.animals)?local.animals.length:0;
+  if(data.animals.length===0&&localCount>0){window._fbSync=false;return;}
+  // Apply remote data
+  if(window.applyRemoteData)window.applyRemoteData(data);
+  setTimeout(()=>window._fbSync=false,600);
+},e=>console.warn('fbListen:',e));
+</script>
+
 <script>
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
 function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]}};}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]}});}}}catch(e){}return seed();}
-function save(){localStorage.setItem(KEY,JSON.stringify(db));}
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(db));
+  if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
+}
 let db=load();
 let selColor=COLORS[0].v;
 let curAnimal=null;
 let penSelMode=false,penSel=[];
+
+window.applyRemoteData=function(data){
+  const d=seed();
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]}});
+  localStorage.setItem(KEY,JSON.stringify(db));
+  const active=document.querySelector('.page.active');
+  if(active){const id=active.id.replace('page-','');
+    if(id==='home')rHome();else if(id==='pens')rPens();else if(id==='fin')rFin();else if(id==='rep')rRep();}
+};
 
 function uid(){return Math.random().toString(36).slice(2,9);}
 function tod(){return new Date().toISOString().slice(0,10);}
