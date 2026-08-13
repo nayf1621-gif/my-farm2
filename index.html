@@ -69,6 +69,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>الحظائر</span></button>
   <button onclick="nav('fin')"><span class="ico">💰</span><span>المالية</span></button>
   <button onclick="nav('rep')"><span class="ico">📊</span><span>التقارير</span></button>
+  <button onclick="nav('birds')"><span class="ico">🦜</span><span>الطيور</span></button>
 </div>
 <div id="content">
 
@@ -165,6 +166,42 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 </div>
 </div>
 
+<!-- BIRDS PAGE -->
+<div id="page-birds" class="page">
+  <div class="sh"><span class="st">🦜 محمية الطيور بالبيت</span></div>
+
+  <!-- Net -->
+  <div class="card mb10" style="text-align:center">
+    <div class="muted" style="font-size:11px">الصافي (مبيعات − مصروفات)</div>
+    <div id="bnet" style="font-size:30px;font-weight:700;margin-top:4px"></div>
+  </div>
+  <div class="row mb10" id="btotals"></div>
+
+  <!-- Date filter + reset -->
+  <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+    <span class="muted" style="font-size:11px">📅</span>
+    <input type="date" id="bff" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:100px" onchange="rBirds()">
+    <span class="muted" style="font-size:11px">إلى</span>
+    <input type="date" id="bft" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:100px" onchange="rBirds()">
+    <button class="bi" onclick="document.getElementById('bff').value='';document.getElementById('bft').value='';rBirds()">✕</button>
+    <button class="btn-r" onclick="cfmResetBirds()" style="font-size:11px;padding:6px 10px">🗑 سنة جديدة</button>
+  </div>
+
+  <!-- Sales -->
+  <div class="sh">
+    <span class="st">المبيعات</span>
+    <button class="btn" onclick="openBirdSaleModal()">＋ إضافة</button>
+  </div>
+  <div id="bsales-list" class="mb10"></div>
+
+  <!-- Expenses -->
+  <div class="sh">
+    <span class="st">المصاريف</span>
+    <button class="btn" onclick="openBirdExpModal()">＋ إضافة</button>
+  </div>
+  <div id="bexp-list"></div>
+</div>
+
 <div id="ovl" onclick="closeMdl()"><div class="mdl" onclick="event.stopPropagation()" id="mbox"></div></div>
 <div id="tst"></div>
 
@@ -203,8 +240,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]}};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]}});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك']};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك']});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -216,11 +253,11 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]}});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
-    if(id==='home')rHome();else if(id==='pens')rPens();else if(id==='fin')rFin();else if(id==='rep')rRep();}
+    if(id==='home')rHome();else if(id==='pens')rPens();else if(id==='fin')rFin();else if(id==='rep')rRep();else if(id==='birds')rBirds();}
 };
 
 function uid(){return Math.random().toString(36).slice(2,9);}
@@ -234,12 +271,13 @@ function nav(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const idx={home:0,pens:1,fin:2,rep:3}[id];
+  const idx={home:0,pens:1,fin:2,rep:3,birds:4}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   if(id==='home')rHome();
   if(id==='pens')rPens();
   if(id==='fin')rFin();
   if(id==='rep')rRep();
+  if(id==='birds')rBirds();
 }
 
 function mkCP(cid,init,cb){
@@ -675,6 +713,84 @@ function rRep(){
   document.getElementById('rpens').innerHTML=db.pens.length===0?'<div class="muted" style="font-size:12px">لا حظائر</div>':db.pens.map(p=>{const l=A.filter(a=>a.penId===p.id&&a.alive);const avg=l.length?Math.round(l.reduce((a,an)=>a+Math.floor((new Date()-new Date(an.entered))/86400000),0)/l.length):0;return`<div class="li mb8"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${l.length} كائن · ${avg} يوم</span></div>`;}).join('');
 }
 function cfmResetBC(){if(confirm('تصفير العداد؟')){db.bc={t:[],s:[]};save();toast('تم');rRep();}}
+
+// ====== BIRDS ======
+function rBirds(){
+  const from=document.getElementById('bff').value,to=document.getElementById('bft').value;
+  const inR=d=>(!from||d>=from)&&(!to||d<=to);
+  const fS=(db.birdSales||[]).filter(s=>inR(s.date));
+  const fE=(db.birdExp||[]).filter(e=>inR(e.date));
+  const tS=fS.reduce((a,b)=>a+Number(b.amount||0),0);
+  const tE=fE.reduce((a,b)=>a+Number(b.amount||0),0);
+  const net=tS-tE;
+  document.getElementById('bnet').textContent=net.toLocaleString()+' ﷼';
+  document.getElementById('bnet').style.color=net>=0?'#6E7B45':'#A8503A';
+  document.getElementById('btotals').innerHTML=`
+    <div class="sc"><div class="v green">${tS.toLocaleString()}</div><div class="l">مبيعات ﷼</div></div>
+    <div class="sc"><div class="v red">${tE.toLocaleString()}</div><div class="l">مصاريف ﷼</div></div>
+  `;
+  document.getElementById('bsales-list').innerHTML=fS.length===0?'<div class="empty mb10">لا توجد مبيعات</div>':[...fS].reverse().map(s=>`
+    <div class="li mb8">
+      <div><div style="font-size:12.5px;font-weight:600">${s.type}${s.desc?' — '+s.desc:''}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div>
+      <div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdSale('${s.id}')">🗑</button></div>
+    </div>`).join('');
+  document.getElementById('bexp-list').innerHTML=fE.length===0?'<div class="empty">لا توجد مصاريف</div>':[...fE].reverse().map(e=>`
+    <div class="li mb8">
+      <div><div style="font-size:12.5px;font-weight:600">${e.desc||e.item}</div><div class="muted" style="font-size:10px">${e.item} · ${fmt(e.date)}</div></div>
+      <div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdExp('${e.id}')">🗑</button></div>
+    </div>`).join('');
+}
+
+function openBirdSaleModal(){
+  const types=(db.birdTypes||[]);
+  openMdl('إضافة مبيعة طيور',`
+    <div class="fld"><label>نوع الطائر</label>
+      <select id="bst">${types.map(t=>`<option>${t}</option>`).join('')}<option value="__new__">＋ نوع جديد...</option></select>
+    </div>
+    <div id="bst-new" class="fld" style="display:none"><label>اسم النوع الجديد</label><input type="text" id="bst-new-val" placeholder="أدخل اسم النوع"></div>
+    <div class="fld"><label>الوصف (اختياري)</label><input type="text" id="bsd" placeholder="تفاصيل"></div>
+    <div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="bsa"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="bsdate" value="${tod()}"></div></div>
+    <button class="btn w100 jc" onclick="saveBirdSale()">حفظ</button>
+  `);
+  document.getElementById('bst').onchange=function(){
+    document.getElementById('bst-new').style.display=this.value==='__new__'?'block':'none';
+  };
+}
+function saveBirdSale(){
+  let type=document.getElementById('bst').value;
+  if(type==='__new__'){
+    const nv=document.getElementById('bst-new-val').value.trim();
+    if(!nv){toast('أدخل اسم النوع',true);return;}
+    if(!db.birdTypes.includes(nv))db.birdTypes.push(nv);
+    type=nv;
+  }
+  const amt=document.getElementById('bsa').value;
+  if(!amt){toast('أدخل المبلغ',true);return;}
+  if(!db.birdSales)db.birdSales=[];
+  db.birdSales.push({id:uid(),type,desc:document.getElementById('bsd').value,amount:amt,date:document.getElementById('bsdate').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rBirds();
+}
+function delBirdSale(id){db.birdSales=(db.birdSales||[]).filter(s=>s.id!==id);save();rBirds();}
+
+function openBirdExpModal(){
+  openMdl('إضافة مصروف طيور',`
+    <div class="fld"><label>البند / العنصر</label><input type="text" id="bei" placeholder="مثال: علف، فيتامينات، قفص..."></div>
+    <div class="fld"><label>الوصف (اختياري)</label><input type="text" id="bed"></div>
+    <div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="bea"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="bedate" value="${tod()}"></div></div>
+    <button class="btn w100 jc" onclick="saveBirdExp()">حفظ</button>
+  `);
+}
+function saveBirdExp(){
+  const item=document.getElementById('bei').value.trim();
+  const amt=document.getElementById('bea').value;
+  if(!item){toast('أدخل البند',true);return;}
+  if(!amt){toast('أدخل المبلغ',true);return;}
+  if(!db.birdExp)db.birdExp=[];
+  db.birdExp.push({id:uid(),item,desc:document.getElementById('bed').value,amount:amt,date:document.getElementById('bedate').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rBirds();
+}
+function delBirdExp(id){db.birdExp=(db.birdExp||[]).filter(e=>e.id!==id);save();rBirds();}
+function cfmResetBirds(){if(confirm('تصفير مبيعات ومصاريف الطيور للسنة الجديدة؟')){db.birdSales=[];db.birdExp=[];save();toast('تم التصفير');rBirds();}}
 
 // ====== MODAL ======
 let keepOpen=false;
