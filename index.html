@@ -305,12 +305,13 @@ function rHome(){
   const sc=document.getElementById('sc');
   sc.innerHTML='<option value="">الكل</option>'+COLORS.map(t=>`<option>${t.v}</option>`).join('');
 
+  window._catLists={prod:prod.map(a=>a.id),nonprod:nonprod.map(a=>a.id),twin:twin.map(a=>a.id),dead:dead.map(a=>a.id),unassigned:unassigned.map(a=>a.id)};
   document.getElementById('ibar').innerHTML=`
-    <button class="ibtn" onclick="showCatMdl('المنتجة',${JSON.stringify(prod.map(a=>a.id))},true)"><div class="iw" style="background:#6E7B4518">❤️</div><div class="in">${prod.length}</div><div class="il">منتجة</div></button>
-    <button class="ibtn" onclick="showCatMdl('غير منتجة',${JSON.stringify(nonprod.map(a=>a.id))},true)"><div class="iw" style="background:#8C806418">❤️</div><div class="in">${nonprod.length}</div><div class="il">غير منتجة</div></button>
-    <button class="ibtn" onclick="showCatMdl('المتأومة',${JSON.stringify(twin.map(a=>a.id))},false)"><div class="iw" style="background:#C79A3E18">👶</div><div class="in">${twin.length}</div><div class="il">متأومة</div></button>
+    <button class="ibtn" onclick="showCatMdl('المنتجة',window._catLists.prod,true)"><div class="iw" style="background:#6E7B4518">❤️</div><div class="in">${prod.length}</div><div class="il">منتجة</div></button>
+    <button class="ibtn" onclick="showCatMdl('غير منتجة',window._catLists.nonprod,true)"><div class="iw" style="background:#8C806418">❤️</div><div class="in">${nonprod.length}</div><div class="il">غير منتجة</div></button>
+    <button class="ibtn" onclick="showCatMdl('المتأومة',window._catLists.twin,false)"><div class="iw" style="background:#C79A3E18">👶</div><div class="in">${twin.length}</div><div class="il">متأومة</div></button>
     <button class="ibtn" onclick="showDeadMdl()"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${dead.length}</div><div class="il">النفوق</div></button>
-    <button class="ibtn" onclick="showCatMdl('بدون حظيرة',${JSON.stringify(unassigned.map(a=>a.id))},false)"><div class="iw" style="background:#4472A818">🧱</div><div class="in">${unassigned.length}</div><div class="il">بدون حظيرة</div></button>
+    <button class="ibtn" onclick="showCatMdl('بدون حظيرة',window._catLists.unassigned,false)"><div class="iw" style="background:#4472A818">🧱</div><div class="in">${unassigned.length}</div><div class="il">بدون حظيرة</div></button>
   `;
 }
 
