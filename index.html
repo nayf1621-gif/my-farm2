@@ -837,6 +837,41 @@ if(sessionStorage.getItem('auth')==='1'){
   document.getElementById('app').style.display='block';
   rHome();
 }
+
+// ====== NOTIFICATIONS ======
+function reqNotifPerm(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+}
+function sendNotif(title,body){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{new Notification(title,{body,icon:'https://nayf1621-gif.github.io/my-farm2/icon.png',tag:title});}catch(e){}
+}
+
+// Check alerts every minute and fire notifications
+function checkNotifs(){
+  const alerts=getAlerts();
+  alerts.forEach(a=>{
+    const key='notif_'+a.id+'_'+tod();
+    if(!sessionStorage.getItem(key)){
+      sendNotif('🌿 my farm',a.txt||a.text||'');
+      sessionStorage.setItem(key,'1');
+    }
+  });
+}
+// Request permission on first interaction
+document.addEventListener('click',function askOnce(){
+  reqNotifPerm();
+  document.removeEventListener('click',askOnce);
+},{once:true});
+// Check every 60 seconds
+setInterval(checkNotifs,60000);
+// Register service worker for background notifications
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
