@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>my farm</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6E7B45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="my farm">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -828,6 +833,14 @@ function chkPw(){
     document.getElementById('lock').style.display='none';
     document.getElementById('app').style.display='block';
     rHome();
+    // Request notification permission after login
+    setTimeout(()=>{
+      if('Notification' in window && Notification.permission==='default'){
+        Notification.requestPermission().then(p=>{
+          if(p==='granted') sendNotif('🌿 my farm','تم تفعيل الإشعارات ✅');
+        });
+      }
+    },1500);
   } else {
     const e=document.getElementById('pw-err');
     e.style.display='block';
