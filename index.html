@@ -77,6 +77,10 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <input type="password" id="pw" placeholder="••••" maxlength="10" onkeydown="if(event.key==='Enter')chkPw()">
   <button onclick="chkPw()">دخول</button>
   <div class="err" id="pw-err">كلمة المرور غير صحيحة</div>
+  <div id="notif-btn-wrap" style="margin-top:8px;display:none">
+    <button onclick="askNotif()" style="background:#4472A8;color:#fff;border:none;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;width:100%;max-width:260px">🔔 تفعيل الإشعارات</button>
+    <div style="font-size:11px;color:#8C8064;margin-top:4px;text-align:center">اضغط للسماح بالإشعارات</div>
+  </div>
 </div>
 <div id="app" style="display:none">
 <div id="nav">
@@ -839,36 +843,37 @@ if(sessionStorage.getItem('auth')==='1'){
 }
 
 // ====== NOTIFICATIONS ======
-function reqNotifPerm(){
+function showNotifBtn(){
   if(!('Notification' in window))return;
   if(Notification.permission==='default'){
-    Notification.requestPermission();
+    document.getElementById('notif-btn-wrap').style.display='block';
   }
+}
+function askNotif(){
+  Notification.requestPermission().then(p=>{
+    if(p==='granted'){
+      document.getElementById('notif-btn-wrap').style.display='none';
+      sendNotif('🌿 my farm','تم تفعيل الإشعارات بنجاح!');
+    }
+  });
 }
 function sendNotif(title,body){
   if(!('Notification' in window)||Notification.permission!=='granted')return;
   try{new Notification(title,{body,icon:'https://nayf1621-gif.github.io/my-farm2/icon.png',tag:title});}catch(e){}
 }
-
-// Check alerts every minute and fire notifications
 function checkNotifs(){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
   const alerts=getAlerts();
   alerts.forEach(a=>{
     const key='notif_'+a.id+'_'+tod();
     if(!sessionStorage.getItem(key)){
-      sendNotif('🌿 my farm',a.txt||a.text||'');
+      sendNotif('🌿 my farm تنبيه',a.txt||a.text||'');
       sessionStorage.setItem(key,'1');
     }
   });
 }
-// Request permission on first interaction
-document.addEventListener('click',function askOnce(){
-  reqNotifPerm();
-  document.removeEventListener('click',askOnce);
-},{once:true});
-// Check every 60 seconds
+showNotifBtn();
 setInterval(checkNotifs,60000);
-// Register service worker for background notifications
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
