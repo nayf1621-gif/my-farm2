@@ -1,0 +1,22 @@
+{
+  "name": "my farm",
+  "short_name": "my farm",
+  "description": "إدارة القطيع",
+  "start_url": "/my-farm2/",
+  "display": "standalone",
+  "background_color": "#F3ECDD",
+  "theme_color": "#6E7B45",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/nayf1621-gif/my-farm2/main/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/nayf1621-gif/my-farm2/main/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
