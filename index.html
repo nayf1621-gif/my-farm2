@@ -822,7 +822,7 @@ function rBirds(){
             <span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${n.type||'عام'}</span>
             <button class="bi red" onclick="delBirdNote(${i})">🗑</button>
           </div>
-          <div style="font-size:13px">${n.text}</div>
+          <div style="font-size:13px;white-space:pre-wrap">${n.text}</div>
           <div class="muted" style="font-size:10px;margin-top:4px">${fmt(n.date)}</div>
         </div>`}).join('');
   }
