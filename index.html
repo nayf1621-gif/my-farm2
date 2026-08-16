@@ -216,12 +216,16 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <span class="st">المبيعات</span>
     <button class="btn" onclick="openBirdSaleModal()">＋ إضافة</button>
   </div>
+  <div id="btype-filters" class="fw gap8 mb8"></div>
   <div id="bsales-list" class="mb10"></div>
 
   <!-- Expenses -->
   <div class="sh">
     <span class="st">المصاريف</span>
-    <button class="btn" onclick="openBirdExpModal()">＋ إضافة</button>
+    <div class="flex gap8 ac">
+      <input type="text" id="bef" placeholder="بحث..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px;width:80px" oninput="rBirds()">
+      <button class="btn" onclick="openBirdExpModal()">＋ إضافة</button>
+    </div>
   </div>
   <div id="bexp-list"></div>
 </div>
@@ -740,11 +744,30 @@ function rRep(){
 function cfmResetBC(){if(confirm('تصفير العداد؟')){db.bc={t:[],s:[]};save();toast('تم');rRep();}}
 
 // ====== BIRDS ======
+let bSelTypes=[];
+function toggleBType(type){
+  if(bSelTypes.includes(type))bSelTypes=bSelTypes.filter(x=>x!==type);
+  else bSelTypes.push(type);
+  rBirds();
+}
 function rBirds(){
   const from=document.getElementById('bff').value,to=document.getElementById('bft').value;
+  const expSearch=document.getElementById('bef')?document.getElementById('bef').value.trim().toLowerCase():'';
   const inR=d=>(!from||d>=from)&&(!to||d<=to);
-  const fS=(db.birdSales||[]).filter(s=>inR(s.date));
-  const fE=(db.birdExp||[]).filter(e=>inR(e.date));
+
+  // Render type filter buttons
+  const types=db.birdTypes||[];
+  const filterEl=document.getElementById('btype-filters');
+  if(filterEl){
+    filterEl.innerHTML=types.map(t=>{
+      const active=bSelTypes.includes(t);
+      return`<button onclick="toggleBType('${t}')" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?'#6E7B45':'#E1D6BB'};background:${active?'#6E7B45':'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif">${t}</button>`;
+    }).join('');
+    if(types.length>0) filterEl.innerHTML+= `<button onclick="bSelTypes=[];rBirds()" style="padding:5px 10px;border-radius:999px;border:1px solid #E1D6BB;background:#F3ECDD;color:#8C8064;font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif">الكل ✕</button>`;
+  }
+
+  const fS=(db.birdSales||[]).filter(s=>inR(s.date)&&(bSelTypes.length===0||bSelTypes.includes(s.type)));
+  const fE=(db.birdExp||[]).filter(e=>inR(e.date)&&(!expSearch||((e.desc||'').toLowerCase().includes(expSearch)||(e.item||'').toLowerCase().includes(expSearch))));
   const tS=fS.reduce((a,b)=>a+Number(b.amount||0),0);
   const tE=fE.reduce((a,b)=>a+Number(b.amount||0),0);
   const net=tS-tE;
