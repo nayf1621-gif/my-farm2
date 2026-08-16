@@ -239,7 +239,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
       <label>التصنيف</label>
       <div class="flex gap8 fw" id="bnt-btns"></div>
     </div>
-    <div class="fld mt8"><textarea id="bnote-input" placeholder="أضف ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:100px;resize:vertical;font-family:Tajawal,sans-serif"></textarea></div>
+    <div class="fld mt8"><textarea id="bnote-input" placeholder="أضف ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:150px;resize:none;font-family:Tajawal,sans-serif;overflow-y:hidden" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea></div>
     <div class="flex gap8">
       <button class="btn" style="flex:1;justify-content:center" onclick="addBirdNote()">＋ إضافة</button>
       <button class="btn-g" onclick="addBirdNoteType()">＋ تصنيف جديد</button>
