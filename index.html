@@ -144,20 +144,27 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="card mb10" style="text-align:center"><div class="muted" style="font-size:11px">الصافي</div><div id="fnet" style="font-size:30px;font-weight:700"></div></div>
   <div class="row" id="ftotals"></div>
 
-  <!-- Mothers added stat -->
-  <div class="card mb10" style="cursor:pointer" onclick="togBSection('fmothers-wrap','fmothers-arrow')">
-    <div class="flex jb ac">
+  <!-- Rakhal purchased -->
+  <div class="card mb10">
+    <div class="sh" style="cursor:pointer" onclick="togBSection('frak-wrap','frak-arrow')">
       <div class="flex ac gap8">
-        <span style="font-size:22px">🐑</span>
+        <span style="font-size:20px">🐑</span>
         <div>
           <div class="st" style="font-size:13px">الرخال المضافة كأمهات</div>
-          <div class="muted" style="font-size:11px" id="fmothers-count">اضغط للعرض</div>
+          <div class="muted" style="font-size:11px" id="frak-summary">اضغط للعرض</div>
         </div>
       </div>
-      <span id="fmothers-arrow">▼</span>
+      <div class="flex ac gap8">
+        <button class="btn-g" data-owner onclick="event.stopPropagation();openRakhalModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
+        <span id="frak-arrow">▼</span>
+      </div>
     </div>
-    <div id="fmothers-wrap" style="display:none;margin-top:12px">
-      <div id="fmothers-list"></div>
+    <div id="frak-wrap" style="display:none;margin-top:12px">
+      <div id="frak-list"></div>
+      <div class="sc mt8" style="text-align:center">
+        <div class="v green" id="frak-total">0</div>
+        <div class="l">إجمالي القيمة ﷼</div>
+      </div>
     </div>
   </div>
 
@@ -311,8 +318,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج']};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج']});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[]};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[]});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -324,7 +331,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[]});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -688,22 +695,59 @@ function rFin(){
   document.getElementById('exp-list').innerHTML=fE.length===0?'<div class="empty">لا مصروفات</div>':[...fE].reverse().map(e=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${e.desc||e.category}</div><div class="muted" style="font-size:10px">${e.category} · ${fmt(e.date)}</div></div><div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delE('${e.id}')" ${gHide()}>🗑</button></div></div>`).join('');
   document.getElementById('sal-list').innerHTML=fS.length===0?'<div class="empty">لا مبيعات</div>':[...fS].reverse().map(s=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${s.desc||'بيع'}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString()}</span><button class="bi red" onclick="delS('${s.id}')" ${gHide()}>🗑</button></div></div>`).join('');
 
-  // Mothers added stat
-  const mothers=db.animals.filter(a=>a.cat==='m');
-  const countEl=document.getElementById('fmothers-count');
-  const listEl=document.getElementById('fmothers-list');
-  if(countEl)countEl.textContent=`${mothers.length} رأس مسجلة`;
+  // Rakhal stat
+  const rakhal=db.rakhal||[];
+  const totalRak=rakhal.reduce((a,b)=>a+Number(b.count||0),0);
+  const totalRakVal=rakhal.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const sumEl=document.getElementById('frak-summary');
+  const listEl=document.getElementById('frak-list');
+  const totEl=document.getElementById('frak-total');
+  if(sumEl)sumEl.textContent=`${totalRak} رأس · ${totalRakVal.toLocaleString()} ﷼`;
+  if(totEl)totEl.textContent=totalRakVal.toLocaleString()+' ﷼';
   if(listEl){
-    listEl.innerHTML=mothers.length===0?'<div class="empty">لا توجد أمهات مسجلة</div>':
-      mothers.map(a=>`<div class="li mb8">
-        <div class="flex ac gap8">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${a.alive?'حية':'نافقة'}</span></div>
-        <span class="muted" style="font-size:11px">${fmt(a.addedAt)}</span>
-      </div>`).join('');
+    listEl.innerHTML=rakhal.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
+      [...rakhal].reverse().map((r,ri)=>{const i=rakhal.length-1-ri;return`
+        <div class="li mb8">
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count} رأس</div>
+            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
+          </div>
+          <div class="flex ac gap8">
+            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString()} ﷼</span>
+            <button class="bi red" onclick="delRakhal(${i})" ${gHide()}>🗑</button>
+          </div>
+        </div>`}).join('');
   }
 }
 function delE(id){if(!confirm('حذف هذا المصروف؟'))return;db.expenses=db.expenses.filter(e=>e.id!==id);save();rFin();}
 function delS(id){if(!confirm('حذف هذه المبيعة؟'))return;db.sales=db.sales.filter(s=>s.id!==id);save();rFin();}
 function cfmResetFin(){if(confirm('تصفير المصروفات والمبيعات للسنة الجديدة؟')){db.expenses=[];db.sales=[];save();toast('تم');rFin();}}
+function openRakhalModal(){
+  if(guardGuest())return;
+  openMdl('إضافة رخال كأمهات',`
+    <div class="fld"><label>النوع</label><input type="text" id="rk-type" placeholder="مثال: نجدية، عواس..."></div>
+    <div class="flex gap8">
+      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="rk-count" min="1"></div>
+      <div class="fld" style="flex:1"><label>سعر الرأس (﷼)</label><input type="number" id="rk-price"></div>
+    </div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="rk-date" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="saveRakhal()">حفظ</button>
+  `);
+}
+function saveRakhal(){
+  if(guardGuest())return;
+  const type=document.getElementById('rk-type').value.trim();
+  const count=document.getElementById('rk-count').value;
+  const price=document.getElementById('rk-price').value;
+  if(!type||!count){toast('أدخل النوع والعدد',true);return;}
+  if(!db.rakhal)db.rakhal=[];
+  db.rakhal.push({id:uid(),type,count:Number(count),price:Number(price)||0,date:document.getElementById('rk-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rFin();
+}
+function delRakhal(i){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.rakhal.splice(i,1);save();rFin();
+}
 function openExpModal(){
   openMdl('إضافة مصروف',`<div class="fld"><label>النوع</label><select id="ecat">${ECATS.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="fld"><label>الوصف</label><input type="text" id="edesc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="eamt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="edate" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveExp()">حفظ</button>`);
 }
