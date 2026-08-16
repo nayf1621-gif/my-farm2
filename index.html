@@ -1007,24 +1007,10 @@ function chkPw(){
 function applyMode(){
   const badge=document.getElementById('guest-badge');
   if(badge) badge.style.display=isGuest?'block':'none';
-  let gs=document.getElementById('guest-style');
-  if(isGuest){
-    if(!gs){
-      gs=document.createElement('style');
-      gs.id='guest-style';
-      // Hide ALL buttons except bell and nav and togBSection
-      gs.textContent=`
-        button:not(#nav button):not([onclick*="togBSection"]):not([onclick*="togBell"]):not([onclick*="openPV"]):not([onclick*="openAnimal"]):not([onclick*="closeMdl"]):not([onclick*="nav("]) { display:none !important; }
-        input[type="text"],input[type="number"],input[type="date"],select,textarea { pointer-events:none !important; opacity:0.7; }
-      `;
-      document.head.appendChild(gs);
-    }
-  } else {
-    if(gs) gs.remove();
-  }
+  const gs=document.getElementById('guest-style');
+  if(gs) gs.remove();
 }
 
-// Block all write operations in guest mode
 function guardGuest(){
   if(isGuest){toast('وضع الاطلاع فقط — لا يمكن التعديل',true);return true;}
   return false;
