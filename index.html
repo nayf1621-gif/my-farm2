@@ -143,6 +143,24 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="sh"><span class="st">المالية</span><button class="btn-r" data-owner onclick="cfmResetFin()">📅 سنة جديدة</button></div>
   <div class="card mb10" style="text-align:center"><div class="muted" style="font-size:11px">الصافي</div><div id="fnet" style="font-size:30px;font-weight:700"></div></div>
   <div class="row" id="ftotals"></div>
+
+  <!-- Mothers added stat -->
+  <div class="card mb10" style="cursor:pointer" onclick="togBSection('fmothers-wrap','fmothers-arrow')">
+    <div class="flex jb ac">
+      <div class="flex ac gap8">
+        <span style="font-size:22px">🐑</span>
+        <div>
+          <div class="st" style="font-size:13px">الرخال المضافة كأمهات</div>
+          <div class="muted" style="font-size:11px" id="fmothers-count">اضغط للعرض</div>
+        </div>
+      </div>
+      <span id="fmothers-arrow">▼</span>
+    </div>
+    <div id="fmothers-wrap" style="display:none;margin-top:12px">
+      <div id="fmothers-list"></div>
+    </div>
+  </div>
+
   <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
     <span class="muted" style="font-size:11px">📅</span>
     <input type="date" id="ff" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:110px" onchange="rFin()">
@@ -150,22 +168,32 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <input type="date" id="ft" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:110px" onchange="rFin()">
     <button class="bi" onclick="document.getElementById('ff').value='';document.getElementById('ft').value='';rFin()">✕</button>
   </div>
-  <div class="sh">
-    <span class="st">المصروفات</span>
-    <div class="flex gap8 ac">
+
+  <!-- Expenses collapsible -->
+  <div class="sh" style="cursor:pointer" onclick="togBSection('fexp-wrap','fexp-arrow')">
+    <div class="flex ac gap8">
+      <span class="st">المصروفات <span id="fexp-arrow">▼</span></span>
+    </div>
+    <div class="flex gap8 ac" onclick="event.stopPropagation()">
       <select id="ecf" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px" onchange="rFin()"><option value="">الكل</option><option>حلال</option><option>مكعب</option><option>حشائش</option><option>أدوية</option><option>فيتامينات</option><option>ماء</option><option>رواتب</option><option>صيانة</option><option>بنزين</option><option>إيجار</option><option>تطعيمات</option><option>أخرى</option></select>
       <button class="btn-g" data-owner onclick="openExpModal()">＋ مصروف</button>
     </div>
   </div>
-  <div id="exp-list" class="mb10"></div>
-  <div class="sh">
-    <span class="st">المبيعات</span>
-    <div class="flex gap8 ac">
+  <div id="fexp-wrap" style="display:none">
+    <div id="exp-list" class="mb10"></div>
+  </div>
+
+  <!-- Sales collapsible -->
+  <div class="sh" style="cursor:pointer" onclick="togBSection('fsal-wrap','fsal-arrow')">
+    <span class="st">المبيعات <span id="fsal-arrow">▼</span></span>
+    <div class="flex gap8 ac" onclick="event.stopPropagation()">
       <input type="text" id="ssrch" placeholder="بحث..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px;width:80px" oninput="rFin()">
       <button class="btn-g" data-owner onclick="openSaleModal()">＋ مبيعة</button>
     </div>
   </div>
-  <div id="sal-list"></div>
+  <div id="fsal-wrap" style="display:none">
+    <div id="sal-list"></div>
+  </div>
 </div>
 
 <!-- REPORTS -->
@@ -659,6 +687,19 @@ function rFin(){
   document.getElementById('ftotals').innerHTML=`<div class="sc"><div class="v green">${tS.toLocaleString()}</div><div class="l">مبيعات ﷼</div></div><div class="sc"><div class="v red">${tE.toLocaleString()}</div><div class="l">مصروفات ﷼</div></div>`;
   document.getElementById('exp-list').innerHTML=fE.length===0?'<div class="empty">لا مصروفات</div>':[...fE].reverse().map(e=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${e.desc||e.category}</div><div class="muted" style="font-size:10px">${e.category} · ${fmt(e.date)}</div></div><div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delE('${e.id}')" ${gHide()}>🗑</button></div></div>`).join('');
   document.getElementById('sal-list').innerHTML=fS.length===0?'<div class="empty">لا مبيعات</div>':[...fS].reverse().map(s=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${s.desc||'بيع'}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString()}</span><button class="bi red" onclick="delS('${s.id}')" ${gHide()}>🗑</button></div></div>`).join('');
+
+  // Mothers added stat
+  const mothers=db.animals.filter(a=>a.cat==='m');
+  const countEl=document.getElementById('fmothers-count');
+  const listEl=document.getElementById('fmothers-list');
+  if(countEl)countEl.textContent=`${mothers.length} رأس مسجلة`;
+  if(listEl){
+    listEl.innerHTML=mothers.length===0?'<div class="empty">لا توجد أمهات مسجلة</div>':
+      mothers.map(a=>`<div class="li mb8">
+        <div class="flex ac gap8">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${a.alive?'حية':'نافقة'}</span></div>
+        <span class="muted" style="font-size:11px">${fmt(a.addedAt)}</span>
+      </div>`).join('');
+  }
 }
 function delE(id){if(!confirm('حذف هذا المصروف؟'))return;db.expenses=db.expenses.filter(e=>e.id!==id);save();rFin();}
 function delS(id){if(!confirm('حذف هذه المبيعة؟'))return;db.sales=db.sales.filter(s=>s.id!==id);save();rFin();}
