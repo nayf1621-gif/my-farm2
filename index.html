@@ -228,6 +228,23 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     </div>
   </div>
   <div id="bexp-list"></div>
+
+  <!-- Notes -->
+  <div class="sh mt10">
+    <span class="st">📓 ملاحظات الطيور</span>
+  </div>
+  <div id="bnotes-list" class="mb10"></div>
+  <div class="card">
+    <div class="fld">
+      <label>التصنيف</label>
+      <div class="flex gap8 fw" id="bnt-btns"></div>
+    </div>
+    <div class="fld mt8"><input type="text" id="bnote-input" placeholder="أضف ملاحظة..."></div>
+    <div class="flex gap8">
+      <button class="btn" style="flex:1;justify-content:center" onclick="addBirdNote()">＋ إضافة</button>
+      <button class="btn-g" onclick="addBirdNoteType()">＋ تصنيف جديد</button>
+    </div>
+  </div>
 </div>
 
 <div id="ovl" onclick="closeMdl()"><div class="mdl" onclick="event.stopPropagation()" id="mbox"></div></div>
@@ -269,8 +286,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك']};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك']});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج']};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج']});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -282,7 +299,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -787,6 +804,35 @@ function rBirds(){
       <div><div style="font-size:12.5px;font-weight:600">${e.desc||e.item}</div><div class="muted" style="font-size:10px">${e.item} · ${fmt(e.date)}</div></div>
       <div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdExp('${e.id}')">🗑</button></div>
     </div>`).join('');
+
+  // Notes
+  const bNotes=db.birdNotes||[];
+  const bNoteTypes=db.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'];
+  const bnEl=document.getElementById('bnotes-list');
+  if(bnEl){
+    bnEl.innerHTML=bNotes.length===0?'<div class="empty mb8">لا توجد ملاحظات</div>':
+      [...bNotes].reverse().map((n,ri)=>{const i=bNotes.length-1-ri;
+        const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
+        const c=colors[n.type]||'#4472A8';
+        return`<div class="card mb8">
+          <div class="flex jb ac mb4">
+            <span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${n.type||'عام'}</span>
+            <button class="bi red" onclick="delBirdNote(${i})">🗑</button>
+          </div>
+          <div style="font-size:13px">${n.text}</div>
+          <div class="muted" style="font-size:10px;margin-top:4px">${fmt(n.date)}</div>
+        </div>`}).join('');
+  }
+  // Render note type buttons
+  const bntEl=document.getElementById('bnt-btns');
+  if(bntEl){
+    bntEl.innerHTML=bNoteTypes.map(t=>{
+      const active=window._selBNType===t;
+      const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
+      const c=colors[t]||'#4472A8';
+      return`<button onclick="window._selBNType='${t}';rBirds()" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:4px">${t}</button>`;
+    }).join('');
+  }
 }
 
 function openBirdSaleModal(){
@@ -839,6 +885,24 @@ function saveBirdExp(){
 }
 function delBirdExp(id){db.birdExp=(db.birdExp||[]).filter(e=>e.id!==id);save();rBirds();}
 function cfmResetBirds(){if(confirm('تصفير مبيعات ومصاريف الطيور للسنة الجديدة؟')){db.birdSales=[];db.birdExp=[];save();toast('تم التصفير');rBirds();}}
+function addBirdNote(){
+  const inp=document.getElementById('bnote-input');
+  if(!inp||!inp.value.trim()){toast('أدخل الملاحظة',true);return;}
+  const type=window._selBNType||(db.birdNoteTypes&&db.birdNoteTypes[0])||'عام';
+  if(!db.birdNotes)db.birdNotes=[];
+  db.birdNotes.push({text:inp.value.trim(),type,date:tod()});
+  inp.value='';save();toast('تمت الإضافة');rBirds();
+}
+function delBirdNote(i){db.birdNotes.splice(i,1);save();rBirds();}
+function addBirdNoteType(){
+  const name=prompt('اسم التصنيف الجديد:');
+  if(!name||!name.trim())return;
+  if(!db.birdNoteTypes)db.birdNoteTypes=['مشكلة','مرض','موسم الإنتاج'];
+  if(db.birdNoteTypes.includes(name.trim())){toast('التصنيف موجود مسبقاً',true);return;}
+  db.birdNoteTypes.push(name.trim());
+  window._selBNType=name.trim();
+  save();toast('تمت الإضافة');rBirds();
+}
 
 // ====== MODAL ======
 let keepOpen=false;
