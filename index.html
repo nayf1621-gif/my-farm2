@@ -1006,15 +1006,23 @@ function chkPw(){
 function applyMode(){
   const badge=document.getElementById('guest-badge');
   if(badge) badge.style.display=isGuest?'block':'none';
-  // Hide static add/reset buttons in nav pages
-  ['btn-add-pen','btn-add-exp','btn-add-sale','btn-reset-fin','btn-add-animal'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.style.display=isGuest?'none':'';
-  });
-  // Hide all elements with data-owner attribute
-  document.querySelectorAll('[data-owner]').forEach(el=>{
-    el.style.display=isGuest?'none':'';
-  });
+  // Inject or remove guest CSS
+  let gs=document.getElementById('guest-style');
+  if(isGuest){
+    if(!gs){
+      gs=document.createElement('style');
+      gs.id='guest-style';
+      gs.textContent=`
+        [data-owner]{display:none!important}
+        .btn,.btn-r,.btn-g{display:none!important}
+        .bi[onclick*="del"],[onclick*="del"],[onclick*="cfm"],[onclick*="add"],[onclick*="open"],[onclick*="edit"],[onclick*="save"],[onclick*="show"],[onclick*="bulk"],[onclick*="remove"],[onclick*="promote"],[onclick*="undo"],[onclick*="tog"]{display:none!important}
+        #h-add,#add-section,.card:has(#nn),#ncp,#np-fld{display:none!important}
+      `;
+      document.head.appendChild(gs);
+    }
+  } else {
+    if(gs) gs.remove();
+  }
 }
 // Auto-unlock if already authenticated in this session
 const savedAuth=sessionStorage.getItem('auth');
