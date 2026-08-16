@@ -212,22 +212,26 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   </div>
 
   <!-- Sales -->
-  <div class="sh">
-    <span class="st">المبيعات</span>
-    <button class="btn" onclick="openBirdSaleModal()">＋ إضافة</button>
+  <div class="sh" style="cursor:pointer" onclick="togBSection('bsales-wrap','bsales-arrow')">
+    <span class="st">المبيعات <span id="bsales-arrow">▼</span></span>
+    <button class="btn" onclick="event.stopPropagation();openBirdSaleModal()">＋ إضافة</button>
   </div>
-  <div id="btype-filters" class="fw gap8 mb8"></div>
-  <div id="bsales-list" class="mb10"></div>
+  <div id="bsales-wrap" style="display:none">
+    <div id="btype-filters" class="fw gap8 mb8"></div>
+    <div id="bsales-list" class="mb10"></div>
+  </div>
 
   <!-- Expenses -->
-  <div class="sh">
-    <span class="st">المصاريف</span>
-    <div class="flex gap8 ac">
+  <div class="sh" style="cursor:pointer" onclick="togBSection('bexp-wrap','bexp-arrow')">
+    <span class="st">المصاريف <span id="bexp-arrow">▼</span></span>
+    <div class="flex gap8 ac" onclick="event.stopPropagation()">
       <input type="text" id="bef" placeholder="بحث..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px;width:80px" oninput="rBirds()">
       <button class="btn" onclick="openBirdExpModal()">＋ إضافة</button>
     </div>
   </div>
-  <div id="bexp-list"></div>
+  <div id="bexp-wrap" style="display:none">
+    <div id="bexp-list" class="mb10"></div>
+  </div>
 
   <!-- Notes -->
   <div class="sh mt10">
@@ -762,6 +766,15 @@ function rRep(){
   document.getElementById('rpens').innerHTML=db.pens.length===0?'<div class="muted" style="font-size:12px">لا حظائر</div>':db.pens.map(p=>{const l=A.filter(a=>a.penId===p.id&&a.alive);const avg=l.length?Math.round(l.reduce((a,an)=>a+Math.floor((new Date()-new Date(an.entered))/86400000),0)/l.length):0;return`<div class="li mb8"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${l.length} كائن · ${avg} يوم</span></div>`;}).join('');
 }
 function cfmResetBC(){if(confirm('تصفير عداد الولادات؟ لا يمكن التراجع.')){db.bc={t:[],s:[]};save();toast('تم');rRep();}}
+
+function togBSection(wrapId,arrowId){
+  const w=document.getElementById(wrapId);
+  const a=document.getElementById(arrowId);
+  if(!w)return;
+  const open=w.style.display==='none';
+  w.style.display=open?'block':'none';
+  if(a)a.textContent=open?'▲':'▼';
+}
 
 // ====== BIRDS ======
 let bSelTypes=[];
