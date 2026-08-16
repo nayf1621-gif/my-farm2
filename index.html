@@ -236,19 +236,9 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <!-- Notes -->
   <div class="sh mt10">
     <span class="st">📓 ملاحظات الطيور</span>
+    <button class="btn-g" onclick="addBirdNoteType()" style="font-size:12px">＋ تصنيف جديد</button>
   </div>
-  <div id="bnotes-list" class="mb10"></div>
-  <div class="card">
-    <div class="fld">
-      <label>التصنيف</label>
-      <div class="flex gap8 fw" id="bnt-btns"></div>
-    </div>
-    <div class="fld mt8"><textarea id="bnote-input" placeholder="أضف ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:150px;resize:none;font-family:Tajawal,sans-serif;overflow-y:hidden" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea></div>
-    <div class="flex gap8">
-      <button class="btn" style="flex:1;justify-content:center" onclick="addBirdNote()">＋ إضافة</button>
-      <button class="btn-g" onclick="addBirdNoteType()">＋ تصنيف جديد</button>
-    </div>
-  </div>
+  <div id="bnotes-cats"></div>
 </div>
 
 <div id="ovl" onclick="closeMdl()"><div class="mdl" onclick="event.stopPropagation()" id="mbox"></div></div>
@@ -821,40 +811,43 @@ function rBirds(){
       <div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdExp('${e.id}')">🗑</button></div>
     </div>`).join('');
 
-  // Notes
+  // Notes — per category
   const bNotes=db.birdNotes||[];
   const bNoteTypes=db.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'];
-  const selType=window._selBNType||'';
-  const filteredNotes=selType?bNotes.filter(n=>n.type===selType):bNotes;
-  const bnEl=document.getElementById('bnotes-list');
-  if(bnEl){
-    bnEl.innerHTML=filteredNotes.length===0?'<div class="empty mb8">لا توجد ملاحظات</div>':
-      [...filteredNotes].reverse().map(n=>{
-        const i=bNotes.indexOf(n);
-        const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
-        const c=colors[n.type]||'#4472A8';
-        return`<div class="card mb8">
-          <div class="flex jb ac mb4">
-            <span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${n.type||'عام'}</span>
-            <div class="flex gap8">
-              <button class="bi" onclick="editBirdNote(${i})">✎</button>
-              <button class="bi red" onclick="delBirdNote(${i})">🗑</button>
-            </div>
-          </div>
-          <div style="font-size:13px;white-space:pre-wrap">${n.text}</div>
-          <div class="muted" style="font-size:10px;margin-top:4px">${fmt(n.date)}</div>
-        </div>`}).join('');
-  }
-  // Render note type buttons
-  const bntEl=document.getElementById('bnt-btns');
-  if(bntEl){
-    bntEl.innerHTML=bNoteTypes.map(t=>{
-      const active=window._selBNType===t;
-      const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
+  const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
+  const catsEl=document.getElementById('bnotes-cats');
+  if(catsEl){
+    catsEl.innerHTML=bNoteTypes.map(t=>{
       const c=colors[t]||'#4472A8';
-      return`<div class="flex ac gap4" style="margin-bottom:4px">
-        <button onclick="window._selBNType=(window._selBNType==='${t}'?'':'${t}');rBirds()" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif">${t}</button>
-        <button onclick="editBirdNoteType('${t}')" style="background:none;border:none;color:#8C8064;cursor:pointer;font-size:13px;padding:2px">✎</button>
+      const catNotes=bNotes.filter(n=>n.type===t);
+      const sid='bcat-'+t.replace(/\s/g,'_');
+      const arid='bcar-'+t.replace(/\s/g,'_');
+      return`<div class="mb8">
+        <div class="sh" style="cursor:pointer;background:#fff;border:1px solid ${c}44;border-radius:12px;padding:10px 14px;margin-bottom:0" onclick="togBSection('${sid}','${arid}')">
+          <div class="flex ac gap8">
+            <span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${t}</span>
+            <span class="muted" style="font-size:11px">${catNotes.length} ملاحظة</span>
+          </div>
+          <div class="flex ac gap8">
+            <button class="btn-g" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openAddBirdNote('${t}')">＋ إضافة</button>
+            <button class="bi" onclick="event.stopPropagation();editBirdNoteType('${t}')">✎</button>
+            <span id="${arid}">▼</span>
+          </div>
+        </div>
+        <div id="${sid}" style="display:none;padding:8px 0">
+          ${catNotes.length===0?'<div class="empty mb8" style="font-size:12px">لا توجد ملاحظات</div>':catNotes.map(n=>{
+            const i=bNotes.indexOf(n);
+            return`<div class="card mb8">
+              <div class="flex jb ac mb4">
+                <div class="muted" style="font-size:10px">${fmt(n.date)}</div>
+                <div class="flex gap8">
+                  <button class="bi" onclick="editBirdNote(${i})">✎</button>
+                  <button class="bi red" onclick="delBirdNote(${i})">🗑</button>
+                </div>
+              </div>
+              <div style="font-size:13px;white-space:pre-wrap">${n.text}</div>
+            </div>`;}).join('')}
+        </div>
       </div>`;
     }).join('');
   }
@@ -910,13 +903,18 @@ function saveBirdExp(){
 }
 function delBirdExp(id){if(!confirm('حذف هذا المصروف؟'))return;db.birdExp=(db.birdExp||[]).filter(e=>e.id!==id);save();rBirds();}
 function cfmResetBirds(){if(confirm('تصفير مبيعات ومصاريف الطيور للسنة الجديدة؟ لا يمكن التراجع.')){db.birdSales=[];db.birdExp=[];save();toast('تم التصفير');rBirds();}}
-function addBirdNote(){
+function openAddBirdNote(type){
+  openMdl(`إضافة ملاحظة — ${type}`,`
+    <div class="fld"><textarea id="bnote-input" placeholder="أضف ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:150px;resize:none;font-family:Tajawal,sans-serif;overflow-y:hidden" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea></div>
+    <button class="btn w100 jc" onclick="addBirdNote('${type}')">＋ إضافة</button>
+  `);
+}
+function addBirdNote(type){
   const inp=document.getElementById('bnote-input');
   if(!inp||!inp.value.trim()){toast('أدخل الملاحظة',true);return;}
-  const type=window._selBNType||(db.birdNoteTypes&&db.birdNoteTypes[0])||'عام';
   if(!db.birdNotes)db.birdNotes=[];
-  db.birdNotes.push({text:inp.value.trim(),type,date:tod()});
-  inp.value='';inp.style.height='150px';save();toast('تمت الإضافة');rBirds();
+  db.birdNotes.push({text:inp.value.trim(),type:type||(db.birdNoteTypes&&db.birdNoteTypes[0])||'عام',date:tod()});
+  save();toast('تمت الإضافة');closeMdl();rBirds();
 }
 function delBirdNote(i){if(!confirm('حذف هذه الملاحظة؟'))return;db.birdNotes.splice(i,1);save();rBirds();}
 function editBirdNote(i){
