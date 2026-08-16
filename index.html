@@ -239,7 +239,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
       <label>التصنيف</label>
       <div class="flex gap8 fw" id="bnt-btns"></div>
     </div>
-    <div class="fld mt8"><input type="text" id="bnote-input" placeholder="أضف ملاحظة..."></div>
+    <div class="fld mt8"><textarea id="bnote-input" placeholder="أضف ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:100px;resize:vertical;font-family:Tajawal,sans-serif"></textarea></div>
     <div class="flex gap8">
       <button class="btn" style="flex:1;justify-content:center" onclick="addBirdNote()">＋ إضافة</button>
       <button class="btn-g" onclick="addBirdNoteType()">＋ تصنيف جديد</button>
@@ -808,10 +808,13 @@ function rBirds(){
   // Notes
   const bNotes=db.birdNotes||[];
   const bNoteTypes=db.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'];
+  const selType=window._selBNType||'';
+  const filteredNotes=selType?bNotes.filter(n=>n.type===selType):bNotes;
   const bnEl=document.getElementById('bnotes-list');
   if(bnEl){
-    bnEl.innerHTML=bNotes.length===0?'<div class="empty mb8">لا توجد ملاحظات</div>':
-      [...bNotes].reverse().map((n,ri)=>{const i=bNotes.length-1-ri;
+    bnEl.innerHTML=filteredNotes.length===0?'<div class="empty mb8">لا توجد ملاحظات</div>':
+      [...filteredNotes].reverse().map(n=>{
+        const i=bNotes.indexOf(n);
         const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
         const c=colors[n.type]||'#4472A8';
         return`<div class="card mb8">
@@ -830,7 +833,7 @@ function rBirds(){
       const active=window._selBNType===t;
       const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
       const c=colors[t]||'#4472A8';
-      return`<button onclick="window._selBNType='${t}';rBirds()" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:4px">${t}</button>`;
+      return`<button onclick="window._selBNType=(window._selBNType==='${t}'?'':'${t}');rBirds()" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:4px">${t}</button>`;
     }).join('');
   }
 }
