@@ -82,12 +82,16 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <input type="password" id="pw" placeholder="••••" maxlength="10" onkeydown="if(event.key==='Enter')chkPw()">
   <button onclick="chkPw()">دخول</button>
   <div class="err" id="pw-err">كلمة المرور غير صحيحة</div>
+  <div style="margin-top:8px;font-size:12px;color:#8C8064;text-align:center">
+    للاطلاع فقط أدخل كلمة مرور الضيف
+  </div>
   <div id="notif-btn-wrap" style="margin-top:8px;display:none">
     <button onclick="askNotif()" style="background:#4472A8;color:#fff;border:none;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;width:100%;max-width:260px">🔔 تفعيل الإشعارات</button>
     <div style="font-size:11px;color:#8C8064;margin-top:4px;text-align:center">اضغط للسماح بالإشعارات</div>
   </div>
 </div>
 <div id="app" style="display:none">
+<div id="guest-badge" style="display:none;background:#C79A3E;color:#fff;text-align:center;padding:6px;font-size:12px;font-weight:700">👁 وضع الاطلاع فقط — لا يمكن التعديل</div>
 <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>الحظائر</span></button>
@@ -318,6 +322,7 @@ function nav(id){
   if(id==='fin')rFin();
   if(id==='rep')rRep();
   if(id==='birds')rBirds();
+  setTimeout(applyMode,50);
 }
 
 function mkCP(cid,init,cb){
@@ -968,14 +973,15 @@ function openMdl(title,body,ko){
 }
 function closeMdl(){document.getElementById('ovl').classList.remove('open');curAnimal=null;atpSel=[];pvSel=[];}
 
+let isGuest=false;
 function chkPw(){
   const v=document.getElementById('pw').value;
   if(v==='1621'){
-    sessionStorage.setItem('auth','1');
+    isGuest=false;
+    sessionStorage.setItem('auth','owner');
     document.getElementById('lock').style.display='none';
     document.getElementById('app').style.display='block';
-    rHome();
-    // Request notification permission after login
+    applyMode();rHome();
     setTimeout(()=>{
       if('Notification' in window && Notification.permission==='default'){
         Notification.requestPermission().then(p=>{
@@ -983,6 +989,12 @@ function chkPw(){
         });
       }
     },1500);
+  } else if(v==='4572'){
+    isGuest=true;
+    sessionStorage.setItem('auth','guest');
+    document.getElementById('lock').style.display='none';
+    document.getElementById('app').style.display='block';
+    applyMode();rHome();
   } else {
     const e=document.getElementById('pw-err');
     e.style.display='block';
@@ -990,11 +1002,26 @@ function chkPw(){
     setTimeout(()=>e.style.display='none',2000);
   }
 }
+function applyMode(){
+  // Show/hide all add/edit/delete buttons based on mode
+  document.querySelectorAll('.btn,.btn-r,.btn-g,.bi').forEach(el=>{
+    const txt=el.textContent||'';
+    const oc=el.getAttribute('onclick')||'';
+    const isAction=oc.match(/del|cfm|save|add|open.*Modal|openAddPen|openEditPen|openOffs|openBird|openExp|openSale|openVax|openNotes|openAddBirdNote|addBirdNoteType|editBird|editVax|editNote|promote|undoDeath|showDF|showDC|openSellA|openTransfer|bulkDel|bulkTr|doBTr|togPVSel|saveATP|openAddToPen/i);
+    if(isGuest&&isAction) el.style.display='none';
+    else if(!isGuest&&isAction) el.style.display='';
+  });
+  // Show guest badge
+  const badge=document.getElementById('guest-badge');
+  if(badge) badge.style.display=isGuest?'block':'none';
+}
 // Auto-unlock if already authenticated in this session
-if(sessionStorage.getItem('auth')==='1'){
+const savedAuth=sessionStorage.getItem('auth');
+if(savedAuth==='owner'||savedAuth==='guest'){
+  isGuest=savedAuth==='guest';
   document.getElementById('lock').style.display='none';
   document.getElementById('app').style.display='block';
-  rHome();
+  applyMode();rHome();
 }
 
 // ====== NOTIFICATIONS ======
