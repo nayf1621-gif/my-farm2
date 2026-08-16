@@ -406,6 +406,7 @@ function togBell(){
 }
 
 function addAnimal(){
+  if(guardGuest())return;
   const num=document.getElementById('nn').value.trim();
   const err=document.getElementById('ae');
   if(!num){err.textContent='أدخل الرقم';err.style.display='block';return;}
@@ -498,7 +499,7 @@ function doDelete(){
   if(!deloffs)db.animals.forEach(a=>{if(a.motherId===curAnimal)a.motherId=null;});
   save();toast('تم الحذف');closeMdl();rHome();
 }
-function addAnote(){
+function addAnote(){if(guardGuest())return;
   const inp=document.getElementById('anote');if(!inp||!inp.value.trim())return;
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
   if(!a.notes)a.notes=[];
@@ -547,7 +548,7 @@ function rOffs(){
   offRows.forEach((r,i)=>mkCP('ocp'+i,r.color,c=>offRows[i].color=c));
 }
 function addOffRow(){if(offRows.length>=3)return;offRows.push({gender:'أنثى',number:'',color:COLORS[0].v});rOffs();}
-function saveOffs(){
+function saveOffs(){if(guardGuest())return;
   const bd=document.getElementById('obd').value||tod();
   const rows=offRows.map(r=>({...r,number:r.number.trim(),bd}));
   const err=document.getElementById('oerr');
@@ -607,7 +608,7 @@ function bulkDel(){
 function openAddPen(){
   openMdl('إضافة حظيرة',`<div class="fld"><label>الاسم</label><input type="text" id="pn" placeholder="حظيرة ١"></div><div class="fld"><label>تنبيه بعد كم يوم</label><input type="number" id="pd" value="7"></div><div class="flex jb ac mb10" style="background:#F3ECDD;border-radius:10px;padding:10px"><span style="font-size:13px">تفعيل التنبيه</span><input type="checkbox" id="pa" checked style="width:20px;height:20px"></div><button class="btn w100 jc" onclick="savePen()">حفظ</button>`);
 }
-function savePen(){
+function savePen(){if(guardGuest())return;
   const name=document.getElementById('pn').value.trim();
   if(!name){toast('أدخل الاسم',true);return;}
   db.pens.push({id:uid(),name,days:Number(document.getElementById('pd').value)||7,alert:document.getElementById('pa').checked});
@@ -617,7 +618,7 @@ function openEditPen(id){
   const p=db.pens.find(x=>x.id===id);
   openMdl('تعديل الحظيرة',`<div class="fld"><label>الاسم</label><input type="text" id="epn" value="${p.name}"></div><div class="fld"><label>الأيام</label><input type="number" id="epd" value="${p.days||7}"></div><div class="flex jb ac mb10" style="background:#F3ECDD;border-radius:10px;padding:10px"><span style="font-size:13px">تفعيل التنبيه</span><input type="checkbox" id="epa" ${p.alert!==false?'checked':''} style="width:20px;height:20px"></div><button class="btn w100 jc mb8" onclick="doEditPen('${id}')">حفظ</button><button class="btn-r w100 jc" onclick="delPen('${id}')">🗑 حذف</button>`);
 }
-function doEditPen(id){
+function doEditPen(id){if(guardGuest())return;
   const p=db.pens.find(x=>x.id===id);if(!p)return;
   const n=document.getElementById('epn').value.trim();if(!n){toast('أدخل الاسم',true);return;}
   p.name=n;p.days=Number(document.getElementById('epd').value)||7;p.alert=document.getElementById('epa').checked;
@@ -637,7 +638,7 @@ function togATP(id,pid,el){
   if(atpSel.includes(id)){atpSel=atpSel.filter(x=>x!==id);b.style.background='transparent';b.style.borderColor='#ccc';b.textContent='';el.style.background='#F3ECDD';el.style.borderColor='#E1D6BB';}
   else{atpSel.push(id);b.style.background='#6E7B45';b.style.borderColor='#6E7B45';b.style.color='#fff';b.textContent='✓';el.style.background='#6E7B4514';el.style.borderColor='#6E7B45';}
 }
-function saveATP(pid){
+function saveATP(pid){if(guardGuest())return;
   if(!atpSel.length){toast('اختر كائن',true);return;}
   atpSel.forEach(id=>{const a=db.animals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});
   atpSel=[];save();toast('تمت الإضافة');closeMdl();rPens();rHome();
@@ -665,11 +666,11 @@ function cfmResetFin(){if(confirm('تصفير المصروفات والمبيع�
 function openExpModal(){
   openMdl('إضافة مصروف',`<div class="fld"><label>النوع</label><select id="ecat">${ECATS.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="fld"><label>الوصف</label><input type="text" id="edesc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="eamt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="edate" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveExp()">حفظ</button>`);
 }
-function saveExp(){const a=document.getElementById('eamt').value;if(!a){toast('أدخل المبلغ',true);return;}db.expenses.push({id:uid(),category:document.getElementById('ecat').value,desc:document.getElementById('edesc').value,amount:a,date:document.getElementById('edate').value||tod()});save();toast('تمت الإضافة');closeMdl();rFin();}
+function saveExp(){if(guardGuest())return;const a=document.getElementById('eamt').value;if(!a){toast('أدخل المبلغ',true);return;}db.expenses.push({id:uid(),category:document.getElementById('ecat').value,desc:document.getElementById('edesc').value,amount:a,date:document.getElementById('edate').value||tod()});save();toast('تمت الإضافة');closeMdl();rFin();}
 function openSaleModal(){
   openMdl('إضافة مبيعة',`<div class="fld"><label>الوصف</label><input type="text" id="sdesc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="samt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="sdate" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveSl()">حفظ</button>`);
 }
-function saveSl(){const a=document.getElementById('samt').value;if(!a){toast('أدخل المبلغ',true);return;}db.sales.push({id:uid(),desc:document.getElementById('sdesc').value,amount:a,date:document.getElementById('sdate').value||tod()});save();toast('تمت الإضافة');closeMdl();rFin();}
+function saveSl(){if(guardGuest())return;const a=document.getElementById('samt').value;if(!a){toast('أدخل المبلغ',true);return;}db.sales.push({id:uid(),desc:document.getElementById('sdesc').value,amount:a,date:document.getElementById('sdate').value||tod()});save();toast('تمت الإضافة');closeMdl();rFin();}
 
 // ====== NOTES ======
 function openNotes(){
@@ -687,7 +688,7 @@ function openNotes(){
     ${db.notes.length===0?'<div class="empty">لا ملاحظات</div>':db.notes.slice().reverse().map((n,ri)=>{const i=db.notes.length-1-ri;return`<div class="card mb8"><div class="flex jb ac mb8"><div class="flex ac gap8"><span class="chip ${n.type==='مرض'?'cr':'cau'}">${n.type}</span><span style="font-weight:700;font-size:12.5px">${n.title}</span></div><button class="bi red" onclick="delNote(${i})">🗑</button></div><div class="muted" style="font-size:10px;margin-bottom:4px">${fmt(n.date)}</div>${n.details?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">${n.type==='مرض'?'الأعراض:':'التفاصيل:'}</b> ${n.details}</div>`:''}${n.treatment?`<div style="font-size:12px"><b class="muted">${n.type==='مرض'?'العلاج:':'الحل:'}</b> ${n.treatment}</div>`:''}</div>`;}).join('')}
   `);
 }
-function saveNote(){const t=document.getElementById('ntitle').value.trim();if(!t){toast('أدخل العنوان',true);return;}db.notes.push({id:uid(),type:document.getElementById('ntype').value,title:t,details:document.getElementById('ndetails').value,treatment:document.getElementById('ntreat').value,date:document.getElementById('ndate').value||tod()});save();toast('تمت الإضافة');openNotes();rHome();}
+function saveNote(){if(guardGuest())return;const t=document.getElementById('ntitle').value.trim();if(!t){toast('أدخل العنوان',true);return;}db.notes.push({id:uid(),type:document.getElementById('ntype').value,title:t,details:document.getElementById('ndetails').value,treatment:document.getElementById('ntreat').value,date:document.getElementById('ndate').value||tod()});save();toast('تمت الإضافة');openNotes();rHome();}
 function delNote(i){if(!confirm('حذف هذه الملاحظة؟'))return;db.notes.splice(i,1);save();openNotes();rHome();}
 
 // ====== VAX REMINDERS ======
@@ -715,7 +716,7 @@ function openVax(){
     `).join('')}
   `);
 }
-function saveVax(){const t=document.getElementById('vtype').value.trim();const e=document.getElementById('verr');if(!t){e.textContent='أدخل النوع';e.style.display='block';return;}e.style.display='none';db.vax.push({id:uid(),type:t,date:document.getElementById('vdate').value||tod(),before:Number(document.getElementById('vbef').value)||0,notes:document.getElementById('vnotes').value});save();toast('تمت الإضافة');openVax();rHome();}
+function saveVax(){if(guardGuest())return;const t=document.getElementById('vtype').value.trim();const e=document.getElementById('verr');if(!t){e.textContent='أدخل النوع';e.style.display='block';return;}e.style.display='none';db.vax.push({id:uid(),type:t,date:document.getElementById('vdate').value||tod(),before:Number(document.getElementById('vbef').value)||0,notes:document.getElementById('vnotes').value});save();toast('تمت الإضافة');openVax();rHome();}
 function delVax(id){if(!confirm('حذف هذا الموعد؟'))return;db.vax=db.vax.filter(v=>v.id!==id);save();openVax();rHome();}
 function openEV(id){
   const v=db.vax.find(x=>x.id===id);if(!v)return;
@@ -872,7 +873,7 @@ function openBirdSaleModal(){
     document.getElementById('bst-new').style.display=this.value==='__new__'?'block':'none';
   };
 }
-function saveBirdSale(){
+function saveBirdSale(){if(guardGuest())return;
   let type=document.getElementById('bst').value;
   if(type==='__new__'){
     const nv=document.getElementById('bst-new-val').value.trim();
@@ -896,7 +897,7 @@ function openBirdExpModal(){
     <button class="btn w100 jc" onclick="saveBirdExp()">حفظ</button>
   `);
 }
-function saveBirdExp(){
+function saveBirdExp(){if(guardGuest())return;
   const item=document.getElementById('bei').value.trim();
   const amt=document.getElementById('bea').value;
   if(!item){toast('أدخل البند',true);return;}
@@ -913,7 +914,7 @@ function openAddBirdNote(type){
     <button class="btn w100 jc" onclick="addBirdNote('${type}')">＋ إضافة</button>
   `);
 }
-function addBirdNote(type){
+function addBirdNote(type){if(guardGuest())return;
   const inp=document.getElementById('bnote-input');
   if(!inp||!inp.value.trim()){toast('أدخل الملاحظة',true);return;}
   if(!db.birdNotes)db.birdNotes=[];
@@ -1006,23 +1007,27 @@ function chkPw(){
 function applyMode(){
   const badge=document.getElementById('guest-badge');
   if(badge) badge.style.display=isGuest?'block':'none';
-  // Inject or remove guest CSS
   let gs=document.getElementById('guest-style');
   if(isGuest){
     if(!gs){
       gs=document.createElement('style');
       gs.id='guest-style';
+      // Hide ALL buttons except bell and nav and togBSection
       gs.textContent=`
-        [data-owner]{display:none!important}
-        .btn,.btn-r,.btn-g{display:none!important}
-        .bi[onclick*="del"],[onclick*="del"],[onclick*="cfm"],[onclick*="add"],[onclick*="open"],[onclick*="edit"],[onclick*="save"],[onclick*="show"],[onclick*="bulk"],[onclick*="remove"],[onclick*="promote"],[onclick*="undo"],[onclick*="tog"]{display:none!important}
-        #h-add,#add-section,.card:has(#nn),#ncp,#np-fld{display:none!important}
+        button:not(#nav button):not([onclick*="togBSection"]):not([onclick*="togBell"]):not([onclick*="openPV"]):not([onclick*="openAnimal"]):not([onclick*="closeMdl"]):not([onclick*="nav("]) { display:none !important; }
+        input[type="text"],input[type="number"],input[type="date"],select,textarea { pointer-events:none !important; opacity:0.7; }
       `;
       document.head.appendChild(gs);
     }
   } else {
     if(gs) gs.remove();
   }
+}
+
+// Block all write operations in guest mode
+function guardGuest(){
+  if(isGuest){toast('وضع الاطلاع فقط — لا يمكن التعديل',true);return true;}
+  return false;
 }
 // Auto-unlock if already authenticated in this session
 const savedAuth=sessionStorage.getItem('auth');
