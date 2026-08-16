@@ -106,16 +106,15 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="flex jb ac mb10">
     <div><div style="font-size:21px;font-weight:700">my farm</div><div class="muted" style="font-size:11px">إدارة القطيع</div></div>
     <div class="flex gap8 ac">
-      <button class="bi" onclick="openNotes()" style="font-size:22px;position:relative">📓<span id="nb" style="display:none;position:absolute;top:-3px;right:-3px;background:#6E7B45;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
-      <button class="bi" onclick="openVax()" style="font-size:22px;position:relative">💉<span id="vb" style="display:none;position:absolute;top:-3px;right:-3px;background:#4472A8;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
+      <button class="bi" onclick="openNotes()" style="font-size:22px;position:relative" data-owner>📓<span id="nb" style="display:none;position:absolute;top:-3px;right:-3px;background:#6E7B45;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
+      <button class="bi" onclick="openVax()" style="font-size:22px;position:relative" data-owner>💉<span id="vb" style="display:none;position:absolute;top:-3px;right:-3px;background:#4472A8;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
       <button class="bi" onclick="togBell()" style="font-size:22px;position:relative">🔔<span id="ab" style="display:none;position:absolute;top:-3px;right:-3px;background:#A8503A;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center;padding:0 2px"></span></button>
     </div>
   </div>
   <div id="bell-dd" style="display:none" class="card mb10"><div id="bell-list"></div></div>
   <div class="row" id="h-stats"></div>
   <div class="row" id="h-twin"></div>
-  <div class="card mb10">
-    <div class="st mb10">إضافة حلال</div>
+  <div class="card mb10" data-owner>
     <div class="fld"><input type="text" id="nn" placeholder="الرقم"></div>
     <div class="cp" id="ncp"></div>
     <div class="fld" id="np-fld" style="display:none"><select id="np-sel"><option value="">بدون حظيرة</option></select></div>
@@ -135,13 +134,13 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- PENS -->
 <div id="page-pens" class="page">
-  <div class="sh"><span class="st">الحظائر</span><button class="btn" onclick="openAddPen()">＋ جديدة</button></div>
+  <div class="sh"><span class="st">الحظائر</span><button class="btn" data-owner onclick="openAddPen()">＋ جديدة</button></div>
   <div id="pens-list"></div>
 </div>
 
 <!-- FINANCE -->
 <div id="page-fin" class="page">
-  <div class="sh"><span class="st">المالية</span><button class="btn-r" onclick="cfmResetFin()">📅 سنة جديدة</button></div>
+  <div class="sh"><span class="st">المالية</span><button class="btn-r" data-owner onclick="cfmResetFin()">📅 سنة جديدة</button></div>
   <div class="card mb10" style="text-align:center"><div class="muted" style="font-size:11px">الصافي</div><div id="fnet" style="font-size:30px;font-weight:700"></div></div>
   <div class="row" id="ftotals"></div>
   <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -155,7 +154,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <span class="st">المصروفات</span>
     <div class="flex gap8 ac">
       <select id="ecf" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px" onchange="rFin()"><option value="">الكل</option><option>حلال</option><option>مكعب</option><option>حشائش</option><option>أدوية</option><option>فيتامينات</option><option>ماء</option><option>رواتب</option><option>صيانة</option><option>بنزين</option><option>إيجار</option><option>تطعيمات</option><option>أخرى</option></select>
-      <button class="btn-g" onclick="openExpModal()">＋ مصروف</button>
+      <button class="btn-g" data-owner onclick="openExpModal()">＋ مصروف</button>
     </div>
   </div>
   <div id="exp-list" class="mb10"></div>
@@ -163,7 +162,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <span class="st">المبيعات</span>
     <div class="flex gap8 ac">
       <input type="text" id="ssrch" placeholder="بحث..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px;width:80px" oninput="rFin()">
-      <button class="btn-g" onclick="openSaleModal()">＋ مبيعة</button>
+      <button class="btn-g" data-owner onclick="openSaleModal()">＋ مبيعة</button>
     </div>
   </div>
   <div id="sal-list"></div>
@@ -212,13 +211,13 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <span class="muted" style="font-size:11px">إلى</span>
     <input type="date" id="bft" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:100px" onchange="rBirds()">
     <button class="bi" onclick="document.getElementById('bff').value='';document.getElementById('bft').value='';rBirds()">✕</button>
-    <button class="btn-r" onclick="cfmResetBirds()" style="font-size:11px;padding:6px 10px">🗑 سنة جديدة</button>
+    <button class="btn-r" data-owner onclick="cfmResetBirds()" style="font-size:11px;padding:6px 10px">🗑 سنة جديدة</button>
   </div>
 
   <!-- Sales -->
   <div class="sh" style="cursor:pointer" onclick="togBSection('bsales-wrap','bsales-arrow')">
     <span class="st">المبيعات <span id="bsales-arrow">▼</span></span>
-    <button class="btn" onclick="event.stopPropagation();openBirdSaleModal()">＋ إضافة</button>
+    <button class="btn" onclick="event.stopPropagation();openBirdSaleModal()" ${gHide()}>＋ إضافة</button>
   </div>
   <div id="bsales-wrap" style="display:none">
     <div id="btype-filters" class="fw gap8 mb8"></div>
@@ -230,7 +229,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <span class="st">المصاريف <span id="bexp-arrow">▼</span></span>
     <div class="flex gap8 ac" onclick="event.stopPropagation()">
       <input type="text" id="bef" placeholder="بحث..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px;width:80px" oninput="rBirds()">
-      <button class="btn" onclick="openBirdExpModal()">＋ إضافة</button>
+      <button class="btn" onclick="openBirdExpModal()" ${gHide()}>＋ إضافة</button>
     </div>
   </div>
   <div id="bexp-wrap" style="display:none">
@@ -240,7 +239,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <!-- Notes -->
   <div class="sh mt10">
     <span class="st">📓 ملاحظات الطيور</span>
-    <button class="btn-g" onclick="addBirdNoteType()" style="font-size:12px">＋ تصنيف جديد</button>
+    <button class="btn-g" data-owner onclick="addBirdNoteType()" style="font-size:12px">＋ تصنيف جديد</button>
   </div>
   <div id="bnotes-cats"></div>
 </div>
@@ -322,7 +321,7 @@ function nav(id){
   if(id==='fin')rFin();
   if(id==='rep')rRep();
   if(id==='birds')rBirds();
-  setTimeout(applyMode,50);
+  applyMode();
 }
 
 function mkCP(cid,init,cb){
@@ -457,7 +456,7 @@ function rAnimal(){
       <div>${tbadge(a.number,a.color)}<div class="muted mt8" style="font-size:11px">${a.cat==='m'?'أم':'مولود'} · ${a.gender}</div>${mother?`<div class="muted" style="font-size:11px">الأم: #${mother.number}</div>`:''}${a.cat==='n'&&a.birthDate?`<div class="muted" style="font-size:11px">الميلاد: ${fmt(a.birthDate)}</div>`:''}${pen?`<div class="muted" style="font-size:11px">الحظيرة: ${pen.name}</div>`:''}${!a.alive&&a.deathCause?`<div class="red" style="font-size:11px">السبب: ${a.deathCause}</div>`:''}</div>
       <div class="flex" style="flex-direction:column;gap:4px;align-items:flex-end"><span class="chip ${a.alive?'cg':'cr'}">${a.alive?'حي':'نافق'}</span>${a.cat==='m'&&a.twin?'<span class="chip cau">متأومة</span>':''}</div>
     </div>
-    <div class="fw gap8 mb8">
+    <div class="fw gap8 mb8" ${gHide()}>
       ${a.alive?`<button class="btn-r" onclick="showDF()">💀 نفوق</button>`:`<button class="btn-g" onclick="undoDeath()">↩ إلغاء</button>`}
       <button class="btn-g" onclick="openSellA()">💰 بيع</button>
       <button class="btn-g" onclick="openTransfer()">🧱 ${pen?'نقل':'لحظيرة'}</button>
@@ -574,7 +573,7 @@ function rPens(){
   if(!db.pens.length){el.innerHTML='<div class="empty">لا توجد حظائر</div>';return;}
   el.innerHTML=db.pens.map(p=>{
     const inn=db.animals.filter(a=>a.penId===p.id&&a.alive);
-    return`<div class="card" style="cursor:pointer" onclick="openPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${inn.length} كائن · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()"><button class="bi" onclick="openEditPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToPen('${p.id}')">＋</button></div></div></div>`;
+    return`<div class="card" style="cursor:pointer" onclick="openPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${inn.length} كائن · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()" ${gHide()}><button class="bi" onclick="openEditPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToPen('${p.id}')">＋</button></div></div></div>`;
   }).join('');
 }
 
@@ -657,8 +656,8 @@ function rFin(){
   document.getElementById('fnet').textContent=net.toLocaleString()+' ﷼';
   document.getElementById('fnet').style.color=net>=0?'#6E7B45':'#A8503A';
   document.getElementById('ftotals').innerHTML=`<div class="sc"><div class="v green">${tS.toLocaleString()}</div><div class="l">مبيعات ﷼</div></div><div class="sc"><div class="v red">${tE.toLocaleString()}</div><div class="l">مصروفات ﷼</div></div>`;
-  document.getElementById('exp-list').innerHTML=fE.length===0?'<div class="empty">لا مصروفات</div>':[...fE].reverse().map(e=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${e.desc||e.category}</div><div class="muted" style="font-size:10px">${e.category} · ${fmt(e.date)}</div></div><div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delE('${e.id}')">🗑</button></div></div>`).join('');
-  document.getElementById('sal-list').innerHTML=fS.length===0?'<div class="empty">لا مبيعات</div>':[...fS].reverse().map(s=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${s.desc||'بيع'}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString()}</span><button class="bi red" onclick="delS('${s.id}')">🗑</button></div></div>`).join('');
+  document.getElementById('exp-list').innerHTML=fE.length===0?'<div class="empty">لا مصروفات</div>':[...fE].reverse().map(e=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${e.desc||e.category}</div><div class="muted" style="font-size:10px">${e.category} · ${fmt(e.date)}</div></div><div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delE('${e.id}')" ${gHide()}>🗑</button></div></div>`).join('');
+  document.getElementById('sal-list').innerHTML=fS.length===0?'<div class="empty">لا مبيعات</div>':[...fS].reverse().map(s=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${s.desc||'بيع'}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString()}</span><button class="bi red" onclick="delS('${s.id}')" ${gHide()}>🗑</button></div></div>`).join('');
 }
 function delE(id){if(!confirm('حذف هذا المصروف؟'))return;db.expenses=db.expenses.filter(e=>e.id!==id);save();rFin();}
 function delS(id){if(!confirm('حذف هذه المبيعة؟'))return;db.sales=db.sales.filter(s=>s.id!==id);save();rFin();}
@@ -808,12 +807,12 @@ function rBirds(){
   document.getElementById('bsales-list').innerHTML=fS.length===0?'<div class="empty mb10">لا توجد مبيعات</div>':[...fS].reverse().map(s=>`
     <div class="li mb8">
       <div><div style="font-size:12.5px;font-weight:600">${s.type}${s.desc?' — '+s.desc:''}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div>
-      <div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdSale('${s.id}')">🗑</button></div>
+      <div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdSale('${s.id}')" ${gHide()}>🗑</button></div>
     </div>`).join('');
   document.getElementById('bexp-list').innerHTML=fE.length===0?'<div class="empty">لا توجد مصاريف</div>':[...fE].reverse().map(e=>`
     <div class="li mb8">
       <div><div style="font-size:12.5px;font-weight:600">${e.desc||e.item}</div><div class="muted" style="font-size:10px">${e.item} · ${fmt(e.date)}</div></div>
-      <div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdExp('${e.id}')">🗑</button></div>
+      <div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString()}</span><button class="bi red" onclick="delBirdExp('${e.id}')" ${gHide()}>🗑</button></div>
     </div>`).join('');
 
   // Notes — per category
@@ -834,8 +833,8 @@ function rBirds(){
             <span class="muted" style="font-size:11px">${catNotes.length} ملاحظة</span>
           </div>
           <div class="flex ac gap8">
-            <button class="btn-g" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openAddBirdNote('${t}')">＋ إضافة</button>
-            <button class="bi" onclick="event.stopPropagation();editBirdNoteType('${t}')">✎</button>
+            <button class="btn-g" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openAddBirdNote('${t}')" ${gHide()}>＋ إضافة</button>
+            <button class="bi" onclick="event.stopPropagation();editBirdNoteType('${t}')" ${gHide()}>✎</button>
             <span id="${arid}">▼</span>
           </div>
         </div>
@@ -845,7 +844,7 @@ function rBirds(){
             return`<div class="card mb8">
               <div class="flex jb ac mb4">
                 <div class="muted" style="font-size:10px">${fmt(n.date)}</div>
-                <div class="flex gap8">
+                <div class="flex gap8" ${gHide()}>
                   <button class="bi" onclick="editBirdNote(${i})">✎</button>
                   <button class="bi red" onclick="delBirdNote(${i})">🗑</button>
                 </div>
@@ -974,6 +973,8 @@ function openMdl(title,body,ko){
 function closeMdl(){document.getElementById('ovl').classList.remove('open');curAnimal=null;atpSel=[];pvSel=[];}
 
 let isGuest=false;
+const gHide=()=>isGuest?'style="display:none"':'';
+const gDis=()=>isGuest?'disabled style="opacity:0.3;pointer-events:none"':'';
 function chkPw(){
   const v=document.getElementById('pw').value;
   if(v==='1621'){
@@ -1003,17 +1004,17 @@ function chkPw(){
   }
 }
 function applyMode(){
-  // Show/hide all add/edit/delete buttons based on mode
-  document.querySelectorAll('.btn,.btn-r,.btn-g,.bi').forEach(el=>{
-    const txt=el.textContent||'';
-    const oc=el.getAttribute('onclick')||'';
-    const isAction=oc.match(/del|cfm|save|add|open.*Modal|openAddPen|openEditPen|openOffs|openBird|openExp|openSale|openVax|openNotes|openAddBirdNote|addBirdNoteType|editBird|editVax|editNote|promote|undoDeath|showDF|showDC|openSellA|openTransfer|bulkDel|bulkTr|doBTr|togPVSel|saveATP|openAddToPen/i);
-    if(isGuest&&isAction) el.style.display='none';
-    else if(!isGuest&&isAction) el.style.display='';
-  });
-  // Show guest badge
   const badge=document.getElementById('guest-badge');
   if(badge) badge.style.display=isGuest?'block':'none';
+  // Hide static add/reset buttons in nav pages
+  ['btn-add-pen','btn-add-exp','btn-add-sale','btn-reset-fin','btn-add-animal'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=isGuest?'none':'';
+  });
+  // Hide all elements with data-owner attribute
+  document.querySelectorAll('[data-owner]').forEach(el=>{
+    el.style.display=isGuest?'none':'';
+  });
 }
 // Auto-unlock if already authenticated in this session
 const savedAuth=sessionStorage.getItem('auth');
