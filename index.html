@@ -820,7 +820,10 @@ function rBirds(){
         return`<div class="card mb8">
           <div class="flex jb ac mb4">
             <span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${n.type||'عام'}</span>
-            <button class="bi red" onclick="delBirdNote(${i})">🗑</button>
+            <div class="flex gap8">
+              <button class="bi" onclick="editBirdNote(${i})">✎</button>
+              <button class="bi red" onclick="delBirdNote(${i})">🗑</button>
+            </div>
           </div>
           <div style="font-size:13px;white-space:pre-wrap">${n.text}</div>
           <div class="muted" style="font-size:10px;margin-top:4px">${fmt(n.date)}</div>
@@ -833,7 +836,10 @@ function rBirds(){
       const active=window._selBNType===t;
       const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
       const c=colors[t]||'#4472A8';
-      return`<button onclick="window._selBNType=(window._selBNType==='${t}'?'':'${t}');rBirds()" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:4px">${t}</button>`;
+      return`<div class="flex ac gap4" style="margin-bottom:4px">
+        <button onclick="window._selBNType=(window._selBNType==='${t}'?'':'${t}');rBirds()" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif">${t}</button>
+        <button onclick="editBirdNoteType('${t}')" style="background:none;border:none;color:#8C8064;cursor:pointer;font-size:13px;padding:2px">✎</button>
+      </div>`;
     }).join('');
   }
 }
@@ -894,9 +900,31 @@ function addBirdNote(){
   const type=window._selBNType||(db.birdNoteTypes&&db.birdNoteTypes[0])||'عام';
   if(!db.birdNotes)db.birdNotes=[];
   db.birdNotes.push({text:inp.value.trim(),type,date:tod()});
-  inp.value='';save();toast('تمت الإضافة');rBirds();
+  inp.value='';inp.style.height='150px';save();toast('تمت الإضافة');rBirds();
 }
 function delBirdNote(i){db.birdNotes.splice(i,1);save();rBirds();}
+function editBirdNote(i){
+  const n=db.birdNotes[i];if(!n)return;
+  openMdl('تعديل الملاحظة',`
+    <div class="fld"><label>التصنيف</label>
+      <select id="en-type" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%">
+        ${(db.birdNoteTypes||[]).map(t=>`<option ${t===n.type?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fld"><label>الملاحظة</label>
+      <textarea id="en-text" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:120px;resize:vertical;font-family:Tajawal,sans-serif">${n.text}</textarea>
+    </div>
+    <button class="btn w100 jc" onclick="saveEditBirdNote(${i})">حفظ التعديل</button>
+  `);
+}
+function saveEditBirdNote(i){
+  const text=document.getElementById('en-text').value.trim();
+  const type=document.getElementById('en-type').value;
+  if(!text){toast('أدخل الملاحظة',true);return;}
+  db.birdNotes[i].text=text;
+  db.birdNotes[i].type=type;
+  save();toast('تم الحفظ');closeMdl();rBirds();
+}
 function addBirdNoteType(){
   const name=prompt('اسم التصنيف الجديد:');
   if(!name||!name.trim())return;
@@ -905,6 +933,16 @@ function addBirdNoteType(){
   db.birdNoteTypes.push(name.trim());
   window._selBNType=name.trim();
   save();toast('تمت الإضافة');rBirds();
+}
+function editBirdNoteType(old){
+  const name=prompt('اسم التصنيف الجديد:',old);
+  if(!name||!name.trim()||name.trim()===old)return;
+  const i=db.birdNoteTypes.indexOf(old);
+  if(i===-1)return;
+  db.birdNoteTypes[i]=name.trim();
+  db.birdNotes.forEach(n=>{if(n.type===old)n.type=name.trim();});
+  if(window._selBNType===old)window._selBNType=name.trim();
+  save();toast('تم التعديل');rBirds();
 }
 
 // ====== MODAL ======
