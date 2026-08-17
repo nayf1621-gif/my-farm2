@@ -475,7 +475,7 @@ function showDeadMdl(){
 function cfmResetDead(){if(confirm('حذف كل سجل النفوق نهائياً؟ لا يمكن التراجع.')){db.animals=db.animals.filter(a=>a.alive);save();toast('تم');closeMdl();rHome();}}
 
 // ====== ANIMAL DETAIL ======
-function openAnimal(id){curAnimal=id;rAnimal();}
+function openAnimal(id){if(guardGuest())return;curAnimal=id;rAnimal();}
 function rAnimal(){
   const a=db.animals.find(x=>x.id===curAnimal);
   if(!a)return;
