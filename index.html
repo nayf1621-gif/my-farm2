@@ -346,6 +346,7 @@ function tbadge(n,c){const h=hex(c);return`<span class="tb"><span class="td" sty
 function toast(m,e){const t=document.getElementById('tst');t.textContent=(e?'✕ ':'✓ ')+m;t.className=e?'err':'';t.style.display='block';setTimeout(()=>t.style.display='none',2500);}
 
 function nav(id){
+  if(isGuest&&id!=='pens'){toast('الاطلاع متاح على الحظائر فقط',true);return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -1112,7 +1113,15 @@ function chkPw(){
     sessionStorage.setItem('auth','guest');
     document.getElementById('lock').style.display='none';
     document.getElementById('app').style.display='block';
-    applyMode();rHome();
+    applyMode();
+    // Go directly to pens page
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-pens').classList.add('active');
+    document.querySelectorAll('#nav button').forEach((b,i)=>{
+      b.style.display=i===1?'':'none'; // show only pens (index 1)
+    });
+    document.querySelectorAll('#nav button')[1].classList.add('active');
+    rPens();
   } else {
     const e=document.getElementById('pw-err');
     e.style.display='block';
@@ -1137,7 +1146,18 @@ if(savedAuth==='owner'||savedAuth==='guest'){
   isGuest=savedAuth==='guest';
   document.getElementById('lock').style.display='none';
   document.getElementById('app').style.display='block';
-  applyMode();rHome();
+  if(isGuest){
+    applyMode();
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-pens').classList.add('active');
+    document.querySelectorAll('#nav button').forEach((b,i)=>{
+      b.style.display=i===1?'':'none';
+    });
+    document.querySelectorAll('#nav button')[1].classList.add('active');
+    rPens();
+  } else {
+    applyMode();rHome();
+  }
 }
 
 // ====== NOTIFICATIONS ======
