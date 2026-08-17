@@ -496,6 +496,7 @@ function rAnimal(){
       <button class="btn-g" onclick="openSellA()">💰 بيع</button>
       <button class="btn-g" onclick="openTransfer()">🧱 ${pen?'نقل':'لحظيرة'}</button>
       ${a.cat==='n'&&a.gender==='أنثى'?`<button class="btn-g green" onclick="promote()">❤️ أم</button>`:''}
+      <button class="btn-g" onclick="openEditAnimalTag()">✎ تعديل الرقم</button>
       <button class="btn-r" onclick="showDC()">🗑 حذف</button>
     </div>
     <div id="df" style="display:none" class="db mb8"><div class="fld"><label>سبب النفوق (اختياري)</label><textarea id="dcause"></textarea></div><div class="flex gap8"><button class="btn" style="background:#A8503A" onclick="cfmDeath()">تأكيد</button><button class="btn-g" onclick="document.getElementById('df').style.display='none'">إلغاء</button></div></div>
@@ -504,7 +505,29 @@ function rAnimal(){
   `,true);
 }
 
-function showDF(){document.getElementById('df').style.display='block';}
+function openEditAnimalTag(){
+  if(guardGuest())return;
+  const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
+  openMdl('تعديل الرقم واللون',`
+    <div class="fld"><label>الرقم الجديد</label><input type="text" id="et-num" value="${a.number}"></div>
+    <div class="fld"><label>اللون</label></div>
+    <div class="cp mb10" id="et-cp"></div>
+    <button class="btn w100 jc" onclick="saveEditAnimalTag()">حفظ التعديل</button>
+  `);
+  window._etColor=a.color;
+  setTimeout(()=>mkCP('et-cp',a.color,c=>window._etColor=c),50);
+}
+function saveEditAnimalTag(){
+  if(guardGuest())return;
+  const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
+  const num=document.getElementById('et-num').value.trim();
+  if(!num){toast('أدخل الرقم',true);return;}
+  const newColor=window._etColor||a.color;
+  const dup=db.animals.some(x=>x.id!==curAnimal&&x.number===num&&x.color===newColor);
+  if(dup){toast(`الرقم ${num} باللون ${newColor} مستخدم مسبقاً`,true);return;}
+  a.number=num;a.color=newColor;
+  save();toast('تم الحفظ');closeMdl();rAnimal();
+}
 function cfmDeath(){
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
   a.alive=false;a.deathAt=new Date().toISOString();a.deathCause=document.getElementById('dcause').value||'';
