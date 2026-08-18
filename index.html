@@ -224,7 +224,8 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   </div>
   <div class="card mb10"><div class="st mb8">مقارنة شهرية</div><div id="rmonth"></div></div>
   <div class="card mb10"><div class="st mb8">مواعيد التطعيم</div><div id="rvax"></div></div>
-  <div class="card"><div class="st mb8">ملخص الحظائر</div><div id="rpens"></div></div>
+  <div class="card mb10"><div class="st mb8">ملخص الحظائر</div><div id="rpens"></div></div>
+  <div class="card"><div class="st mb8">📚 أرشيف الأرباح السنوية (هجري)</div><div id="rarchive"></div></div>
 </div>
 </div>
 
@@ -318,8 +319,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[]};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[]});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[]};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[]});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -331,7 +332,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[]});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[]});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -340,7 +341,9 @@ window.applyRemoteData=function(data){
 
 function uid(){return Math.random().toString(36).slice(2,9);}
 function tod(){return new Date().toISOString().slice(0,10);}
-function fmt(s){if(!s)return'—';return new Date(s).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});}
+function fmt(s){if(!s)return'—';return new Date(s).toLocaleDateString('ar-SA-u-ca-islamic',{day:'numeric',month:'short',year:'numeric'});}
+function todHijri(){return new Date().toLocaleDateString('ar-SA-u-ca-islamic',{year:'numeric',month:'2-digit',day:'2-digit'});}
+function hijriYear(){return new Date().toLocaleDateString('ar-SA-u-ca-islamic',{year:'numeric'}).replace(/\D/g,'').trim();}
 function hex(c){const t=COLORS.find(x=>x.v===c);return t?t.h:'#8C8064';}
 function tbadge(n,c){const h=hex(c);return`<span class="tb"><span class="td" style="background:${h};${c==='أبيض'?'border:1px solid #ccc':''}"></span>#${n}</span>`;}
 function toast(m,e){const t=document.getElementById('tst');t.textContent=(e?'✕ ':'✓ ')+m;t.className=e?'err':'';t.style.display='block';setTimeout(()=>t.style.display='none',2500);}
@@ -744,7 +747,16 @@ function rFin(){
 }
 function delE(id){if(!confirm('حذف هذا المصروف؟'))return;db.expenses=db.expenses.filter(e=>e.id!==id);save();rFin();}
 function delS(id){if(!confirm('حذف هذه المبيعة؟'))return;db.sales=db.sales.filter(s=>s.id!==id);save();rFin();}
-function cfmResetFin(){if(confirm('تصفير المصروفات والمبيعات للسنة الجديدة؟')){db.expenses=[];db.sales=[];save();toast('تم');rFin();}}
+function cfmResetFin(){
+  if(!confirm('تصفير المصروفات والمبيعات للسنة الجديدة؟'))return;
+  const tS=db.sales.reduce((a,b)=>a+Number(b.amount||0),0);
+  const tE=db.expenses.reduce((a,b)=>a+Number(b.amount||0),0);
+  const year=hijriYear()||new Date().getFullYear();
+  if(!db.yearlyArchive)db.yearlyArchive=[];
+  db.yearlyArchive.push({year,sales:tS,expenses:tE,net:tS-tE,date:new Date().toISOString()});
+  db.expenses=[];db.sales=[];
+  save();toast('تم التصفير وحفظ السنة');rFin();
+}
 function openRakhalModal(){
   if(guardGuest())return;
   openMdl('إضافة رخال كأمهات',`
@@ -867,6 +879,23 @@ function rRep(){
   const vax=db.vax.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
   document.getElementById('rvax').innerHTML=vax.length===0?'<div class="muted" style="font-size:12px">لا مواعيد</div>':vax.map(v=>`<div class="li mb8"><div><div style="font-size:12.5px;font-weight:600">${v.type}</div>${v.notes?`<div style="font-size:10px;color:#8C8064">${v.notes}</div>`:''}</div><span style="font-size:11px;color:${new Date(v.date)<=new Date()?'#A8503A':'#8C8064'}">${fmt(v.date)}${new Date(v.date)<=new Date()?' · مستحق':''}</span></div>`).join('');
   document.getElementById('rpens').innerHTML=db.pens.length===0?'<div class="muted" style="font-size:12px">لا حظائر</div>':db.pens.map(p=>{const l=A.filter(a=>a.penId===p.id&&a.alive);const avg=l.length?Math.round(l.reduce((a,an)=>a+Math.floor((new Date()-new Date(an.entered))/86400000),0)/l.length):0;return`<div class="li mb8"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${l.length} كائن · ${avg} يوم</span></div>`;}).join('');
+
+  // Yearly archive
+  const arch=db.yearlyArchive||[];
+  const archEl=document.getElementById('rarchive');
+  if(archEl){
+    archEl.innerHTML=arch.length===0?'<div class="muted" style="font-size:12px">لا يوجد أرشيف بعد — يُحفظ تلقائياً عند كل سنة جديدة</div>':
+      [...arch].reverse().map(y=>`
+        <div class="li mb8" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="font-weight:700;font-size:13px">السنة ${y.year} هـ</div>
+          <div class="flex gap8 fw">
+            <span class="green" style="font-size:12px">مبيعات: ${y.sales.toLocaleString('en-US')} ﷼</span>
+            <span class="red" style="font-size:12px">مصروفات: ${y.expenses.toLocaleString('en-US')} ﷼</span>
+            <span style="font-size:12px;font-weight:700;color:${y.net>=0?'#6E7B45':'#A8503A'}">صافي: ${y.net.toLocaleString('en-US')} ﷼</span>
+          </div>
+        </div>
+      `).join('');
+  }
 }
 function cfmResetBC(){if(confirm('تصفير عداد الولادات؟ لا يمكن التراجع.')){db.bc={t:[],s:[]};save();toast('تم');rRep();}}
 
