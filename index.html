@@ -324,8 +324,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[]};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[]});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -337,7 +337,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[]});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -662,7 +662,13 @@ function saveOffs(){if(guardGuest())return;
   const tot=db.animals.filter(a=>a.motherId===mid).length;
   const m=db.animals.find(a=>a.id===mid);
   if(m){
-    if(tot>=2){m.twin=true;if(!db.bc.t.includes(mid)){db.bc.t.push(mid);db.bc.s=db.bc.s.filter(x=>x!==mid);}}
+    if(tot>=2){
+      if(!m.twin){
+        m.twin=true;
+        db.twinArchive=(db.twinArchive||0)+1;
+      }
+      if(!db.bc.t.includes(mid)){db.bc.t.push(mid);db.bc.s=db.bc.s.filter(x=>x!==mid);}
+    }
     else if(!db.bc.t.includes(mid)&&!db.bc.s.includes(mid))db.bc.s.push(mid);
   }
   save();toast('تمت الإضافة');closeMdl();rAnimal();rHome();
@@ -902,7 +908,7 @@ function rRep(){
   const pPct=mothers.length?Math.round(prod.length/mothers.length*100):0;
   const twin=mothers.filter(m=>m.twin);
   const tPct=prod.length?Math.round(twin.length/prod.length*100):0;
-  document.getElementById('rherd').innerHTML=`<div class="sc"><div class="v" style="color:#4472A8">${nR.length}</div><div class="l">مواليد جدد</div></div><div class="sc"><div class="v red">${dR.length}</div><div class="l">نفوق</div></div><div class="sc"><div class="v green">${pPct}%</div><div class="l">نسبة الأمهات المنتجة</div></div><div class="sc" style="cursor:pointer" onclick="showTwinDetail()"><div class="v gold">${twin.length}</div><div class="l">الأمهات المتأومة (${tPct}%)</div><div style="font-size:10px;color:#C79A3E">اضغط للتفاصيل</div></div>`;
+  document.getElementById('rherd').innerHTML=`<div class="sc"><div class="v" style="color:#4472A8">${nR.length}</div><div class="l">مواليد جدد</div></div><div class="sc"><div class="v red">${dR.length}</div><div class="l">نفوق</div></div><div class="sc"><div class="v green">${pPct}%</div><div class="l">نسبة الأمهات المنتجة</div></div><div class="sc" style="cursor:pointer" onclick="showTwinDetail()"><div class="v gold">${db.twinArchive||0}</div><div class="l">الأمهات المتأومة (تراكمي)</div><div style="font-size:10px;color:#C79A3E">اضغط للتفاصيل</div></div>`;
   if(cat){
     const cE=fE.filter(e=>e.category===cat);
     const cT=cE.reduce((a,b)=>a+Number(b.amount||0),0);
