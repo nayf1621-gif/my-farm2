@@ -454,7 +454,7 @@ function rHome(){
   document.getElementById('ibar').innerHTML=`
     <button class="ibtn" onclick="showCatMdl('المنتجة',window._catLists.prod,true)"><div class="iw" style="background:#6E7B4518">❤️</div><div class="in">${prod.length}</div><div class="il">منتجة</div></button>
     <button class="ibtn" onclick="showCatMdl('غير منتجة',window._catLists.nonprod,true)"><div class="iw" style="background:#8C806418">❤️</div><div class="in">${nonprod.length}</div><div class="il">غير منتجة</div></button>
-    <button class="ibtn" onclick="showCatMdl('المتأومة',window._catLists.twin,false)"><div class="iw" style="background:#C79A3E18">👶</div><div class="in">${twin.length}</div><div class="il">متأومة</div></button>
+    <button class="ibtn" onclick="showTwinModal()"><div class="iw" style="background:#C79A3E18">👶</div><div class="in">${twin.length}</div><div class="il">متأومة</div></button>
     <button class="ibtn" onclick="showDeadMdl()"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${dead.length}</div><div class="il">النفوق</div></button>
     <button class="ibtn" onclick="showCatMdl('بدون حظيرة',window._catLists.unassigned,false)"><div class="iw" style="background:#4472A818">🧱</div><div class="in">${unassigned.length}</div><div class="il">بدون حظيرة</div></button>
   `;
@@ -495,7 +495,22 @@ function showCatMdl(title,ids,withPen){
     list.map(a=>{const pen=withPen?db.pens.find(p=>p.id===a.penId):null;return`<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${pen?pen.name:'بدون'}</span></div>`}).join(''));
 }
 
-function showDeadMdl(){
+function showTwinModal(){
+  const list=window._catLists&&window._catLists.twin?db.animals.filter(a=>window._catLists.twin.includes(a.id)):db.animals.filter(a=>a.cat==='m'&&a.alive&&a.twin);
+  openMdl(`المتأومة (${list.length})`,`
+    <button class="btn-r mb8 w100 jc" onclick="cfmResetTwin()">🗑 تصفير المتأومة</button>
+    ${list.length===0?'<div class="empty">لا توجد أمهات متأومة</div>':list.map(a=>`
+      <div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">
+        ${tbadge(a.number,a.color)}
+        <span class="muted" style="font-size:11px">${db.pens.find(p=>p.id===a.penId)?.name||'بدون'}</span>
+      </div>`).join('')}
+  `);
+}
+function cfmResetTwin(){
+  if(!confirm('تصفير المتأومة؟ سيتم إزالة علامة التأومة من كل الأمهات.'))return;
+  db.animals.forEach(a=>{if(a.cat==='m')a.twin=false;});
+  save();toast('تم التصفير');closeMdl();rHome();
+}
   const dead=db.animals.filter(a=>!a.alive);
   openMdl(`النفوق (${dead.length})`,`<button class="btn-r mb8 w100 jc" onclick="cfmResetDead()">🗑 تصفير</button>`+(dead.length===0?'<div class="empty">لا يوجد</div>':dead.map(a=>`<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="red" style="font-size:11px">${a.deathCause||''}</span></div>`).join('')));
 }
