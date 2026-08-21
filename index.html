@@ -511,6 +511,7 @@ function cfmResetTwin(){
   db.animals.forEach(a=>{if(a.cat==='m')a.twin=false;});
   save();toast('تم التصفير');closeMdl();rHome();
 }
+function showDeadMdl(){
   const dead=db.animals.filter(a=>!a.alive);
   openMdl(`النفوق (${dead.length})`,`<button class="btn-r mb8 w100 jc" onclick="cfmResetDead()">🗑 تصفير</button>`+(dead.length===0?'<div class="empty">لا يوجد</div>':dead.map(a=>`<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="red" style="font-size:11px">${a.deathCause||''}</span></div>`).join('')));
 }
