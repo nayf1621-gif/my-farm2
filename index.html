@@ -574,12 +574,14 @@ function saveEditAnimalTag(){
 }
 function cfmDeath(){
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
+  if(a.cat==='m'&&a.twin&&db.twinArchive>0) db.twinArchive--;
   a.alive=false;a.deathAt=new Date().toISOString();a.deathCause=document.getElementById('dcause').value||'';
   save();toast('تم تسجيل النفوق');closeMdl();rHome();
 }
 function undoDeath(){
   if(!confirm('إلغاء تسجيل النفوق لهذا الكائن؟'))return;
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
+  if(a.cat==='m'&&a.twin) db.twinArchive=(db.twinArchive||0)+1;
   a.alive=true;delete a.deathAt;delete a.deathCause;
   save();toast('تم الإلغاء');rAnimal();rHome();
 }
@@ -596,6 +598,8 @@ function showDC(){
 }
 function doDelete(){
   const deloffs=document.getElementById('deloffs')&&document.getElementById('deloffs').checked;
+  const a=db.animals.find(x=>x.id===curAnimal);
+  if(a&&a.cat==='m'&&a.twin&&db.twinArchive>0) db.twinArchive--;
   db.animals=db.animals.filter(a=>{if(a.id===curAnimal)return false;if(deloffs&&a.motherId===curAnimal)return false;return true;});
   if(!deloffs)db.animals.forEach(a=>{if(a.motherId===curAnimal)a.motherId=null;});
   save();toast('تم الحذف');closeMdl();rHome();
@@ -620,6 +624,7 @@ function openSellA(){
 }
 function doSell(){
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
+  if(a.cat==='m'&&a.twin&&db.twinArchive>0) db.twinArchive--;
   db.sales.push({id:uid(),desc:document.getElementById('sd').value||`بيع #${a.number}`,amount:document.getElementById('sa').value||0,date:document.getElementById('sdate').value||tod()});
   db.animals=db.animals.filter(x=>x.id!==curAnimal);
   save();toast('تم البيع');closeMdl();rHome();
