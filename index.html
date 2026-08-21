@@ -856,11 +856,39 @@ function openNotes(){
       <div class="fld"><label>العلاج / الحل</label><textarea id="ntreat"></textarea></div>
       <button class="btn w100 jc" onclick="saveNote()">＋ إضافة</button>
     </div>
-    ${db.notes.length===0?'<div class="empty">لا ملاحظات</div>':db.notes.slice().reverse().map((n,ri)=>{const i=db.notes.length-1-ri;return`<div class="card mb8"><div class="flex jb ac mb8"><div class="flex ac gap8"><span class="chip ${n.type==='مرض'?'cr':'cau'}">${n.type}</span><span style="font-weight:700;font-size:12.5px">${n.title}</span></div><button class="bi red" onclick="delNote(${i})">🗑</button></div><div class="muted" style="font-size:10px;margin-bottom:4px">${fmt(n.date)}</div>${n.details?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">${n.type==='مرض'?'الأعراض:':'التفاصيل:'}</b> ${n.details}</div>`:''}${n.treatment?`<div style="font-size:12px"><b class="muted">${n.type==='مرض'?'العلاج:':'الحل:'}</b> ${n.treatment}</div>`:''}</div>`;}).join('')}
+    ${db.notes.length===0?'<div class="empty">لا ملاحظات</div>':db.notes.slice().reverse().map((n,ri)=>{const i=db.notes.length-1-ri;return`<div class="card mb8"><div class="flex jb ac mb8"><div class="flex ac gap8"><span class="chip ${n.type==='مرض'?'cr':'cau'}">${n.type}</span><span style="font-weight:700;font-size:12.5px">${n.title}</span></div><div class="flex gap8"><button class="bi" onclick="editNote(${i})">✎</button><button class="bi red" onclick="delNote(${i})">🗑</button></div></div><div class="muted" style="font-size:10px;margin-bottom:4px">${fmt(n.date)}</div>${n.details?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">${n.type==='مرض'?'الأعراض:':'التفاصيل:'}</b> ${n.details}</div>`:''}${n.treatment?`<div style="font-size:12px"><b class="muted">${n.type==='مرض'?'العلاج:':'الحل:'}</b> ${n.treatment}</div>`:''}</div>`;}).join('')}
   `);
 }
 function saveNote(){if(guardGuest())return;const t=document.getElementById('ntitle').value.trim();if(!t){toast('أدخل العنوان',true);return;}db.notes.push({id:uid(),type:document.getElementById('ntype').value,title:t,details:document.getElementById('ndetails').value,treatment:document.getElementById('ntreat').value,date:document.getElementById('ndate').value||tod()});save();toast('تمت الإضافة');openNotes();rHome();}
 function delNote(i){if(!confirm('حذف هذه الملاحظة؟'))return;db.notes.splice(i,1);save();openNotes();rHome();}
+function editNote(i){
+  if(guardGuest())return;
+  const n=db.notes[i];if(!n)return;
+  openMdl('تعديل الملاحظة',`
+    <div class="flex gap8 mb8">
+      <select id="en-type" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:7px;font-size:12px;flex:1">
+        <option ${n.type==='مرض'?'selected':''}>مرض</option>
+        <option ${n.type==='مشكلة'?'selected':''}>مشكلة</option>
+      </select>
+      <input type="date" id="en-date" value="${n.date||tod()}" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:7px;font-size:12px;flex:1">
+    </div>
+    <div class="fld"><label>العنوان</label><input type="text" id="en-title" value="${n.title||''}"></div>
+    <div class="fld"><label>التفاصيل / الأعراض</label><textarea id="en-details">${n.details||''}</textarea></div>
+    <div class="fld"><label>العلاج / الحل</label><textarea id="en-treat">${n.treatment||''}</textarea></div>
+    <button class="btn w100 jc" onclick="saveEditNote(${i})">حفظ التعديل</button>
+  `);
+}
+function saveEditNote(i){
+  if(guardGuest())return;
+  const t=document.getElementById('en-title').value.trim();
+  if(!t){toast('أدخل العنوان',true);return;}
+  db.notes[i].type=document.getElementById('en-type').value;
+  db.notes[i].title=t;
+  db.notes[i].details=document.getElementById('en-details').value;
+  db.notes[i].treatment=document.getElementById('en-treat').value;
+  db.notes[i].date=document.getElementById('en-date').value||tod();
+  save();toast('تم الحفظ');closeMdl();openNotes();
+}
 
 // ====== VAX REMINDERS ======
 function openVax(){
