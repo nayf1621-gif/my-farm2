@@ -104,7 +104,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 <!-- HOME -->
 <div id="page-home" class="page active">
   <div class="flex jb ac mb10">
-    <div><div style="font-size:21px;font-weight:700">my farm</div><div class="muted" style="font-size:11px">إدارة القطيع</div></div>
+    <div><div style="font-size:21px;font-weight:700">my farm</div><div class="muted" style="font-size:11px">إدارة القطيع</div><div style="font-size:11px;color:#6E7B45;font-weight:600;margin-top:2px" id="hijri-today"></div></div>
     <div class="flex gap8 ac">
       <button class="bi" onclick="openNotes()" style="font-size:22px;position:relative" data-owner>📓<span id="nb" style="display:none;position:absolute;top:-3px;right:-3px;background:#6E7B45;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
       <button class="bi" onclick="openVax()" style="font-size:22px;position:relative" data-owner>💉<span id="vb" style="display:none;position:absolute;top:-3px;right:-3px;background:#4472A8;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
@@ -393,7 +393,13 @@ function getAlerts(){
 }
 
 function rHome(){
+  const hijriToday=new Date().toLocaleDateString('ar-SA-u-ca-islamic',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+  const htEl=document.getElementById('hijri-today');
+  if(htEl)htEl.textContent=hijriToday;
   const A=db.animals;
+  // Hijri date
+  const hd=document.getElementById('hijri-today');
+  if(hd) hd.textContent=new Date().toLocaleDateString('ar-SA-u-ca-islamic',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const mothers=A.filter(a=>a.cat==='m'&&a.alive);
   const newborns=A.filter(a=>a.cat==='n'&&a.alive);
   const dead=A.filter(a=>!a.alive);
