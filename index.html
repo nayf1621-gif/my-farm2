@@ -886,7 +886,7 @@ function rRep(){
   const pPct=mothers.length?Math.round(prod.length/mothers.length*100):0;
   const twin=mothers.filter(m=>m.twin);
   const tPct=prod.length?Math.round(twin.length/prod.length*100):0;
-  document.getElementById('rherd').innerHTML=`<div class="sc"><div class="v" style="color:#4472A8">${nR.length}</div><div class="l">مواليد جدد</div></div><div class="sc"><div class="v red">${dR.length}</div><div class="l">نفوق</div></div><div class="sc"><div class="v green">${pPct}%</div><div class="l">نسبة الأمهات المنتجة</div></div><div class="sc"><div class="v gold">${twin.length}</div><div class="l">الأمهات المتأومة (${tPct}%)</div></div>`;
+  document.getElementById('rherd').innerHTML=`<div class="sc"><div class="v" style="color:#4472A8">${nR.length}</div><div class="l">مواليد جدد</div></div><div class="sc"><div class="v red">${dR.length}</div><div class="l">نفوق</div></div><div class="sc"><div class="v green">${pPct}%</div><div class="l">نسبة الأمهات المنتجة</div></div><div class="sc" style="cursor:pointer" onclick="showTwinDetail()"><div class="v gold">${twin.length}</div><div class="l">الأمهات المتأومة (${tPct}%)</div><div style="font-size:10px;color:#C79A3E">اضغط للتفاصيل</div></div>`;
   if(cat){
     const cE=fE.filter(e=>e.category===cat);
     const cT=cE.reduce((a,b)=>a+Number(b.amount||0),0);
@@ -920,6 +920,34 @@ function rRep(){
         </div>
       `).join('');
   }
+}
+function showTwinDetail(){
+  const A=db.animals;
+  const twinMothers=A.filter(a=>a.cat==='m'&&a.alive&&a.twin);
+  openMdl(`الأمهات المتأومة (${twinMothers.length})`,
+    twinMothers.length===0?'<div class="empty">لا توجد أمهات متأومة</div>':
+    twinMothers.map(m=>{
+      // Get all twin batches (groups of offspring added close together >= 2)
+      const offs=A.filter(o=>o.motherId===m.id).sort((a,b)=>new Date(a.addedAt)-new Date(b.addedAt));
+      // Group by addedAt date (same day = same batch)
+      const batches={};
+      offs.forEach(o=>{
+        const d=(o.addedAt||'').slice(0,10);
+        if(!batches[d])batches[d]=[];
+        batches[d].push(o);
+      });
+      const twinBatches=Object.entries(batches).filter(([,arr])=>arr.length>=2);
+      return`<div class="card mb8">
+        <div class="flex ac gap8 mb8">${tbadge(m.number,m.color)}<span class="muted" style="font-size:11px">${twinBatches.length} مرة تأومة</span></div>
+        ${twinBatches.map(([date,arr])=>`
+          <div class="detail-box mb8">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px">📅 ${fmt(date)} — ${arr.length} مواليد</div>
+            <div class="flex fw gap8">${arr.map(o=>tbadge(o.number,o.color)).join('')}</div>
+          </div>
+        `).join('')}
+      </div>`;
+    }).join('')
+  );
 }
 function cfmResetBC(){if(confirm('تصفير عداد الولادات؟ لا يمكن التراجع.')){db.bc={t:[],s:[]};save();toast('تم');rRep();}}
 
