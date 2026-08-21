@@ -21,11 +21,13 @@ body{font-family:'Tajawal',sans-serif;background:#F3ECDD;color:#3B3324;padding-b
 #lock .err{color:#A8503A;font-size:13px;display:none}
 button{font-family:'Tajawal',sans-serif;cursor:pointer}
 input,select,textarea{font-family:'Tajawal',sans-serif}
-#nav{position:fixed;top:0;left:0;right:0;background:#fff;border-bottom:1px solid #E1D6BB;display:flex;z-index:100;height:56px}
+#nav-wrap{position:fixed;top:0;left:0;right:0;z-index:100}
+#global-date-bar{background:#6E7B45;color:#fff;text-align:center;padding:6px;font-size:15px;font-weight:700}
+#nav{background:#fff;border-bottom:1px solid #E1D6BB;display:flex;height:56px}
 #nav button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:#8C8064}
 #nav button.active{color:#6E7B45;font-weight:700}
 #nav button .ico{font-size:20px}
-#content{padding-top:64px}
+#content{padding-top:98px}
 .page{display:none;padding:14px}
 .page.active{display:block}
 .card{background:#fff;border:1px solid #E1D6BB;border-radius:14px;padding:14px;margin-bottom:12px}
@@ -92,20 +94,22 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 </div>
 <div id="app" style="display:none">
 <div id="guest-badge" style="display:none;background:#C79A3E;color:#fff;text-align:center;padding:6px;font-size:12px;font-weight:700">👁 وضع الاطلاع فقط — لا يمكن التعديل</div>
-<div id="global-date" style="background:#6E7B45;color:#fff;text-align:center;padding:8px;font-size:16px;font-weight:700"></div>
-<div id="nav">
+<div id="nav-wrap">
+  <div id="global-date-bar"></div>
+  <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>الحظائر</span></button>
   <button onclick="nav('fin')"><span class="ico">💰</span><span>المالية</span></button>
   <button onclick="nav('rep')"><span class="ico">📊</span><span>التقارير</span></button>
   <button onclick="nav('birds')"><span class="ico">🦜</span><span>الطيور</span></button>
 </div>
+</div><!-- end nav-wrap -->
 <div id="content">
 
 <!-- HOME -->
 <div id="page-home" class="page active">
   <div class="flex jb ac mb10">
-    <div><div style="font-size:21px;font-weight:700">my farm</div><div class="muted" style="font-size:11px">إدارة القطيع</div><div style="font-size:11px;color:#6E7B45;font-weight:600;margin-top:2px" id="hijri-today"></div></div>
+    <div><div style="font-size:21px;font-weight:700">my farm</div><div class="muted" style="font-size:11px">إدارة القطيع</div></div>
     <div class="flex gap8 ac">
       <button class="bi" onclick="openNotes()" style="font-size:22px;position:relative" data-owner>📓<span id="nb" style="display:none;position:absolute;top:-3px;right:-3px;background:#6E7B45;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
       <button class="bi" onclick="openVax()" style="font-size:22px;position:relative" data-owner>💉<span id="vb" style="display:none;position:absolute;top:-3px;right:-3px;background:#4472A8;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
@@ -367,7 +371,7 @@ function nav(id){
   const idx={home:0,pens:1,fin:2,rep:3,birds:4}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   // Update global date bar
-  const gd=document.getElementById('global-date');
+  const gd=document.getElementById('global-date-bar');
   if(gd)gd.textContent='📅 '+getHijriDate();
   if(id==='home')rHome();
   if(id==='pens')rPens();
@@ -411,7 +415,7 @@ function rHome(){
   const hijriToday='📅 '+getHijriDate();
   const htEl=document.getElementById('hijri-today');
   if(htEl)htEl.textContent=hijriToday;
-  const gd=document.getElementById('global-date');
+  const gd=document.getElementById('global-date-bar');
   if(gd)gd.textContent=hijriToday;
   const A=db.animals;
   const newborns=A.filter(a=>a.cat==='n'&&a.alive);
@@ -1143,7 +1147,7 @@ document.addEventListener('input',function(e){
 
 function chkPw(){
   // Fill global date bar
-  const gd=document.getElementById('global-date');
+  const gd=document.getElementById('global-date-bar');
   if(gd)gd.textContent='📅 '+getHijriDate();
   const v=document.getElementById('pw').value;
   if(v==='1621'){
@@ -1194,7 +1198,7 @@ function guardGuest(){
 // Auto-unlock if already authenticated in this session
 const savedAuth=sessionStorage.getItem('auth');
 if(savedAuth==='owner'||savedAuth==='guest'){
-  const gd=document.getElementById('global-date');
+  const gd=document.getElementById('global-date-bar');
   if(gd)gd.textContent='📅 '+getHijriDate();
   isGuest=savedAuth==='guest';
   document.getElementById('lock').style.display='none';
