@@ -343,8 +343,18 @@ window.applyRemoteData=function(data){
 function uid(){return Math.random().toString(36).slice(2,9);}
 function tod(){return new Date().toISOString().slice(0,10);}
 function fmt(s){if(!s)return'—';return new Date(s).toLocaleDateString('ar-SA-u-ca-islamic',{day:'numeric',month:'short',year:'numeric'});}
-function todHijri(){return new Date().toLocaleDateString('ar-SA-u-ca-islamic',{year:'numeric',month:'2-digit',day:'2-digit'});}
-function hijriYear(){return new Date().toLocaleDateString('ar-SA-u-ca-islamic',{year:'numeric'}).replace(/\D/g,'').trim();}
+function getHijriDate(){
+  // Manual conversion to ensure numeric month
+  const d=new Date();
+  const parts=new Intl.DateTimeFormat('en-TN-u-ca-islamic',{day:'numeric',month:'numeric',year:'numeric'}).formatToParts(d);
+  let day='',month='',year='';
+  parts.forEach(p=>{if(p.type==='day')day=p.value;if(p.type==='month')month=p.value;if(p.type==='year')year=p.value;});
+  return `${day}/${month}/${year} هـ`;
+}
+function hijriYear(){
+  const parts=new Intl.DateTimeFormat('en-TN-u-ca-islamic',{year:'numeric'}).formatToParts(new Date());
+  return parts.find(p=>p.type==='year')?.value||new Date().getFullYear();
+}
 function hex(c){const t=COLORS.find(x=>x.v===c);return t?t.h:'#8C8064';}
 function tbadge(n,c){const h=hex(c);return`<span class="tb"><span class="td" style="background:${h};${c==='أبيض'?'border:1px solid #ccc':''}"></span>#${n}</span>`;}
 function toast(m,e){const t=document.getElementById('tst');t.textContent=(e?'✕ ':'✓ ')+m;t.className=e?'err':'';t.style.display='block';setTimeout(()=>t.style.display='none',2500);}
@@ -357,9 +367,8 @@ function nav(id){
   const idx={home:0,pens:1,fin:2,rep:3,birds:4}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   // Update global date bar
-  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{day:'numeric',month:'numeric',year:'numeric'});
   const gd=document.getElementById('global-date');
-  if(gd)gd.textContent='📅 '+_hd+' هـ';
+  if(gd)gd.textContent='📅 '+getHijriDate();
   if(id==='home')rHome();
   if(id==='pens')rPens();
   if(id==='fin')rFin();
@@ -399,8 +408,7 @@ function getAlerts(){
 
 function rHome(){
   // Hijri date
-  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{day:'numeric',month:'numeric',year:'numeric'});
-  const hijriToday='📅 '+_hd+' هـ';
+  const hijriToday='📅 '+getHijriDate();
   const htEl=document.getElementById('hijri-today');
   if(htEl)htEl.textContent=hijriToday;
   const gd=document.getElementById('global-date');
@@ -1135,10 +1143,8 @@ document.addEventListener('input',function(e){
 
 function chkPw(){
   // Fill global date bar
-  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
-  const hDate=_hd.replace(/(\d+)\/(\d+)\/(\d+)/,'$3/$2/$1 هـ');
   const gd=document.getElementById('global-date');
-  if(gd)gd.textContent='📅 '+hDate;
+  if(gd)gd.textContent='📅 '+getHijriDate();
   const v=document.getElementById('pw').value;
   if(v==='1621'){
     isGuest=false;
@@ -1188,10 +1194,8 @@ function guardGuest(){
 // Auto-unlock if already authenticated in this session
 const savedAuth=sessionStorage.getItem('auth');
 if(savedAuth==='owner'||savedAuth==='guest'){
-  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
-  const hDate=_hd.replace(/(\d+)\/(\d+)\/(\d+)/,'$3/$2/$1 هـ');
   const gd=document.getElementById('global-date');
-  if(gd)gd.textContent='📅 '+hDate;
+  if(gd)gd.textContent='📅 '+getHijriDate();
   isGuest=savedAuth==='guest';
   document.getElementById('lock').style.display='none';
   document.getElementById('app').style.display='block';
