@@ -1180,9 +1180,9 @@ function closeMdl(){document.getElementById('ovl').classList.remove('open');curA
 let isGuest=false;
 const gHide=()=>isGuest?'style="display:none"':'';
 const gDis=()=>isGuest?'disabled style="opacity:0.3;pointer-events:none"':'';
-// Convert Arabic numerals to English in all inputs
+// Convert Arabic numerals to English in all inputs except password
 document.addEventListener('input',function(e){
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){
+  if((e.target.tagName==='INPUT'&&e.target.type!=='password')||e.target.tagName==='TEXTAREA'){
     const v=e.target.value;
     const en=v.replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632);
     if(v!==en){e.target.value=en;}
