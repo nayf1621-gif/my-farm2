@@ -418,6 +418,7 @@ function rHome(){
   const gd=document.getElementById('global-date-bar');
   if(gd)gd.textContent=hijriToday;
   const A=db.animals;
+  const mothers=A.filter(a=>a.cat==='m'&&a.alive);
   const newborns=A.filter(a=>a.cat==='n'&&a.alive);
   const dead=A.filter(a=>!a.alive);
   const prod=mothers.filter(m=>A.some(o=>o.motherId===m.id&&o.cat==='n'));
