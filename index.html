@@ -356,6 +356,10 @@ function nav(id){
   document.getElementById('page-'+id).classList.add('active');
   const idx={home:0,pens:1,fin:2,rep:3,birds:4}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
+  // Update global date bar
+  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{day:'numeric',month:'numeric',year:'numeric'});
+  const gd=document.getElementById('global-date');
+  if(gd)gd.textContent='📅 '+_hd+' هـ';
   if(id==='home')rHome();
   if(id==='pens')rPens();
   if(id==='fin')rFin();
@@ -394,15 +398,14 @@ function getAlerts(){
 }
 
 function rHome(){
-  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
-  const hijriToday=_hd.replace(/(\d+)\/(\d+)\/(\d+)/,'$3/$2/$1 هـ');
+  // Hijri date
+  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{day:'numeric',month:'numeric',year:'numeric'});
+  const hijriToday='📅 '+_hd+' هـ';
   const htEl=document.getElementById('hijri-today');
   if(htEl)htEl.textContent=hijriToday;
+  const gd=document.getElementById('global-date');
+  if(gd)gd.textContent=hijriToday;
   const A=db.animals;
-  // Hijri date
-  const hd=document.getElementById('hijri-today');
-  if(hd) hd.textContent=new Date().toLocaleDateString('ar-SA-u-ca-islamic',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const mothers=A.filter(a=>a.cat==='m'&&a.alive);
   const newborns=A.filter(a=>a.cat==='n'&&a.alive);
   const dead=A.filter(a=>!a.alive);
   const prod=mothers.filter(m=>A.some(o=>o.motherId===m.id&&o.cat==='n'));
