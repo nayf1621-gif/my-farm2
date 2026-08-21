@@ -92,6 +92,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 </div>
 <div id="app" style="display:none">
 <div id="guest-badge" style="display:none;background:#C79A3E;color:#fff;text-align:center;padding:6px;font-size:12px;font-weight:700">👁 وضع الاطلاع فقط — لا يمكن التعديل</div>
+<div id="global-date" style="background:#6E7B45;color:#fff;text-align:center;padding:5px;font-size:12px;font-weight:600"></div>
 <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>الحظائر</span></button>
@@ -393,7 +394,8 @@ function getAlerts(){
 }
 
 function rHome(){
-  const hijriToday=new Date().toLocaleDateString('ar-SA-u-ca-islamic',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+  const hijriToday=_hd.replace(/(\d+)\/(\d+)\/(\d+)/,'$3/$2/$1 هـ');
   const htEl=document.getElementById('hijri-today');
   if(htEl)htEl.textContent=hijriToday;
   const A=db.animals;
@@ -1129,6 +1131,11 @@ document.addEventListener('input',function(e){
 });
 
 function chkPw(){
+  // Fill global date bar
+  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+  const hDate=_hd.replace(/(\d+)\/(\d+)\/(\d+)/,'$3/$2/$1 هـ');
+  const gd=document.getElementById('global-date');
+  if(gd)gd.textContent='📅 '+hDate;
   const v=document.getElementById('pw').value;
   if(v==='1621'){
     isGuest=false;
@@ -1178,6 +1185,10 @@ function guardGuest(){
 // Auto-unlock if already authenticated in this session
 const savedAuth=sessionStorage.getItem('auth');
 if(savedAuth==='owner'||savedAuth==='guest'){
+  const _hd=new Date().toLocaleDateString('en-u-ca-islamic-nu-latn',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+  const hDate=_hd.replace(/(\d+)\/(\d+)\/(\d+)/,'$3/$2/$1 هـ');
+  const gd=document.getElementById('global-date');
+  if(gd)gd.textContent='📅 '+hDate;
   isGuest=savedAuth==='guest';
   document.getElementById('lock').style.display='none';
   document.getElementById('app').style.display='block';
