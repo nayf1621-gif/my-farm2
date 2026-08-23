@@ -259,7 +259,10 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <!-- Sales -->
   <div class="sh" style="cursor:pointer" onclick="togBSection('bsales-wrap','bsales-arrow')">
     <span class="st">المبيعات <span id="bsales-arrow">▼</span></span>
-    <button class="btn" onclick="event.stopPropagation();openBirdSaleModal()" ${gHide()}>＋ إضافة</button>
+    <div class="flex gap8 ac" onclick="event.stopPropagation()">
+      <button class="btn-g" onclick="openManageTypes('bird')" data-owner style="font-size:11px">⚙ الأنواع</button>
+      <button class="btn" onclick="openBirdSaleModal()" ${gHide()}>＋ إضافة</button>
+    </div>
   </div>
   <div id="bsales-wrap" style="display:none">
     <div id="btype-filters" class="fw gap8 mb8"></div>
@@ -304,7 +307,10 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   </div>
   <div class="sh" style="cursor:pointer" onclick="togBSection('fbsales-wrap','fbsales-arrow')">
     <span class="st">المبيعات <span id="fbsales-arrow">▼</span></span>
-    <button class="btn" onclick="event.stopPropagation();openFBSaleModal()" data-owner>＋ إضافة</button>
+    <div class="flex gap8 ac" onclick="event.stopPropagation()">
+      <button class="btn-g" onclick="openManageTypes('fb')" data-owner style="font-size:11px">⚙ الأنواع</button>
+      <button class="btn" onclick="openFBSaleModal()" data-owner>＋ إضافة</button>
+    </div>
   </div>
   <div id="fbsales-wrap" style="display:none">
     <div id="fbsales-list" class="mb10"></div>
@@ -1211,6 +1217,55 @@ function saveEditBirdExp(id){
   save();toast('تم الحفظ');closeMdl();rBirds();
 }
 
+function openManageTypes(page){
+  if(guardGuest())return;
+  const isFB=page==='fb';
+  const types=isFB?(db.fbTypes||[]):(db.birdTypes||[]);
+  const refresh=isFB?()=>openManageTypes('fb'):()=>openManageTypes('bird');
+  openMdl(`⚙ إدارة أنواع ${isFB?'طيور المزرعة':'طيور البيت'}`,`
+    ${types.length===0?'<div class="empty mb8">لا توجد أنواع</div>':types.map((t,i)=>`
+      <div class="li mb8">
+        <span style="font-size:13px;font-weight:600">${t}</span>
+        <div class="flex gap8">
+          <button class="bi" onclick="editBirdType('${page}',${i})">✎</button>
+          <button class="bi red" onclick="delBirdType('${page}',${i})">🗑</button>
+        </div>
+      </div>`).join('')}
+    <hr style="border:none;border-top:1px solid #E1D6BB;margin:12px 0">
+    <div class="flex gap8">
+      <input type="text" id="new-type-inp" placeholder="نوع جديد..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;flex:1">
+      <button class="btn" onclick="addBirdTypeFromMgr('${page}')">＋</button>
+    </div>
+  `);
+}
+function editBirdType(page,i){
+  const types=page==='fb'?(db.fbTypes||[]):(db.birdTypes||[]);
+  const old=types[i];
+  const name=prompt('الاسم الجديد:',old);
+  if(!name||!name.trim()||name.trim()===old)return;
+  const newName=name.trim();
+  if(types.includes(newName)){toast('الاسم مستخدم',true);return;}
+  types[i]=newName;
+  // Update existing sales
+  const sales=page==='fb'?db.fbSales:db.birdSales;
+  (sales||[]).forEach(s=>{if(s.type===old)s.type=newName;});
+  save();toast('تم التعديل');openManageTypes(page);
+}
+function delBirdType(page,i){
+  if(!confirm('حذف هذا النوع؟'))return;
+  const types=page==='fb'?(db.fbTypes||[]):(db.birdTypes||[]);
+  types.splice(i,1);
+  save();toast('تم الحذف');openManageTypes(page);
+}
+function addBirdTypeFromMgr(page){
+  const inp=document.getElementById('new-type-inp');
+  if(!inp||!inp.value.trim()){toast('أدخل الاسم',true);return;}
+  const types=page==='fb'?(db.fbTypes||[]):(db.birdTypes||[]);
+  const name=inp.value.trim();
+  if(types.includes(name)){toast('موجود مسبقاً',true);return;}
+  types.push(name);
+  save();toast('تمت الإضافة');openManageTypes(page);
+}
 function openBirdSalesChart(){
   const sales=db.birdSales||[];
   if(sales.length===0){toast('لا توجد مبيعات بعد',true);return;}
