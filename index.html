@@ -1618,25 +1618,33 @@ function rFinRep(){
 
   // Bar chart SVG
   const maxVal=Math.max(1,...data.map(d=>Math.abs(d.net)));
-  const barW=60,gap=30,h=200,padding=40;
+  const barW=55,gap=25,chartH=180,padding=40,labelH=30,numH=20;
+  const totalH=chartH+labelH+numH;
   const svgW=data.length*(barW+gap)+padding*2;
+  const baseline=chartH/2; // center line for +/-
+
   const bars=data.map((d,i)=>{
     const x=padding+i*(barW+gap);
-    const barH=Math.abs(d.net)/maxVal*(h-40);
+    const barH=Math.min(Math.abs(d.net)/maxVal*(chartH/2-10),chartH/2-5);
     const isPos=d.net>=0;
-    const y=isPos?(h-20-barH):(h-20);
     const col=d.net>=0?d.color:'#A8503A';
+    const y=isPos?(baseline-barH):baseline;
     return`
       <rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${col}" rx="4"/>
-      <text x="${x+barW/2}" y="${h-5}" text-anchor="middle" font-size="10" fill="#8C8064" font-family="Tajawal,sans-serif">${d.label}</text>
-      <text x="${x+barW/2}" y="${isPos?y-5:y+barH+12}" text-anchor="middle" font-size="10" font-weight="bold" fill="${col}" font-family="Tajawal,sans-serif">${d.net.toLocaleString('en-US')}</text>
+      <text x="${x+barW/2}" y="${totalH-5}" text-anchor="middle" font-size="11" fill="#8C8064" font-family="Tajawal,sans-serif">${d.label}</text>
+      <text x="${x+barW/2}" y="${isPos?y-6:y+barH+14}" text-anchor="middle" font-size="10" font-weight="bold" fill="${col}" font-family="Tajawal,sans-serif">${d.net.toLocaleString('en-US')}</text>
     `;
   }).join('');
 
   document.getElementById('finrep-chart').innerHTML=`
-    <svg width="100%" viewBox="0 0 ${svgW} ${h+10}" style="overflow:visible">
-      <line x1="${padding-10}" y1="${h-20}" x2="${svgW-padding+10}" y2="${h-20}" stroke="#E1D6BB" stroke-width="1"/>
+    <svg width="100%" viewBox="0 0 ${svgW} ${totalH+10}" style="overflow:visible;display:block">
+      <!-- Zero line -->
+      <line x1="${padding-10}" y1="${baseline}" x2="${svgW-padding+10}" y2="${baseline}" stroke="#E1D6BB" stroke-width="1.5"/>
+      <!-- Top border -->
+      <line x1="${padding-10}" y1="10" x2="${svgW-padding+10}" y2="10" stroke="#F3ECDD" stroke-width="1"/>
       ${bars}
+      <!-- Zero label -->
+      <text x="${padding-15}" y="${baseline+4}" text-anchor="end" font-size="9" fill="#8C8064" font-family="Tajawal,sans-serif">0</text>
     </svg>
   `;
 
