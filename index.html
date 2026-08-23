@@ -99,7 +99,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>الحظائر</span></button>
-  <button onclick="nav('fin')"><span class="ico">💰</span><span>المالية</span></button>
+  <button onclick="nav('fin')"><span class="ico">💰</span><span>مالية الغنم</span></button>
   <button onclick="nav('rep')"><span class="ico">📊</span><span>التقارير</span></button>
   <button onclick="nav('birds')"><span class="ico">🦜</span><span>طيور البيت</span></button>
   <button onclick="nav('farm-birds')"><span class="ico">🐦</span><span>طيور المزرعة</span></button>
@@ -147,7 +147,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- FINANCE -->
 <div id="page-fin" class="page">
-  <div class="sh"><span class="st">المالية</span><button class="btn-r" data-owner onclick="cfmResetFin()">📅 سنة جديدة</button></div>
+  <div class="sh"><span class="st">مالية الغنم</span><button class="btn-r" data-owner onclick="cfmResetFin()">📅 سنة جديدة</button></div>
   <div class="card mb10" style="text-align:center"><div class="muted" style="font-size:11px">الصافي</div><div id="fnet" style="font-size:30px;font-weight:700"></div></div>
   <div class="row" id="ftotals"></div>
 
@@ -1605,7 +1605,7 @@ function rFinRep(){
   const total=finNet+bNet+fbNet;
 
   const data=[
-    {label:'المالية',net:finNet,sales:finSales,exp:finExp,color:'#6E7B45'},
+    {label:'مالية الغنم',net:finNet,sales:finSales,exp:finExp,color:'#6E7B45'},
     {label:'طيور البيت',net:bNet,sales:bSales,exp:bExp,color:'#4472A8'},
     {label:'طيور المزرعة',net:fbNet,sales:fbSales,exp:fbExp,color:'#C79A3E'},
   ];
