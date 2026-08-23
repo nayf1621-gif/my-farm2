@@ -101,7 +101,8 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>الحظائر</span></button>
   <button onclick="nav('fin')"><span class="ico">💰</span><span>المالية</span></button>
   <button onclick="nav('rep')"><span class="ico">📊</span><span>التقارير</span></button>
-  <button onclick="nav('birds')"><span class="ico">🦜</span><span>الطيور</span></button>
+  <button onclick="nav('birds')"><span class="ico">🦜</span><span>طيور البيت</span></button>
+  <button onclick="nav('farm-birds')"><span class="ico">🐦</span><span>طيور المزرعة</span></button>
 </div>
 </div><!-- end nav-wrap -->
 <div id="content">
@@ -236,7 +237,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- BIRDS PAGE -->
 <div id="page-birds" class="page">
-  <div class="sh"><span class="st">🦜 محمية الطيور بالبيت</span><button class="btn-g" onclick="openBirdSalesChart()" style="font-size:12px">📊 نسب المبيعات</button></div>
+  <div class="sh"><span class="st">🦜 طيور البيت</span><button class="btn-g" onclick="openBirdSalesChart()" style="font-size:12px">📊 نسب المبيعات</button></div>
 
   <!-- Net -->
   <div class="card mb10" style="text-align:center">
@@ -285,6 +286,46 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div id="bnotes-cats"></div>
 </div>
 
+<!-- FARM BIRDS PAGE -->
+<div id="page-farm-birds" class="page">
+  <div class="sh"><span class="st">🐦 طيور المزرعة</span><button class="btn-g" onclick="openFBSalesChart()" style="font-size:12px">📊 نسب المبيعات</button></div>
+  <div class="card mb10" style="text-align:center">
+    <div class="muted" style="font-size:11px">الصافي (مبيعات − مصروفات)</div>
+    <div id="fbnet" style="font-size:30px;font-weight:700;margin-top:4px"></div>
+  </div>
+  <div class="row mb10" id="fbtotals"></div>
+  <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+    <span class="muted" style="font-size:11px">📅</span>
+    <input type="date" id="fbff" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:100px" onchange="rFarmBirds()">
+    <span class="muted" style="font-size:11px">إلى</span>
+    <input type="date" id="fbft" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:100px" onchange="rFarmBirds()">
+    <button class="bi" onclick="document.getElementById('fbff').value='';document.getElementById('fbft').value='';rFarmBirds()">✕</button>
+    <button class="btn-r" data-owner onclick="cfmResetFarmBirds()" style="font-size:11px;padding:6px 10px">🗑 سنة جديدة</button>
+  </div>
+  <div class="sh" style="cursor:pointer" onclick="togBSection('fbsales-wrap','fbsales-arrow')">
+    <span class="st">المبيعات <span id="fbsales-arrow">▼</span></span>
+    <button class="btn" onclick="event.stopPropagation();openFBSaleModal()" data-owner>＋ إضافة</button>
+  </div>
+  <div id="fbsales-wrap" style="display:none">
+    <div id="fbsales-list" class="mb10"></div>
+  </div>
+  <div class="sh" style="cursor:pointer" onclick="togBSection('fbexp-wrap','fbexp-arrow')">
+    <span class="st">المصاريف <span id="fbexp-arrow">▼</span></span>
+    <div class="flex gap8 ac" onclick="event.stopPropagation()">
+      <input type="text" id="fbef" placeholder="بحث..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px;width:80px" oninput="rFarmBirds()">
+      <button class="btn" onclick="openFBExpModal()" data-owner>＋ إضافة</button>
+    </div>
+  </div>
+  <div id="fbexp-wrap" style="display:none">
+    <div id="fbexp-list" class="mb10"></div>
+  </div>
+  <div class="sh mt10">
+    <span class="st">📓 ملاحظات طيور المزرعة</span>
+    <button class="btn-g" data-owner onclick="addFBNoteType()" style="font-size:12px">＋ تصنيف جديد</button>
+  </div>
+  <div id="fbnotes-cats"></div>
+</div>
+
 <div id="ovl" onclick="closeMdl()"><div class="mdl" onclick="event.stopPropagation()" id="mbox"></div></div>
 <div id="tst"></div>
 </div><!-- end #app -->
@@ -324,8 +365,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج']};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج']});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -337,7 +378,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -368,7 +409,7 @@ function nav(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const idx={home:0,pens:1,fin:2,rep:3,birds:4}[id];
+  const idx={home:0,pens:1,fin:2,rep:3,birds:4,'farm-birds':5}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   // Update global date bar
   const gd=document.getElementById('global-date-bar');
@@ -378,6 +419,7 @@ function nav(id){
   if(id==='fin')rFin();
   if(id==='rep')rRep();
   if(id==='birds')rBirds();
+  if(id==='farm-birds')rFarmBirds();
   applyMode();
 }
 
@@ -1052,12 +1094,12 @@ function rBirds(){
   document.getElementById('bsales-list').innerHTML=fS.length===0?'<div class="empty mb10">لا توجد مبيعات</div>':[...fS].reverse().map(s=>`
     <div class="li mb8">
       <div><div style="font-size:12.5px;font-weight:600">${s.type}${s.desc?' — '+s.desc:''}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div>
-      <div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString('en-US')}</span><button class="bi red" onclick="delBirdSale('${s.id}')" ${gHide()}>🗑</button></div>
+      <div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString('en-US')}</span><button class="bi" onclick="editBirdSale('${s.id}')" ${gHide()}>✎</button><button class="bi red" onclick="delBirdSale('${s.id}')" ${gHide()}>🗑</button></div>
     </div>`).join('');
   document.getElementById('bexp-list').innerHTML=fE.length===0?'<div class="empty">لا توجد مصاريف</div>':[...fE].reverse().map(e=>`
     <div class="li mb8">
       <div><div style="font-size:12.5px;font-weight:600">${e.desc||e.item}</div><div class="muted" style="font-size:10px">${e.item} · ${fmt(e.date)}</div></div>
-      <div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString('en-US')}</span><button class="bi red" onclick="delBirdExp('${e.id}')" ${gHide()}>🗑</button></div>
+      <div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString('en-US')}</span><button class="bi" onclick="editBirdExp('${e.id}')" ${gHide()}>✎</button><button class="bi red" onclick="delBirdExp('${e.id}')" ${gHide()}>🗑</button></div>
     </div>`).join('');
 
   // Notes — per category
@@ -1132,24 +1174,80 @@ function saveBirdSale(){if(guardGuest())return;
   save();toast('تمت الإضافة');closeMdl();rBirds();
 }
 function delBirdSale(id){if(!confirm('حذف هذه المبيعة؟'))return;db.birdSales=(db.birdSales||[]).filter(s=>s.id!==id);save();rBirds();}
+function editBirdSale(id){
+  if(guardGuest())return;
+  const s=db.birdSales.find(x=>x.id===id);if(!s)return;
+  openMdl('تعديل مبيعة',`
+    <div class="fld"><label>النوع</label><input type="text" id="ebs-type" value="${s.type}"></div>
+    <div class="fld"><label>الوصف</label><input type="text" id="ebs-desc" value="${s.desc||''}"></div>
+    <div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="ebs-amt" value="${s.amount}"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="ebs-date" value="${s.date}"></div></div>
+    <button class="btn w100 jc" onclick="saveEditBirdSale('${id}')">حفظ</button>
+  `);
+}
+function saveEditBirdSale(id){
+  const s=db.birdSales.find(x=>x.id===id);if(!s)return;
+  s.type=document.getElementById('ebs-type').value.trim()||s.type;
+  s.desc=document.getElementById('ebs-desc').value;
+  s.amount=document.getElementById('ebs-amt').value||s.amount;
+  s.date=document.getElementById('ebs-date').value||s.date;
+  save();toast('تم الحفظ');closeMdl();rBirds();
+}
+function editBirdExp(id){
+  if(guardGuest())return;
+  const e=db.birdExp.find(x=>x.id===id);if(!e)return;
+  openMdl('تعديل مصروف',`
+    <div class="fld"><label>البند</label><input type="text" id="ebe-item" value="${e.item||''}"></div>
+    <div class="fld"><label>الوصف</label><input type="text" id="ebe-desc" value="${e.desc||''}"></div>
+    <div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="ebe-amt" value="${e.amount}"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="ebe-date" value="${e.date}"></div></div>
+    <button class="btn w100 jc" onclick="saveEditBirdExp('${id}')">حفظ</button>
+  `);
+}
+function saveEditBirdExp(id){
+  const e=db.birdExp.find(x=>x.id===id);if(!e)return;
+  e.item=document.getElementById('ebe-item').value.trim()||e.item;
+  e.desc=document.getElementById('ebe-desc').value;
+  e.amount=document.getElementById('ebe-amt').value||e.amount;
+  e.date=document.getElementById('ebe-date').value||e.date;
+  save();toast('تم الحفظ');closeMdl();rBirds();
+}
 
 function openBirdSalesChart(){
   const sales=db.birdSales||[];
   if(sales.length===0){toast('لا توجد مبيعات بعد',true);return;}
+  window._chartSelTypes=[];
+  renderBirdSalesChart();
+}
+function renderBirdSalesChart(){
+  const sales=db.birdSales||[];
   const types=db.birdTypes||[];
+  const sel=window._chartSelTypes||[];
+  const filtered=sel.length>0?sales.filter(s=>sel.includes(s.type)):sales;
   const totals={};
-  sales.forEach(s=>{totals[s.type]=(totals[s.type]||0)+Number(s.amount||0);});
+  filtered.forEach(s=>{totals[s.type]=(totals[s.type]||0)+Number(s.amount||0);});
   const grand=Object.values(totals).reduce((a,b)=>a+b,0);
   const sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
   const colors=['#6E7B45','#4472A8','#C79A3E','#A8503A','#7A5FA0','#CC7A2E','#C97B9C','#2B2620','#4C7A3D'];
 
   openMdl('📊 نسب المبيعات حسب النوع',`
+    <!-- Type filter -->
+    <div class="mb10">
+      <div class="muted mb8" style="font-size:12px">اختر أنواعاً معينة (أو اتركها للكل)</div>
+      <div class="fw gap8">
+        ${types.map(t=>{
+          const active=sel.includes(t);
+          const c=colors[types.indexOf(t)%colors.length];
+          return`<button onclick="togChartType('${t}')" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:4px">${t}</button>`;
+        }).join('')}
+        ${sel.length>0?`<button onclick="window._chartSelTypes=[];renderBirdSalesChart()" style="padding:5px 10px;border-radius:999px;border:1px solid #E1D6BB;background:#F3ECDD;color:#8C8064;font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif">الكل ✕</button>`:''}
+      </div>
+    </div>
+
+    ${grand===0?'<div class="empty">لا توجد مبيعات للأنواع المختارة</div>':`
     <div style="margin-bottom:14px;text-align:center">
-      <div class="muted" style="font-size:12px">إجمالي المبيعات</div>
+      <div class="muted" style="font-size:12px">إجمالي المبيعات ${sel.length>0?'(المختارة)':''}</div>
       <div class="green" style="font-size:22px;font-weight:700">${grand.toLocaleString('en-US')} ﷼</div>
     </div>
 
-    <!-- Donut chart using SVG -->
     <div style="display:flex;justify-content:center;margin-bottom:20px">
       <svg width="200" height="200" viewBox="-1 -1 2 2" style="transform:rotate(-90deg)">
         ${(()=>{
@@ -1162,18 +1260,19 @@ function openBirdSalesChart(){
             const x2=Math.cos(2*Math.PI*offset);
             const y2=Math.sin(2*Math.PI*offset);
             const large=pct>0.5?1:0;
-            const c=colors[i%colors.length];
+            const allTypes=db.birdTypes||[];
+            const c=colors[allTypes.indexOf(type)%colors.length]||colors[i%colors.length];
             return `<path d="M 0 0 L ${x1} ${y1} A 1 1 0 ${large} 1 ${x2} ${y2} Z" fill="${c}" stroke="#fff" stroke-width="0.02"/>`;
           }).join('');
         })()}
       </svg>
     </div>
 
-    <!-- Legend and bars -->
     <div style="display:flex;flex-direction:column;gap:10px">
       ${sorted.map(([type,val],i)=>{
         const pct=Math.round(val/grand*100);
-        const c=colors[i%colors.length];
+        const allTypes=db.birdTypes||[];
+        const c=colors[allTypes.indexOf(type)%colors.length]||colors[i%colors.length];
         return`<div>
           <div class="flex jb ac mb4">
             <div class="flex ac gap8">
@@ -1188,8 +1287,14 @@ function openBirdSalesChart(){
           <div class="bar"><div class="bf" style="width:${pct}%;background:${c}"></div></div>
         </div>`;
       }).join('')}
-    </div>
+    </div>`}
   `);
+}
+function togChartType(t){
+  const s=window._chartSelTypes||[];
+  if(s.includes(t))window._chartSelTypes=s.filter(x=>x!==t);
+  else window._chartSelTypes=[...s,t];
+  renderBirdSalesChart();
 }
 function openBirdExpModal(){
   openMdl('إضافة مصروف طيور',`
@@ -1265,6 +1370,152 @@ function editBirdNoteType(old){
   if(window._selBNType===old)window._selBNType=name.trim();
   save();toast('تم التعديل');rBirds();
 }
+
+// ====== FARM BIRDS ======
+let fbSelTypes=[];
+function rFarmBirds(){
+  const from=document.getElementById('fbff').value,to=document.getElementById('fbft').value;
+  const expSearch=document.getElementById('fbef')?document.getElementById('fbef').value.trim().toLowerCase():'';
+  const inR=d=>(!from||d>=from)&&(!to||d<=to);
+  const fS=(db.fbSales||[]).filter(s=>inR(s.date)&&(fbSelTypes.length===0||fbSelTypes.includes(s.type)));
+  const fE=(db.fbExp||[]).filter(e=>inR(e.date)&&(!expSearch||((e.desc||'').toLowerCase().includes(expSearch)||(e.item||'').toLowerCase().includes(expSearch))));
+  const tS=fS.reduce((a,b)=>a+Number(b.amount||0),0);
+  const tE=fE.reduce((a,b)=>a+Number(b.amount||0),0);
+  const net=tS-tE;
+  document.getElementById('fbnet').textContent=net.toLocaleString('en-US')+' ﷼';
+  document.getElementById('fbnet').style.color=net>=0?'#6E7B45':'#A8503A';
+  document.getElementById('fbtotals').innerHTML=`<div class="sc"><div class="v green">${tS.toLocaleString('en-US')}</div><div class="l">مبيعات ﷼</div></div><div class="sc"><div class="v red">${tE.toLocaleString('en-US')}</div><div class="l">مصاريف ﷼</div></div>`;
+  document.getElementById('fbsales-list').innerHTML=fS.length===0?'<div class="empty mb10">لا توجد مبيعات</div>':[...fS].reverse().map(s=>`<div class="li mb8"><div><div style="font-size:12.5px;font-weight:600">${s.type}${s.desc?' — '+s.desc:''}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString('en-US')}</span><button class="bi" onclick="editFBSale('${s.id}')" ${gHide()}>✎</button><button class="bi red" onclick="delFBSale('${s.id}')" ${gHide()}>🗑</button></div></div>`).join('');
+  document.getElementById('fbexp-list').innerHTML=fE.length===0?'<div class="empty">لا توجد مصاريف</div>':[...fE].reverse().map(e=>`<div class="li mb8"><div><div style="font-size:12.5px;font-weight:600">${e.desc||e.item}</div><div class="muted" style="font-size:10px">${e.item} · ${fmt(e.date)}</div></div><div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString('en-US')}</span><button class="bi" onclick="editFBExp('${e.id}')" ${gHide()}>✎</button><button class="bi red" onclick="delFBExp('${e.id}')" ${gHide()}>🗑</button></div></div>`).join('');
+  // Notes
+  const fbNotes=db.fbNotes||[];
+  const fbNoteTypes=db.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'];
+  const colors={'مشكلة':'#A8503A','مرض':'#C79A3E','موسم الإنتاج':'#6E7B45'};
+  const catsEl=document.getElementById('fbnotes-cats');
+  if(catsEl){
+    catsEl.innerHTML=fbNoteTypes.map(t=>{
+      const c=colors[t]||'#4472A8';
+      const catNotes=fbNotes.filter(n=>n.type===t);
+      const sid='fbcat-'+t.replace(/\s/g,'_');
+      const arid='fbcar-'+t.replace(/\s/g,'_');
+      return`<div class="mb8"><div class="sh" style="cursor:pointer;background:#fff;border:1px solid ${c}44;border-radius:12px;padding:10px 14px" onclick="togBSection('${sid}','${arid}')"><div class="flex ac gap8"><span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${t}</span><span class="muted" style="font-size:11px">${catNotes.length} ملاحظة</span></div><div class="flex ac gap8"><button class="btn-g" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openAddFBNote('${t}')" ${gHide()}>＋</button><span id="${arid}">▼</span></div></div><div id="${sid}" style="display:none;padding:8px 0">${catNotes.length===0?'<div class="empty mb8" style="font-size:12px">لا توجد ملاحظات</div>':catNotes.map(n=>{const i=fbNotes.indexOf(n);return`<div class="card mb8"><div class="flex jb ac mb4"><div class="muted" style="font-size:10px">${fmt(n.date)}</div><div class="flex gap8" ${gHide()}><button class="bi" onclick="editFBNote(${i})">✎</button><button class="bi red" onclick="delFBNote(${i})">🗑</button></div></div><div style="font-size:13px;white-space:pre-wrap">${n.text}</div></div>`;}).join('')}</div></div>`;
+    }).join('');
+  }
+}
+function delFBSale(id){if(!confirm('حذف؟'))return;db.fbSales=(db.fbSales||[]).filter(s=>s.id!==id);save();rFarmBirds();}
+function editFBSale(id){
+  if(guardGuest())return;
+  const s=db.fbSales.find(x=>x.id===id);if(!s)return;
+  openMdl('تعديل مبيعة',`
+    <div class="fld"><label>النوع</label><input type="text" id="efbs-type" value="${s.type}"></div>
+    <div class="fld"><label>الوصف</label><input type="text" id="efbs-desc" value="${s.desc||''}"></div>
+    <div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="efbs-amt" value="${s.amount}"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="efbs-date" value="${s.date}"></div></div>
+    <button class="btn w100 jc" onclick="saveEditFBSale('${id}')">حفظ</button>
+  `);
+}
+function saveEditFBSale(id){
+  const s=db.fbSales.find(x=>x.id===id);if(!s)return;
+  s.type=document.getElementById('efbs-type').value.trim()||s.type;
+  s.desc=document.getElementById('efbs-desc').value;
+  s.amount=document.getElementById('efbs-amt').value||s.amount;
+  s.date=document.getElementById('efbs-date').value||s.date;
+  save();toast('تم الحفظ');closeMdl();rFarmBirds();
+}
+function delFBExp(id){if(!confirm('حذف؟'))return;db.fbExp=(db.fbExp||[]).filter(e=>e.id!==id);save();rFarmBirds();}
+function editFBExp(id){
+  if(guardGuest())return;
+  const e=db.fbExp.find(x=>x.id===id);if(!e)return;
+  openMdl('تعديل مصروف',`
+    <div class="fld"><label>البند</label><input type="text" id="efbe-item" value="${e.item||''}"></div>
+    <div class="fld"><label>الوصف</label><input type="text" id="efbe-desc" value="${e.desc||''}"></div>
+    <div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="efbe-amt" value="${e.amount}"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="efbe-date" value="${e.date}"></div></div>
+    <button class="btn w100 jc" onclick="saveEditFBExp('${id}')">حفظ</button>
+  `);
+}
+function saveEditFBExp(id){
+  const e=db.fbExp.find(x=>x.id===id);if(!e)return;
+  e.item=document.getElementById('efbe-item').value.trim()||e.item;
+  e.desc=document.getElementById('efbe-desc').value;
+  e.amount=document.getElementById('efbe-amt').value||e.amount;
+  e.date=document.getElementById('efbe-date').value||e.date;
+  save();toast('تم الحفظ');closeMdl();rFarmBirds();
+}
+function cfmResetFarmBirds(){if(confirm('تصفير مبيعات ومصاريف طيور المزرعة؟')){db.fbSales=[];db.fbExp=[];save();toast('تم');rFarmBirds();}}
+function openFBSaleModal(){
+  if(guardGuest())return;
+  const types=db.fbTypes||[];
+  openMdl('إضافة مبيعة — طيور المزرعة',`<div class="fld"><label>نوع الطائر</label><select id="fbs-type">${types.map(t=>`<option>${t}</option>`).join('')}<option value="__new__">＋ نوع جديد...</option></select></div><div id="fbs-new" class="fld" style="display:none"><label>نوع جديد</label><input type="text" id="fbs-new-val"></div><div class="fld"><label>الوصف</label><input type="text" id="fbs-desc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="fbs-amt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="fbs-date" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveFBSale()">حفظ</button>`);
+  document.getElementById('fbs-type').onchange=function(){document.getElementById('fbs-new').style.display=this.value==='__new__'?'block':'none';};
+}
+function saveFBSale(){
+  if(guardGuest())return;
+  let type=document.getElementById('fbs-type').value;
+  if(type==='__new__'){const nv=document.getElementById('fbs-new-val').value.trim();if(!nv){toast('أدخل النوع',true);return;}if(!db.fbTypes.includes(nv))db.fbTypes.push(nv);type=nv;}
+  const amt=document.getElementById('fbs-amt').value;if(!amt){toast('أدخل المبلغ',true);return;}
+  if(!db.fbSales)db.fbSales=[];
+  db.fbSales.push({id:uid(),type,desc:document.getElementById('fbs-desc').value,amount:amt,date:document.getElementById('fbs-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rFarmBirds();
+}
+function openFBExpModal(){
+  if(guardGuest())return;
+  openMdl('إضافة مصروف — طيور المزرعة',`<div class="fld"><label>البند</label><input type="text" id="fbe-item" placeholder="علف، أدوية..."></div><div class="fld"><label>الوصف</label><input type="text" id="fbe-desc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="fbe-amt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="fbe-date" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveFBExp()">حفظ</button>`);
+}
+function saveFBExp(){
+  if(guardGuest())return;
+  const item=document.getElementById('fbe-item').value.trim();const amt=document.getElementById('fbe-amt').value;
+  if(!item||!amt){toast('أدخل البند والمبلغ',true);return;}
+  if(!db.fbExp)db.fbExp=[];
+  db.fbExp.push({id:uid(),item,desc:document.getElementById('fbe-desc').value,amount:amt,date:document.getElementById('fbe-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rFarmBirds();
+}
+function openAddFBNote(type){
+  if(guardGuest())return;
+  openMdl(`ملاحظة — ${type}`,`<div class="fld"><textarea id="fbnote-input" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:120px;resize:none;font-family:Tajawal,sans-serif"></textarea></div><button class="btn w100 jc" onclick="saveFBNote('${type}')">＋ إضافة</button>`);
+}
+function saveFBNote(type){
+  if(guardGuest())return;
+  const inp=document.getElementById('fbnote-input');if(!inp||!inp.value.trim()){toast('أدخل الملاحظة',true);return;}
+  if(!db.fbNotes)db.fbNotes=[];
+  db.fbNotes.push({text:inp.value.trim(),type,date:tod()});
+  save();toast('تمت الإضافة');closeMdl();rFarmBirds();
+}
+function editFBNote(i){
+  const n=db.fbNotes[i];if(!n)return;
+  openMdl('تعديل',`<div class="fld"><label>التصنيف</label><select id="efb-type">${(db.fbNoteTypes||[]).map(t=>`<option ${t===n.type?'selected':''}>${t}</option>`).join('')}</select></div><div class="fld"><textarea id="efb-text" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:100px;resize:vertical;font-family:Tajawal,sans-serif">${n.text}</textarea></div><button class="btn w100 jc" onclick="saveEditFBNote(${i})">حفظ</button>`);
+}
+function saveEditFBNote(i){
+  const t=document.getElementById('efb-text').value.trim();if(!t){toast('أدخل الملاحظة',true);return;}
+  db.fbNotes[i].text=t;db.fbNotes[i].type=document.getElementById('efb-type').value;
+  save();toast('تم');closeMdl();rFarmBirds();
+}
+function delFBNote(i){if(!confirm('حذف؟'))return;db.fbNotes.splice(i,1);save();rFarmBirds();}
+function addFBNoteType(){
+  if(guardGuest())return;
+  const name=prompt('اسم التصنيف الجديد:');if(!name||!name.trim())return;
+  if(!db.fbNoteTypes)db.fbNoteTypes=['مشكلة','مرض','موسم الإنتاج'];
+  if(db.fbNoteTypes.includes(name.trim())){toast('موجود مسبقاً',true);return;}
+  db.fbNoteTypes.push(name.trim());save();toast('تمت الإضافة');rFarmBirds();
+}
+function openFBSalesChart(){
+  const sales=db.fbSales||[];if(sales.length===0){toast('لا توجد مبيعات',true);return;}
+  window._fbChartSel=[];renderFBSalesChart();
+}
+function renderFBSalesChart(){
+  const sales=db.fbSales||[];const types=db.fbTypes||[];const sel=window._fbChartSel||[];
+  const filtered=sel.length>0?sales.filter(s=>sel.includes(s.type)):sales;
+  const totals={};filtered.forEach(s=>{totals[s.type]=(totals[s.type]||0)+Number(s.amount||0);});
+  const grand=Object.values(totals).reduce((a,b)=>a+b,0);
+  const sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const colors=['#6E7B45','#4472A8','#C79A3E','#A8503A','#7A5FA0','#CC7A2E','#C97B9C','#2B2620','#4C7A3D'];
+  openMdl('📊 نسب مبيعات طيور المزرعة',`
+    <div class="mb10"><div class="muted mb8" style="font-size:12px">اختر أنواعاً معينة</div><div class="fw gap8">${types.map(t=>{const active=(sel).includes(t);const c=colors[types.indexOf(t)%colors.length];return`<button onclick="togFBChartType('${t}')" style="padding:5px 10px;border-radius:999px;border:1px solid ${active?c:'#E1D6BB'};background:${active?c:'#F3ECDD'};color:${active?'#fff':'#3B3324'};font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:4px">${t}</button>`;}).join('')}${sel.length>0?`<button onclick="window._fbChartSel=[];renderFBSalesChart()" style="padding:5px 10px;border-radius:999px;border:1px solid #E1D6BB;background:#F3ECDD;color:#8C8064;font-size:12px;cursor:pointer;font-family:Tajawal,sans-serif">الكل ✕</button>`:''}</div></div>
+    ${grand===0?'<div class="empty">لا توجد مبيعات</div>':`
+    <div style="text-align:center;margin-bottom:14px"><div class="muted" style="font-size:12px">الإجمالي</div><div class="green" style="font-size:22px;font-weight:700">${grand.toLocaleString('en-US')} ﷼</div></div>
+    <div style="display:flex;justify-content:center;margin-bottom:20px"><svg width="200" height="200" viewBox="-1 -1 2 2" style="transform:rotate(-90deg)">${(()=>{let o=0;return sorted.map(([t,v],i)=>{const p=v/grand;const x1=Math.cos(2*Math.PI*o),y1=Math.sin(2*Math.PI*o);o+=p;const x2=Math.cos(2*Math.PI*o),y2=Math.sin(2*Math.PI*o);const c=colors[types.indexOf(t)%colors.length]||colors[i%colors.length];return`<path d="M 0 0 L ${x1} ${y1} A 1 1 0 ${p>0.5?1:0} 1 ${x2} ${y2} Z" fill="${c}" stroke="#fff" stroke-width="0.02"/>`;}).join('');})()}</svg></div>
+    <div style="display:flex;flex-direction:column;gap:10px">${sorted.map(([t,v],i)=>{const p=Math.round(v/grand*100);const c=colors[(db.fbTypes||[]).indexOf(t)%colors.length]||colors[i%colors.length];return`<div><div class="flex jb ac mb4"><div class="flex ac gap8"><div style="width:14px;height:14px;border-radius:3px;background:${c}"></div><span style="font-size:13px;font-weight:600">${t}</span></div><div class="flex ac gap8"><span style="font-size:12px;color:#8C8064">${v.toLocaleString('en-US')} ﷼</span><span style="font-size:13px;font-weight:700;color:${c}">${p}%</span></div></div><div class="bar"><div class="bf" style="width:${p}%;background:${c}"></div></div></div>`;}).join('')}</div>`}
+  `);
+}
+function togFBChartType(t){const s=window._fbChartSel||[];if(s.includes(t))window._fbChartSel=s.filter(x=>x!==t);else window._fbChartSel=[...s,t];renderFBSalesChart();}
 
 // ====== MODAL ======
 let keepOpen=false;
