@@ -236,7 +236,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- BIRDS PAGE -->
 <div id="page-birds" class="page">
-  <div class="sh"><span class="st">🦜 محمية الطيور بالبيت</span></div>
+  <div class="sh"><span class="st">🦜 محمية الطيور بالبيت</span><button class="btn-g" onclick="openBirdSalesChart()" style="font-size:12px">📊 نسب المبيعات</button></div>
 
   <!-- Net -->
   <div class="card mb10" style="text-align:center">
@@ -1133,6 +1133,64 @@ function saveBirdSale(){if(guardGuest())return;
 }
 function delBirdSale(id){if(!confirm('حذف هذه المبيعة؟'))return;db.birdSales=(db.birdSales||[]).filter(s=>s.id!==id);save();rBirds();}
 
+function openBirdSalesChart(){
+  const sales=db.birdSales||[];
+  if(sales.length===0){toast('لا توجد مبيعات بعد',true);return;}
+  const types=db.birdTypes||[];
+  const totals={};
+  sales.forEach(s=>{totals[s.type]=(totals[s.type]||0)+Number(s.amount||0);});
+  const grand=Object.values(totals).reduce((a,b)=>a+b,0);
+  const sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const colors=['#6E7B45','#4472A8','#C79A3E','#A8503A','#7A5FA0','#CC7A2E','#C97B9C','#2B2620','#4C7A3D'];
+
+  openMdl('📊 نسب المبيعات حسب النوع',`
+    <div style="margin-bottom:14px;text-align:center">
+      <div class="muted" style="font-size:12px">إجمالي المبيعات</div>
+      <div class="green" style="font-size:22px;font-weight:700">${grand.toLocaleString('en-US')} ﷼</div>
+    </div>
+
+    <!-- Donut chart using SVG -->
+    <div style="display:flex;justify-content:center;margin-bottom:20px">
+      <svg width="200" height="200" viewBox="-1 -1 2 2" style="transform:rotate(-90deg)">
+        ${(()=>{
+          let offset=0;
+          return sorted.map(([type,val],i)=>{
+            const pct=val/grand;
+            const x1=Math.cos(2*Math.PI*offset);
+            const y1=Math.sin(2*Math.PI*offset);
+            offset+=pct;
+            const x2=Math.cos(2*Math.PI*offset);
+            const y2=Math.sin(2*Math.PI*offset);
+            const large=pct>0.5?1:0;
+            const c=colors[i%colors.length];
+            return `<path d="M 0 0 L ${x1} ${y1} A 1 1 0 ${large} 1 ${x2} ${y2} Z" fill="${c}" stroke="#fff" stroke-width="0.02"/>`;
+          }).join('');
+        })()}
+      </svg>
+    </div>
+
+    <!-- Legend and bars -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${sorted.map(([type,val],i)=>{
+        const pct=Math.round(val/grand*100);
+        const c=colors[i%colors.length];
+        return`<div>
+          <div class="flex jb ac mb4">
+            <div class="flex ac gap8">
+              <div style="width:14px;height:14px;border-radius:3px;background:${c};flex-shrink:0"></div>
+              <span style="font-size:13px;font-weight:600">${type}</span>
+            </div>
+            <div class="flex ac gap8">
+              <span style="font-size:12px;color:#8C8064">${val.toLocaleString('en-US')} ﷼</span>
+              <span style="font-size:13px;font-weight:700;color:${c}">${pct}%</span>
+            </div>
+          </div>
+          <div class="bar"><div class="bf" style="width:${pct}%;background:${c}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+  `);
+}
 function openBirdExpModal(){
   openMdl('إضافة مصروف طيور',`
     <div class="fld"><label>البند / العنصر</label><input type="text" id="bei" placeholder="مثال: علف، فيتامينات، قفص..."></div>
