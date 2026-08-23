@@ -103,6 +103,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <button onclick="nav('rep')"><span class="ico">📊</span><span>التقارير</span></button>
   <button onclick="nav('birds')"><span class="ico">🦜</span><span>طيور البيت</span></button>
   <button onclick="nav('farm-birds')"><span class="ico">🐦</span><span>طيور المزرعة</span></button>
+  <button onclick="nav('finrep')"><span class="ico">📈</span><span>المقارنة</span></button>
 </div>
 </div><!-- end nav-wrap -->
 <div id="content">
@@ -332,6 +333,20 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div id="fbnotes-cats"></div>
 </div>
 
+<!-- FINANCIAL REPORT PAGE -->
+<div id="page-finrep" class="page">
+  <div class="st mb10">📈 مقارنة صافي الأرباح</div>
+  <div id="finrep-cards" class="row mb12"></div>
+  <div class="card mb10">
+    <div class="st mb10">الرسم البياني</div>
+    <div id="finrep-chart"></div>
+  </div>
+  <div class="card">
+    <div class="st mb10">تفاصيل</div>
+    <div id="finrep-details"></div>
+  </div>
+</div>
+
 <div id="ovl" onclick="closeMdl()"><div class="mdl" onclick="event.stopPropagation()" id="mbox"></div></div>
 <div id="tst"></div>
 </div><!-- end #app -->
@@ -415,7 +430,7 @@ function nav(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const idx={home:0,pens:1,fin:2,rep:3,birds:4,'farm-birds':5}[id];
+  const idx={home:0,pens:1,fin:2,rep:3,birds:4,'farm-birds':5,finrep:6}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   // Update global date bar
   const gd=document.getElementById('global-date-bar');
@@ -426,6 +441,7 @@ function nav(id){
   if(id==='rep')rRep();
   if(id==='birds')rBirds();
   if(id==='farm-birds')rFarmBirds();
+  if(id==='finrep')rFinRep();
   applyMode();
 }
 
@@ -1571,6 +1587,71 @@ function renderFBSalesChart(){
   `);
 }
 function togFBChartType(t){const s=window._fbChartSel||[];if(s.includes(t))window._fbChartSel=s.filter(x=>x!==t);else window._fbChartSel=[...s,t];renderFBSalesChart();}
+
+// ====== FINANCIAL REPORT ======
+function rFinRep(){
+  const finSales=(db.sales||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+  const finExp=(db.expenses||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+  const finNet=finSales-finExp;
+
+  const bSales=(db.birdSales||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+  const bExp=(db.birdExp||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+  const bNet=bSales-bExp;
+
+  const fbSales=(db.fbSales||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+  const fbExp=(db.fbExp||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+  const fbNet=fbSales-fbExp;
+
+  const total=finNet+bNet+fbNet;
+
+  const data=[
+    {label:'المالية',net:finNet,sales:finSales,exp:finExp,color:'#6E7B45'},
+    {label:'طيور البيت',net:bNet,sales:bSales,exp:bExp,color:'#4472A8'},
+    {label:'طيور المزرعة',net:fbNet,sales:fbSales,exp:fbExp,color:'#C79A3E'},
+  ];
+
+  // Summary cards
+  document.getElementById('finrep-cards').innerHTML=`
+    ${data.map(d=>`<div class="sc"><div class="v" style="color:${d.net>=0?d.color:'#A8503A'}">${d.net.toLocaleString('en-US')}</div><div class="l">صافي ${d.label} ﷼</div></div>`).join('')}
+    <div class="sc"><div class="v" style="color:${total>=0?'#6E7B45':'#A8503A'}">${total.toLocaleString('en-US')}</div><div class="l">الإجمالي ﷼</div></div>
+  `;
+
+  // Bar chart SVG
+  const maxVal=Math.max(1,...data.map(d=>Math.abs(d.net)));
+  const barW=60,gap=30,h=200,padding=40;
+  const svgW=data.length*(barW+gap)+padding*2;
+  const bars=data.map((d,i)=>{
+    const x=padding+i*(barW+gap);
+    const barH=Math.abs(d.net)/maxVal*(h-40);
+    const isPos=d.net>=0;
+    const y=isPos?(h-20-barH):(h-20);
+    const col=d.net>=0?d.color:'#A8503A';
+    return`
+      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${col}" rx="4"/>
+      <text x="${x+barW/2}" y="${h-5}" text-anchor="middle" font-size="10" fill="#8C8064" font-family="Tajawal,sans-serif">${d.label}</text>
+      <text x="${x+barW/2}" y="${isPos?y-5:y+barH+12}" text-anchor="middle" font-size="10" font-weight="bold" fill="${col}" font-family="Tajawal,sans-serif">${d.net.toLocaleString('en-US')}</text>
+    `;
+  }).join('');
+
+  document.getElementById('finrep-chart').innerHTML=`
+    <svg width="100%" viewBox="0 0 ${svgW} ${h+10}" style="overflow:visible">
+      <line x1="${padding-10}" y1="${h-20}" x2="${svgW-padding+10}" y2="${h-20}" stroke="#E1D6BB" stroke-width="1"/>
+      ${bars}
+    </svg>
+  `;
+
+  // Details table
+  document.getElementById('finrep-details').innerHTML=data.map(d=>`
+    <div class="li mb8" style="flex-direction:column;align-items:flex-start;gap:4px">
+      <div style="font-weight:700;font-size:13px;color:${d.color}">${d.label}</div>
+      <div class="flex gap8 fw">
+        <span class="green" style="font-size:12px">مبيعات: ${d.sales.toLocaleString('en-US')} ﷼</span>
+        <span class="red" style="font-size:12px">مصروفات: ${d.exp.toLocaleString('en-US')} ﷼</span>
+        <span style="font-size:12px;font-weight:700;color:${d.net>=0?d.color:'#A8503A'}">صافي: ${d.net.toLocaleString('en-US')} ﷼</span>
+      </div>
+    </div>
+  `).join('');
+}
 
 // ====== MODAL ======
 let keepOpen=false;
