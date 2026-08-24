@@ -408,7 +408,7 @@ window.applyRemoteData=function(data){
 
 function uid(){return Math.random().toString(36).slice(2,9);}
 function tod(){return new Date().toISOString().slice(0,10);}
-function fmt(s){if(!s)return'—';return new Date(s).toLocaleDateString('ar-SA-u-ca-islamic',{day:'numeric',month:'short',year:'numeric'});}
+function fmt(s){if(!s)return'—';return new Date(s).toLocaleDateString('ar-SA-u-ca-islamic-nu-latn',{day:'numeric',month:'short',year:'numeric'});}
 function getHijriDate(){
   // Manual conversion to ensure numeric month
   const d=new Date();
