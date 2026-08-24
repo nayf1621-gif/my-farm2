@@ -647,6 +647,7 @@ function saveEditAnimalTag(){
   a.number=num;a.color=newColor;
   save();toast('تم الحفظ');closeMdl();rAnimal();
 }
+function showDF(){document.getElementById('df').style.display='block';}
 function cfmDeath(){
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
   if(a.cat==='m'&&a.twin&&db.twinArchive>0) db.twinArchive--;
