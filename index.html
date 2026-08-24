@@ -577,7 +577,16 @@ function cfmResetTwin(){
 }
 function showDeadMdl(){
   const dead=db.animals.filter(a=>!a.alive);
-  openMdl(`النفوق (${dead.length})`,`<button class="btn-r mb8 w100 jc" onclick="cfmResetDead()">🗑 تصفير</button>`+(dead.length===0?'<div class="empty">لا يوجد</div>':dead.map(a=>`<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="red" style="font-size:11px">${a.deathCause||''}</span></div>`).join('')));
+  let body=`<button class="btn-r mb8 w100 jc" onclick="cfmResetDead()">🗑 تصفير سجل النفوق</button>`;
+  if(dead.length===0){
+    body+='<div class="empty">لا يوجد نفوق</div>';
+  } else {
+    body+=dead.map(a=>`<div class="li mb8" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">
+      <div class="flex ac gap8">${tbadge(a.number,a.color)}<span class="red" style="font-size:11px">${a.deathCause||''}</span></div>
+      <span class="muted" style="font-size:10px">${fmt(a.deathAt||'')}</span>
+    </div>`).join('');
+  }
+  openMdl(`النفوق (${dead.length})`,body);
 }
 function cfmResetDead(){if(confirm('حذف كل سجل النفوق نهائياً؟ لا يمكن التراجع.')){db.animals=db.animals.filter(a=>a.alive);save();toast('تم');closeMdl();rHome();}}
 
