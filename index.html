@@ -115,6 +115,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <div class="flex gap8 ac">
       <button class="bi" onclick="openNotes()" style="font-size:22px;position:relative" data-owner>📓<span id="nb" style="display:none;position:absolute;top:-3px;right:-3px;background:#6E7B45;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
       <button class="bi" onclick="openVax()" style="font-size:22px;position:relative" data-owner>💉<span id="vb" style="display:none;position:absolute;top:-3px;right:-3px;background:#4472A8;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
+      <button class="bi" onclick="fixArabicNumbers()" style="font-size:22px" data-owner title="إصلاح الأرقام العربية">🔧</button>
       <button class="bi" onclick="togBell()" style="font-size:22px;position:relative">🔔<span id="ab" style="display:none;position:absolute;top:-3px;right:-3px;background:#A8503A;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center;padding:0 2px"></span></button>
     </div>
   </div>
@@ -408,6 +409,17 @@ window.applyRemoteData=function(data){
 
 function uid(){return Math.random().toString(36).slice(2,9);}
 function tod(){return new Date().toISOString().slice(0,10);}
+function toLatinDigits(s){if(!s)return s;return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
+function fixArabicNumbers(){
+  if(guardGuest())return;
+  let fixed=0;
+  db.animals.forEach(a=>{
+    const n=toLatinDigits(a.number);
+    if(n!==a.number){a.number=n;fixed++;}
+  });
+  if(fixed>0){save();rHome();toast(`تم إصلاح ${fixed} رقم`);}
+  else toast('كل الأرقام سليمة بالفعل');
+}
 function fmt(s){if(!s)return'—';return new Date(s).toLocaleDateString('ar-SA-u-ca-islamic-nu-latn',{day:'numeric',month:'short',year:'numeric'});}
 function getHijriDate(){
   // Manual conversion to ensure numeric month
@@ -534,7 +546,7 @@ function togBell(){
 
 function addAnimal(){
   if(guardGuest())return;
-  const num=document.getElementById('nn').value.trim();
+  const num=toLatinDigits(document.getElementById('nn').value.trim());
   const err=document.getElementById('ae');
   if(!num){err.textContent='أدخل الرقم';err.style.display='block';return;}
   if(db.animals.some(a=>a.number===num&&a.color===selColor)){err.textContent=`${num} (${selColor}) مستخدم`;err.style.display='block';return;}
@@ -545,7 +557,7 @@ function addAnimal(){
 }
 
 function doSearch(){
-  const num=document.getElementById('sn').value.trim();
+  const num=toLatinDigits(document.getElementById('sn').value.trim());
   const color=document.getElementById('sc').value;
   const r=document.getElementById('sr');
   if(!num&&!color){r.innerHTML='';return;}
@@ -639,7 +651,7 @@ function openEditAnimalTag(){
 function saveEditAnimalTag(){
   if(guardGuest())return;
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
-  const num=document.getElementById('et-num').value.trim();
+  const num=toLatinDigits(document.getElementById('et-num').value.trim());
   if(!num){toast('أدخل الرقم',true);return;}
   const newColor=window._etColor||a.color;
   const dup=db.animals.some(x=>x.id!==curAnimal&&x.number===num&&x.color===newColor);
@@ -732,7 +744,7 @@ function rOffs(){
 function addOffRow(){if(offRows.length>=3)return;offRows.push({gender:'أنثى',number:'',color:COLORS[0].v});rOffs();}
 function saveOffs(){if(guardGuest())return;
   const bd=document.getElementById('obd').value||tod();
-  const rows=offRows.map(r=>({...r,number:r.number.trim(),bd}));
+  const rows=offRows.map(r=>({...r,number:toLatinDigits(r.number.trim()),bd}));
   const err=document.getElementById('oerr');
   for(const r of rows){
     if(!r.number){err.textContent='أدخل رقم';err.style.display='block';return;}
