@@ -576,6 +576,7 @@ function cfmResetTwin(){
   save();toast('تم التصفير');closeMdl();rHome();
 }
 function showDeadMdl(){
+  toast('جارٍ الفتح...');
   const dead=db.animals.filter(a=>!a.alive);
   let body='<button class="btn-r mb8 w100 jc" onclick="cfmResetDead()">🗑 تصفير سجل النفوق</button>';
   if(dead.length===0){
