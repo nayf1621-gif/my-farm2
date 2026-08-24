@@ -519,7 +519,7 @@ function rHome(){
     <button class="ibtn" onclick="showCatMdl('المنتجة',window._catLists.prod,true)"><div class="iw" style="background:#6E7B4518">❤️</div><div class="in">${prod.length}</div><div class="il">منتجة</div></button>
     <button class="ibtn" onclick="showCatMdl('غير منتجة',window._catLists.nonprod,true)"><div class="iw" style="background:#8C806418">❤️</div><div class="in">${nonprod.length}</div><div class="il">غير منتجة</div></button>
     <button class="ibtn" onclick="showTwinModal()"><div class="iw" style="background:#C79A3E18">👶</div><div class="in">${twin.length}</div><div class="il">متأومة</div></button>
-    <button class="ibtn" onclick="showDeadMdl()"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${dead.length}</div><div class="il">النفوق</div></button>
+    <button class="ibtn" onclick="setTimeout(showDeadMdl,50)"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${dead.length}</div><div class="il">النفوق</div></button>
     <button class="ibtn" onclick="showCatMdl('بدون حظيرة',window._catLists.unassigned,false)"><div class="iw" style="background:#4472A818">🧱</div><div class="in">${unassigned.length}</div><div class="il">بدون حظيرة</div></button>
   `;
 }
