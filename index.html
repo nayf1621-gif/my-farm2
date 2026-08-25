@@ -508,7 +508,7 @@ function rHome(){
 
   document.getElementById('h-stats').innerHTML=`
     <div class="sc"><div class="v green">${mothers.length}</div><div class="l">الأمهات</div></div>
-    <div class="sc"><div class="v" style="color:#4472A8">${newborns.length}</div><div class="l">المواليد</div><div class="s muted">${females} إناث · ${males} ذكور</div></div>
+    <div class="sc" style="cursor:pointer" onclick="showNewbornsModal()"><div class="v" style="color:#4472A8">${newborns.length}</div><div class="l">المواليد</div><div class="s muted">${females} إناث · ${males} ذكور</div></div>
     <div class="sc"><div class="v red">${dead.length}</div><div class="l">النفوق</div></div>
   `;
   document.getElementById('h-twin').innerHTML=`<div class="sc"><div class="v gold">${twin.length}</div><div class="l">المتأومة</div><div class="s gold">${tpct}% من المنتجة</div></div>`;
@@ -571,6 +571,17 @@ function showCatMdl(title,ids,withPen){
     list.map(a=>{const pen=withPen?db.pens.find(p=>p.id===a.penId):null;return`<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${pen?pen.name:'بدون'}</span></div>`}).join(''));
 }
 
+function showNewbornsModal(){
+  const list=db.animals.filter(a=>a.cat==='n'&&a.alive);
+  openMdl(`المواليد (${list.length})`,list.length===0?'<div class="empty">لا يوجد مواليد</div>':
+    list.slice().sort((a,b)=>new Date(b.birthDate||b.addedAt)-new Date(a.birthDate||a.addedAt)).map(a=>{
+      const age=a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
+      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">
+        ${tbadge(a.number,a.color)}
+        <span class="muted" style="font-size:11px">${a.gender}${age!==null?' · '+age+' يوم':''}</span>
+      </div>`;
+    }).join(''));
+}
 function showTwinModal(){
   const list=window._catLists&&window._catLists.twin?db.animals.filter(a=>window._catLists.twin.includes(a.id)):db.animals.filter(a=>a.cat==='m'&&a.alive&&a.twin);
   openMdl(`المتأومة (${list.length})`,`
