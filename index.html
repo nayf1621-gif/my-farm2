@@ -505,6 +505,14 @@ function rHome(){
   const males=newborns.filter(n=>n.gender==='ذكر').length;
   const females=newborns.filter(n=>n.gender==='أنثى').length;
   const alerts=getAlerts();
+  const overdueMothers=mothers.filter(m=>{
+    const offs=A.filter(o=>o.motherId===m.id&&o.birthDate);
+    const lastBirth=offs.length?offs.map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null;
+    const ref=lastBirth||m.addedAt;
+    if(!ref)return false;
+    const days=Math.floor((new Date()-new Date(ref))/86400000);
+    return days>=150;
+  });
 
   document.getElementById('h-stats').innerHTML=`
     <div class="sc"><div class="v green">${mothers.length}</div><div class="l">الأمهات</div></div>
@@ -527,12 +535,14 @@ function rHome(){
   sc.innerHTML='<option value="">الكل</option>'+COLORS.map(t=>`<option>${t.v}</option>`).join('');
 
   window._catLists={prod:prod.map(a=>a.id),nonprod:nonprod.map(a=>a.id),twin:twin.map(a=>a.id),dead:dead.map(a=>a.id),unassigned:unassigned.map(a=>a.id)};
+  window._overdueMothers=overdueMothers.map(a=>a.id);
   document.getElementById('ibar').innerHTML=`
     <button class="ibtn" onclick="showCatMdl('المنتجة',window._catLists.prod,true)"><div class="iw" style="background:#6E7B4518">❤️</div><div class="in">${prod.length}</div><div class="il">منتجة</div></button>
     <button class="ibtn" onclick="showCatMdl('غير منتجة',window._catLists.nonprod,true)"><div class="iw" style="background:#8C806418">❤️</div><div class="in">${nonprod.length}</div><div class="il">غير منتجة</div></button>
     <button class="ibtn" onclick="showTwinModal()"><div class="iw" style="background:#C79A3E18">👶</div><div class="in">${twin.length}</div><div class="il">متأومة</div></button>
     <button class="ibtn" onclick="openDeadList()"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${dead.length}</div><div class="il">النفوق</div></button>
     <button class="ibtn" onclick="showCatMdl('بدون حظيرة',window._catLists.unassigned,false)"><div class="iw" style="background:#4472A818">🧱</div><div class="in">${unassigned.length}</div><div class="il">بدون حظيرة</div></button>
+    <button class="ibtn" onclick="showOverdueMothersModal()"><div class="iw" style="background:#A8503A18">⏰</div><div class="in">${overdueMothers.length}</div><div class="il">تأخر ولادتها</div></button>
   `;
 }
 
@@ -582,6 +592,21 @@ function showNewbornsModal(){
       </div>`;
     }).join(''));
 }
+function showOverdueMothersModal(){
+  const ids=window._overdueMothers||[];
+  const list=db.animals.filter(a=>ids.includes(a.id));
+  openMdl(`تأخر ولادتها (${list.length})`,list.length===0?'<div class="empty">لا توجد أمهات متأخرة</div>':
+    list.map(a=>{
+      const offs=db.animals.filter(o=>o.motherId===a.id&&o.birthDate);
+      const lastBirth=offs.length?offs.map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null;
+      const ref=lastBirth||a.addedAt;
+      const days=ref?Math.floor((new Date()-new Date(ref))/86400000):null;
+      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">
+        ${tbadge(a.number,a.color)}
+        <span class="muted" style="font-size:11px">${lastBirth?'آخر ولادة: '+fmt(lastBirth):'لم تلد بعد'}${days!==null?' · مضى '+days+' يوم':''}</span>
+      </div>`;
+    }).join(''));
+}
 function showTwinModal(){
   const list=window._catLists&&window._catLists.twin?db.animals.filter(a=>window._catLists.twin.includes(a.id)):db.animals.filter(a=>a.cat==='m'&&a.alive&&a.twin);
   openMdl(`المتأومة (${list.length})`,`
@@ -626,12 +651,14 @@ function rAnimal(){
   const anotes=a.notes||[];
 
   const offsHtml=a.cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>`<div class="li" style="cursor:pointer" onclick="openAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${!o.alive?' · نافق':''}</span></div>`).join('')}</div>`:'';
+  const lastBirthDate=a.cat==='m'?offs.filter(o=>o.birthDate).map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null;
+  const daysSinceLastBirth=lastBirthDate?Math.floor((new Date()-new Date(lastBirthDate))/86400000):null;
 
   const notesHtml=`<div class="card mt8"><div class="st mb8">📓 ملاحظات (${anotes.length})</div>${anotes.map((n,i)=>`<div class="db mb8 flex jb"><div><div style="font-size:13px">${n.text}</div><div class="muted" style="font-size:10px">${fmt(n.date)}</div></div><button class="bi red" onclick="delAnote(${i})">🗑</button></div>`).join('')}<div class="flex gap8 mt8"><input type="text" id="anote" placeholder="ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:8px 10px;font-size:13px;flex:1"><button class="btn" onclick="addAnote()">＋</button></div></div>`;
 
   openMdl(`#${a.number}`,`
     <div class="flex jb ac mb10">
-      <div>${tbadge(a.number,a.color)}<div class="muted mt8" style="font-size:11px">${a.cat==='m'?'أم':'مولود'} · ${a.gender}</div>${mother?`<div style="font-size:11px;margin-top:4px">الأم: <span onclick="closeMdl();openAnimal('${mother.id}')" style="cursor:pointer">${tbadge(mother.number,mother.color)}</span></div>`:''}${a.cat==='n'&&a.birthDate?`<div class="muted" style="font-size:11px">الميلاد: ${fmt(a.birthDate)}</div><div style="font-size:13px;font-weight:700;color:#6E7B45;margin-top:5px">🗓 العمر: ${Math.floor((new Date()-new Date(a.birthDate))/86400000)} يوم</div>${Math.floor((new Date()-new Date(a.birthDate))/86400000)>=90?`<div style="font-size:12px;font-weight:700;color:#A8503A;margin-top:4px;background:#A8503A15;border:1px solid #A8503A44;border-radius:8px;padding:6px 10px">⚠️ حان وقت الفطام — مضى أكثر من 90 يوم</div>`:''}`:''}${pen?`<div class="muted" style="font-size:11px">الحظيرة: ${pen.name}</div>`:''}${!a.alive&&a.deathCause?`<div class="red" style="font-size:11px">السبب: ${a.deathCause}</div>`:''}</div><span class="chip ${a.alive?'cg':'cr'}">${a.alive?'حي':'نافق'}</span>${a.cat==='m'&&a.twin?'<span class="chip cau">متأومة</span>':''}</div>
+      <div>${tbadge(a.number,a.color)}<div class="muted mt8" style="font-size:11px">${a.cat==='m'?'أم':'مولود'} · ${a.gender}</div>${mother?`<div style="font-size:11px;margin-top:4px">الأم: <span onclick="closeMdl();openAnimal('${mother.id}')" style="cursor:pointer">${tbadge(mother.number,mother.color)}</span></div>`:''}${a.cat==='m'?`<div class="muted" style="font-size:11px;margin-top:4px">آخر ولادة: ${lastBirthDate?fmt(lastBirthDate):'لا يوجد'}</div>${daysSinceLastBirth!==null?`<div style="font-size:12px;font-weight:700;${daysSinceLastBirth>=150?'color:#A8503A':'color:#6E7B45'};margin-top:3px">مضى ${daysSinceLastBirth} يوم${daysSinceLastBirth>=150?' ⚠️':''}</div>`:''}`:''}${a.cat==='n'&&a.birthDate?`<div class="muted" style="font-size:11px">الميلاد: ${fmt(a.birthDate)}</div><div style="font-size:13px;font-weight:700;color:#6E7B45;margin-top:5px">🗓 العمر: ${Math.floor((new Date()-new Date(a.birthDate))/86400000)} يوم</div>${Math.floor((new Date()-new Date(a.birthDate))/86400000)>=90?`<div style="font-size:12px;font-weight:700;color:#A8503A;margin-top:4px;background:#A8503A15;border:1px solid #A8503A44;border-radius:8px;padding:6px 10px">⚠️ حان وقت الفطام — مضى أكثر من 90 يوم</div>`:''}`:''}${pen?`<div class="muted" style="font-size:11px">الحظيرة: ${pen.name}</div>`:''}${!a.alive&&a.deathCause?`<div class="red" style="font-size:11px">السبب: ${a.deathCause}</div>`:''}</div><span class="chip ${a.alive?'cg':'cr'}">${a.alive?'حي':'نافق'}</span>${a.cat==='m'&&a.twin?'<span class="chip cau">متأومة</span>':''}</div>
     </div>
     <div class="fw gap8 mb8" ${gHide()}>
       ${a.alive?`<button class="btn-r" onclick="showDF()">💀 نفوق</button>`:`<button class="btn-g" onclick="undoDeath()">↩ إلغاء</button>`}
