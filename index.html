@@ -387,8 +387,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج']};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج']});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج']};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج']});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -400,7 +400,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -995,9 +995,20 @@ function openVax(){
       <div class="card mb8" style="border-color:${new Date(v.date)<=new Date()?'#A8503A55':'#E1D6BB'}">
         <div class="flex jb ac mb4">
           <span style="font-weight:600;font-size:13px">${v.type}</span>
-          <div class="flex gap4"><button class="bi" onclick="openEV('${v.id}')">✎</button><button class="bi red" onclick="delVax('${v.id}')">🗑</button></div>
+          <div class="flex gap4"><button class="bi" style="color:#6E7B45" onclick="markVaxDone('${v.id}')" title="تم التنفيذ">✔</button><button class="bi" onclick="openEV('${v.id}')">✎</button><button class="bi red" onclick="delVax('${v.id}')">🗑</button></div>
         </div>
         <div class="muted" style="font-size:10px">${fmt(v.date)}${new Date(v.date)<=new Date()?' · مستحق':''}${v.before?` · تنبيه قبل ${v.before} يوم`:''}</div>
+        ${v.notes?`<div style="font-size:11px;margin-top:3px">${v.notes}</div>`:''}
+      </div>
+    `).join('')}
+    <div class="st mt10 mb8">🗂 سجل التطعيمات المنفذة (${(db.vaxHistory||[]).length})</div>
+    ${(!db.vaxHistory||db.vaxHistory.length===0)?'<div class="empty">لا سجل بعد</div>':db.vaxHistory.slice().sort((a,b)=>new Date(b.doneDate)-new Date(a.doneDate)).map(v=>`
+      <div class="card mb8" style="background:#F3ECDD;border:none">
+        <div class="flex jb ac mb4">
+          <span style="font-weight:600;font-size:13px">${v.type}</span>
+          <button class="bi red" onclick="delVaxHistory('${v.id}')">🗑</button>
+        </div>
+        <div class="muted" style="font-size:10px">تاريخ الموعد: ${fmt(v.date)} · نُفّذ: ${fmt(v.doneDate)}</div>
         ${v.notes?`<div style="font-size:11px;margin-top:3px">${v.notes}</div>`:''}
       </div>
     `).join('')}
@@ -1005,6 +1016,19 @@ function openVax(){
 }
 function saveVax(){if(guardGuest())return;const t=document.getElementById('vtype').value.trim();const e=document.getElementById('verr');if(!t){e.textContent='أدخل النوع';e.style.display='block';return;}e.style.display='none';db.vax.push({id:uid(),type:t,date:document.getElementById('vdate').value||tod(),before:Number(document.getElementById('vbef').value)||0,notes:document.getElementById('vnotes').value});save();toast('تمت الإضافة');openVax();rHome();}
 function delVax(id){if(!confirm('حذف هذا الموعد؟'))return;db.vax=db.vax.filter(v=>v.id!==id);save();openVax();rHome();}
+function markVaxDone(id){
+  if(guardGuest())return;
+  const v=db.vax.find(x=>x.id===id);if(!v)return;
+  db.vax=db.vax.filter(x=>x.id!==id);
+  db.vaxHistory=db.vaxHistory||[];
+  db.vaxHistory.push({id:uid(),type:v.type,date:v.date,before:v.before,notes:v.notes,doneDate:tod()});
+  save();toast('تم تسجيل التنفيذ');openVax();rHome();
+}
+function delVaxHistory(id){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.vaxHistory=(db.vaxHistory||[]).filter(v=>v.id!==id);
+  save();openVax();
+}
 function openEV(id){
   const v=db.vax.find(x=>x.id===id);if(!v)return;
   openMdl('تعديل',`<div class="fld"><label>النوع</label><input type="text" id="evt" value="${v.type}"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="evd" value="${v.date||tod()}"></div><div class="fld" style="flex:1"><label>قبل كم يوم</label><input type="number" id="evb" value="${v.before||0}"></div></div><div class="fld"><label>ملاحظات</label><textarea id="evn">${v.notes||''}</textarea></div><button class="btn w100 jc" onclick="saveEV('${id}')">حفظ</button>`);
