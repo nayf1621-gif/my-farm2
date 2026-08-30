@@ -99,6 +99,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>حظائر الغنم</span></button>
+  <button onclick="nav('dorper')"><span class="ico">🐐</span><span>الدوربر</span></button>
   <button onclick="nav('fin')"><span class="ico">💰</span><span>مالية الغنم</span></button>
   <button onclick="nav('rep')"><span class="ico">📊</span><span>تقارير الغنم</span></button>
   <button onclick="nav('birds')"><span class="ico">🦜</span><span>طيور البيت</span></button>
@@ -145,6 +146,25 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="sh"><span class="st">حظائر الغنم</span><button class="btn" data-owner onclick="openAddPen()">＋ جديدة</button></div>
   <div id="pens-list"></div>
 </div>
+
+<!-- DORPER -->
+<div id="page-dorper" class="page">
+  <div class="sh"><span class="st">الدوربر</span><button class="btn" data-owner onclick="openAddDorperPen()">＋ حظيرة جديدة</button></div>
+  <div class="card mb10" data-owner>
+    <div class="fld"><input type="text" id="dnn" placeholder="الرقم"></div>
+    <div class="cp" id="dncp"></div>
+    <div class="flex gap8 mb8">
+      <button class="btn-g" id="dg-f" style="flex:1;justify-content:center" onclick="setDorGender('أنثى')">أنثى</button>
+      <button class="btn-g" id="dg-m" style="flex:1;justify-content:center" onclick="setDorGender('ذكر')">ذكر</button>
+    </div>
+    <div class="fld"><select id="dnp-sel"><option value="">بدون حظيرة</option></select></div>
+    <button class="btn" onclick="addDorperAnimal()">＋ إضافة رأس</button>
+    <div id="dae" class="red mt8" style="font-size:12px;display:none"></div>
+  </div>
+  <div id="dorper-unassigned"></div>
+  <div id="dorper-pens-list"></div>
+</div>
+
 
 <!-- FINANCE -->
 <div id="page-fin" class="page">
@@ -387,8 +407,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[]};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[]});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -400,7 +420,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[]});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -442,13 +462,14 @@ function nav(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const idx={home:0,pens:1,fin:2,rep:3,birds:4,'farm-birds':5,finrep:6}[id];
+  const idx={home:0,pens:1,dorper:2,fin:3,rep:4,birds:5,'farm-birds':6,finrep:7}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   // Update global date bar
   const gd=document.getElementById('global-date-bar');
   if(gd)gd.textContent='📅 '+getHijriDate();
   if(id==='home')rHome();
   if(id==='pens')rPens();
+  if(id==='dorper')rDorperPens();
   if(id==='fin')rFin();
   if(id==='rep')rRep();
   if(id==='birds')rBirds();
@@ -890,6 +911,112 @@ function saveATP(pid){if(guardGuest())return;
   if(!atpSel.length){toast('اختر كائن',true);return;}
   atpSel.forEach(id=>{const a=db.animals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});
   atpSel=[];save();toast('تمت الإضافة');closeMdl();rPens();rHome();
+}
+
+// ====== DORPER (independent data) ======
+let selDorColor=COLORS[0].v;
+let selDorGender='أنثى';
+function setDorGender(g){selDorGender=g;document.getElementById('dg-f').style.background=g==='أنثى'?'#6E7B45':'';document.getElementById('dg-f').style.color=g==='أنثى'?'#fff':'';document.getElementById('dg-m').style.background=g==='ذكر'?'#6E7B45':'';document.getElementById('dg-m').style.color=g==='ذكر'?'#fff':'';}
+function rDorperPens(){
+  mkCP('dncp',selDorColor,c=>selDorColor=c);
+  setDorGender(selDorGender);
+  const sel=document.getElementById('dnp-sel');
+  sel.innerHTML='<option value="">بدون حظيرة</option>'+db.dorperPens.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const unassigned=db.dorperAnimals.filter(a=>a.alive&&!a.penId);
+  const uEl=document.getElementById('dorper-unassigned');
+  uEl.innerHTML=unassigned.length===0?'':`<div class="card mb10"><div class="st mb8" style="font-size:13px">بدون حظيرة (${unassigned.length})</div>${unassigned.map(a=>`<div class="li"><span onclick="openDorperAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}</span><button class="bi red" onclick="delDorperAnimal('${a.id}')">🗑</button></div></div>`).join('')}</div>`;
+  const el=document.getElementById('dorper-pens-list');
+  if(!db.dorperPens.length){el.innerHTML='<div class="empty">لا توجد حظائر</div>';return;}
+  el.innerHTML=db.dorperPens.map(p=>{
+    const inn=db.dorperAnimals.filter(a=>a.penId===p.id&&a.alive);
+    return`<div class="card" style="cursor:pointer" onclick="openDorperPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${inn.length} كائن · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()"><button class="bi" onclick="openEditDorperPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToDorperPen('${p.id}')">＋</button></div></div></div>`;
+  }).join('');
+}
+function addDorperAnimal(){
+  if(guardGuest())return;
+  const num=toLatinDigits(document.getElementById('dnn').value.trim());
+  const err=document.getElementById('dae');
+  if(!num){err.textContent='أدخل الرقم';err.style.display='block';return;}
+  if(db.dorperAnimals.some(a=>a.number===num&&a.color===selDorColor)){err.textContent=`${num} (${selDorColor}) مستخدم`;err.style.display='block';return;}
+  err.style.display='none';
+  const penId=document.getElementById('dnp-sel').value||null;
+  db.dorperAnimals.push({id:uid(),number:num,color:selDorColor,gender:selDorGender,alive:true,penId,addedAt:new Date().toISOString()});
+  save();toast('تمت الإضافة');document.getElementById('dnn').value='';rDorperPens();
+}
+function delDorperAnimal(id){
+  if(!confirm('حذف هذا الرأس؟'))return;
+  db.dorperAnimals=db.dorperAnimals.filter(a=>a.id!==id);save();toast('تم الحذف');rDorperPens();
+}
+function openDorperAnimal(id){
+  const a=db.dorperAnimals.find(x=>x.id===id);if(!a)return;
+  const pen=db.dorperPens.find(p=>p.id===a.penId);
+  openMdl(`دوربر ${tbadge(a.number,a.color)}`,`
+    <div class="muted mb8" style="font-size:11px">${a.gender}${pen?' · '+pen.name:' · بدون حظيرة'}</div>
+    <button class="btn-r w100 jc" onclick="delDorperAnimal('${a.id}');closeMdl();">🗑 حذف</button>
+  `);
+}
+let dpvPen=null,dpvMode=false,dpvSel=[];
+function openDorperPV(pid){dpvPen=pid;dpvMode=false;dpvSel=[];rDPV();}
+function rDPV(){
+  const pen=db.dorperPens.find(p=>p.id===dpvPen);
+  const anims=db.dorperAnimals.filter(a=>a.penId===dpvPen&&a.alive);
+  openMdl(`${pen.name} (${anims.length})`,`
+    <div class="flex jb mb8"><button class="btn-g" onclick="togDPVSel()">${dpvMode?'إلغاء':'✓ تحديد'}</button></div>
+    <div id="dpvlist">${anims.length===0?'<div class="empty">لا كائنات</div>':anims.map(a=>{const ck=dpvSel.includes(a.id);return`<div class="li" style="cursor:pointer;background:${ck?'#6E7B4514':'#F3ECDD'};border-color:${ck?'#6E7B45':'#E1D6BB'}" onclick="${dpvMode?`togDPVA('${a.id}')`:``}"><div class="flex ac gap8">${dpvMode?`<div style="width:18px;height:18px;border:2px solid ${ck?'#6E7B45':'#ccc'};border-radius:4px;background:${ck?'#6E7B45':'transparent'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">${ck?'✓':''}</div>`:''}${dpvMode?tbadge(a.number,a.color):`<span onclick="closeMdl();openDorperAnimal('${a.id}')">${tbadge(a.number,a.color)}</span>`}</div>${(!dpvMode)?`<button class="bi" onclick="event.stopPropagation();rmDPVA('${a.id}')">🚪</button>`:''}</div>`;}).join('')}</div>
+    ${(dpvMode&&anims.length)?`<div class="flex gap8 mt8"><button class="btn" style="flex:1;justify-content:center" onclick="bulkDTr()" ${!dpvSel.length?'disabled':''}>نقل (${dpvSel.length})</button><button class="btn-r" style="flex:1;justify-content:center" onclick="bulkDDel()" ${!dpvSel.length?'disabled':''}>🗑 (${dpvSel.length})</button></div>`:''}
+  `);
+}
+function togDPVSel(){dpvMode=!dpvMode;dpvSel=[];rDPV();}
+function togDPVA(id){dpvSel=dpvSel.includes(id)?dpvSel.filter(x=>x!==id):[...dpvSel,id];rDPV();}
+function rmDPVA(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.dorperAnimals.find(x=>x.id===id);if(a)a.penId=null;save();rDPV();rDorperPens();}
+function bulkDTr(){
+  const others=db.dorperPens.filter(p=>p.id!==dpvPen);
+  if(!others.length){toast('لا حظائر أخرى',true);return;}
+  openMdl(`نقل ${dpvSel.length} إلى...`,others.map(p=>`<div class="li" style="cursor:pointer" onclick="doBDTr('${p.id}')"><span style="font-weight:700">${p.name}</span></div>`).join(''));
+}
+function doBDTr(pid){dpvSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a)a.penId=pid;});save();toast(`تم نقل ${dpvSel.length}`);closeMdl();rDorperPens();}
+function bulkDDel(){
+  if(!confirm(`حذف ${dpvSel.length} رأس؟`))return;
+  db.dorperAnimals=db.dorperAnimals.filter(a=>!dpvSel.includes(a.id));
+  save();toast('تم الحذف');closeMdl();rDorperPens();
+}
+function openAddDorperPen(){
+  openMdl('إضافة حظيرة دوربر',`<div class="fld"><label>الاسم</label><input type="text" id="dpn" placeholder="حظيرة ١"></div><div class="fld"><label>تنبيه بعد كم يوم</label><input type="number" id="dpd" value="7"></div><div class="flex jb ac mb10" style="background:#F3ECDD;border-radius:10px;padding:10px"><span style="font-size:13px">تفعيل التنبيه</span><input type="checkbox" id="dpa" checked style="width:20px;height:20px"></div><button class="btn w100 jc" onclick="saveDorperPen()">حفظ</button>`);
+}
+function saveDorperPen(){if(guardGuest())return;
+  const name=document.getElementById('dpn').value.trim();
+  if(!name){toast('أدخل الاسم',true);return;}
+  db.dorperPens.push({id:uid(),name,days:Number(document.getElementById('dpd').value)||7,alert:document.getElementById('dpa').checked});
+  save();toast('تمت الإضافة');closeMdl();rDorperPens();
+}
+function openEditDorperPen(id){
+  const p=db.dorperPens.find(x=>x.id===id);
+  openMdl('تعديل الحظيرة',`<div class="fld"><label>الاسم</label><input type="text" id="edpn" value="${p.name}"></div><div class="fld"><label>الأيام</label><input type="number" id="edpd" value="${p.days||7}"></div><div class="flex jb ac mb10" style="background:#F3ECDD;border-radius:10px;padding:10px"><span style="font-size:13px">تفعيل التنبيه</span><input type="checkbox" id="edpa" ${p.alert!==false?'checked':''} style="width:20px;height:20px"></div><button class="btn w100 jc mb8" onclick="doEditDorperPen('${id}')">حفظ</button><button class="btn-r w100 jc" onclick="delDorperPen('${id}')">🗑 حذف</button>`);
+}
+function doEditDorperPen(id){if(guardGuest())return;
+  const p=db.dorperPens.find(x=>x.id===id);if(!p)return;
+  const n=document.getElementById('edpn').value.trim();if(!n){toast('أدخل الاسم',true);return;}
+  p.name=n;p.days=Number(document.getElementById('edpd').value)||7;p.alert=document.getElementById('edpa').checked;
+  save();toast('تم الحفظ');closeMdl();rDorperPens();
+}
+function delDorperPen(id){
+  if(confirm('حذف الحظيرة؟')){db.dorperAnimals.forEach(a=>{if(a.penId===id)a.penId=null;});db.dorperPens=db.dorperPens.filter(p=>p.id!==id);save();toast('تم');closeMdl();rDorperPens();}
+}
+let atpDorSel=[];
+function openAddToDorperPen(pid){
+  atpDorSel=[];
+  const free=db.dorperAnimals.filter(a=>a.alive&&!a.penId);
+  openMdl('إضافة للحظيرة',`${free.length===0?'<div class="empty">لا رؤوس حرة</div>':free.map(a=>`<div class="li" style="cursor:pointer" id="atpd${a.id}" onclick="togATPDor('${a.id}','${pid}',this)"><div class="flex ac gap8"><div style="width:18px;height:18px;border:2px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px" id="atpdb${a.id}"></div>${tbadge(a.number,a.color)}</div><span class="muted" style="font-size:11px">${a.gender}</span></div>`).join('')}${free.length?`<button class="btn w100 jc mt8" onclick="saveATPDor('${pid}')">إضافة</button>`:''}`);
+}
+function togATPDor(id,pid,el){
+  const b=document.getElementById('atpdb'+id);
+  if(atpDorSel.includes(id)){atpDorSel=atpDorSel.filter(x=>x!==id);b.style.background='transparent';b.style.borderColor='#ccc';b.textContent='';el.style.background='#F3ECDD';el.style.borderColor='#E1D6BB';}
+  else{atpDorSel.push(id);b.style.background='#6E7B45';b.style.borderColor='#6E7B45';b.style.color='#fff';b.textContent='✓';el.style.background='#6E7B4514';el.style.borderColor='#6E7B45';}
+}
+function saveATPDor(pid){if(guardGuest())return;
+  if(!atpDorSel.length){toast('اختر رأس',true);return;}
+  atpDorSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a)a.penId=pid;});
+  atpDorSel=[];save();toast('تمت الإضافة');closeMdl();rDorperPens();
 }
 
 // ====== FINANCE ======
