@@ -954,10 +954,29 @@ function openDorperAnimal(id){
   const pen=db.dorperPens.find(p=>p.id===a.penId);
   openMdl(`دوربر ${tbadge(a.number,a.color)}`,`
     <div class="muted mb8" style="font-size:11px">${a.gender}${pen?' · '+pen.name:' · بدون حظيرة'}</div>
+    <div class="fld"><label>الرقم</label><input type="text" id="ednum" value="${a.number}"></div>
+    <div class="cp" id="edcp"></div>
+    <div id="edaeErr" class="red mb8" style="font-size:11px;display:none"></div>
+    <button class="btn w100 jc mb8" onclick="saveDorperNum('${a.id}')">حفظ الرقم واللون</button>
     <div class="fld"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
     <button class="btn w100 jc mb8" onclick="saveDorperNotes('${a.id}')">حفظ الملاحظات</button>
     <button class="btn-r w100 jc" onclick="delDorperAnimal('${a.id}');closeMdl();">🗑 حذف</button>
   `);
+  let editColor=a.color;
+  mkCP('edcp',editColor,c=>editColor=c);
+  window._dorEditColor=()=>editColor;
+}
+function saveDorperNum(id){
+  if(guardGuest())return;
+  const a=db.dorperAnimals.find(x=>x.id===id);if(!a)return;
+  const num=toLatinDigits(document.getElementById('ednum').value.trim());
+  const color=window._dorEditColor?window._dorEditColor():a.color;
+  const err=document.getElementById('edaeErr');
+  if(!num){err.textContent='أدخل الرقم';err.style.display='block';return;}
+  if(db.dorperAnimals.some(x=>x.id!==id&&x.number===num&&x.color===color)){err.textContent=`${num} (${color}) مستخدم`;err.style.display='block';return;}
+  err.style.display='none';
+  a.number=num;a.color=color;
+  save();toast('تم الحفظ');closeMdl();rDorperPens();
 }
 function saveDorperNotes(id){
   const a=db.dorperAnimals.find(x=>x.id===id);if(!a)return;
