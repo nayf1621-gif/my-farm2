@@ -925,7 +925,7 @@ function rDorperPens(){
   sel.innerHTML='<option value="">بدون حظيرة</option>'+db.dorperPens.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   const unassigned=db.dorperAnimals.filter(a=>a.alive&&!a.penId);
   const uEl=document.getElementById('dorper-unassigned');
-  uEl.innerHTML=unassigned.length===0?'':`<div class="card mb10"><div class="st mb8" style="font-size:13px">بدون حظيرة (${unassigned.length})</div>${unassigned.map(a=>`<div class="li"><span onclick="openDorperAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}</span><button class="bi red" onclick="delDorperAnimal('${a.id}')">🗑</button></div></div>`).join('')}</div>`;
+  uEl.innerHTML=unassigned.length===0?'':`<div class="card mb10"><div class="st mb8" style="font-size:13px">بدون حظيرة (${unassigned.length})</div>${unassigned.map(a=>{const uAge=(a.cat==='n'&&a.birthDate)?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;return`<div class="li"><span onclick="openDorperAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}${uAge!==null?' · '+uAge+' يوم':''}</span><button class="bi red" onclick="delDorperAnimal('${a.id}')">🗑</button></div></div>`;}).join('')}</div>`;
   const el=document.getElementById('dorper-pens-list');
   if(!db.dorperPens.length){el.innerHTML='<div class="empty">لا توجد حظائر</div>';return;}
   el.innerHTML=db.dorperPens.map(p=>{
@@ -968,7 +968,7 @@ function openDorperAnimal(id){
     <button class="btn w100 jc mb8" onclick="saveDorperNum('${a.id}')">حفظ الرقم واللون</button>
     <div class="fld"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
     <button class="btn w100 jc mb8" onclick="saveDorperNotes('${a.id}')">حفظ الملاحظات</button>
-    ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.length})</span><button class="btn" onclick="openDorOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>`<div class="li" style="cursor:pointer" onclick="openDorperAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}</span></div>`).join('')}</div>`:''}
+    ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.length})</span><button class="btn" onclick="openDorOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>{const oAge=o.birthDate?Math.floor((new Date()-new Date(o.birthDate))/86400000):null;return`<div class="li" style="cursor:pointer" onclick="openDorperAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${oAge!==null?' · '+oAge+' يوم':''}</span></div>`;}).join('')}</div>`:''}
     <button class="btn-r w100 jc mt8" onclick="delDorperAnimal('${a.id}');closeMdl();">🗑 حذف</button>
   `);
   let editColor=a.color;
