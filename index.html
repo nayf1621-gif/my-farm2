@@ -942,29 +942,64 @@ function addDorperAnimal(){
   err.style.display='none';
   const penId=document.getElementById('dnp-sel').value||null;
   const notes=document.getElementById('dnnotes').value.trim();
-  db.dorperAnimals.push({id:uid(),number:num,color:selDorColor,gender:selDorGender,alive:true,penId,notes,addedAt:new Date().toISOString()});
+  db.dorperAnimals.push({id:uid(),number:num,color:selDorColor,gender:selDorGender,cat:'m',alive:true,penId,notes,addedAt:new Date().toISOString()});
   save();toast('تمت الإضافة');document.getElementById('dnn').value='';document.getElementById('dnnotes').value='';rDorperPens();
 }
 function delDorperAnimal(id){
   if(!confirm('حذف هذا الرأس؟'))return;
   db.dorperAnimals=db.dorperAnimals.filter(a=>a.id!==id);save();toast('تم الحذف');rDorperPens();
 }
+let curDorAnimal=null;
 function openDorperAnimal(id){
+  curDorAnimal=id;
   const a=db.dorperAnimals.find(x=>x.id===id);if(!a)return;
   const pen=db.dorperPens.find(p=>p.id===a.penId);
+  const cat=a.cat||'m';
+  const mother=cat==='n'&&a.motherId?db.dorperAnimals.find(x=>x.id===a.motherId):null;
+  const offs=cat==='m'?db.dorperAnimals.filter(o=>o.motherId===a.id):[];
+  const age=cat==='n'&&a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
   openMdl(`دوربر ${tbadge(a.number,a.color)}`,`
-    <div class="muted mb8" style="font-size:11px">${a.gender}${pen?' · '+pen.name:' · بدون حظيرة'}</div>
+    <div class="muted mb8" style="font-size:11px">${cat==='m'?'أم':'مولود'} · ${a.gender}${pen?' · '+pen.name:' · بدون حظيرة'}</div>
+    ${mother?`<div style="font-size:11px;margin-bottom:8px">الأم: <span onclick="closeMdl();openDorperAnimal('${mother.id}')" style="cursor:pointer">${tbadge(mother.number,mother.color)}</span></div>`:''}
+    ${cat==='n'&&a.birthDate?`<div class="muted" style="font-size:11px;margin-bottom:8px">الميلاد: ${fmt(a.birthDate)}${age!==null?' · العمر: '+age+' يوم':''}</div>`:''}
     <div class="fld"><label>الرقم</label><input type="text" id="ednum" value="${a.number}"></div>
     <div class="cp" id="edcp"></div>
     <div id="edaeErr" class="red mb8" style="font-size:11px;display:none"></div>
     <button class="btn w100 jc mb8" onclick="saveDorperNum('${a.id}')">حفظ الرقم واللون</button>
     <div class="fld"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
     <button class="btn w100 jc mb8" onclick="saveDorperNotes('${a.id}')">حفظ الملاحظات</button>
-    <button class="btn-r w100 jc" onclick="delDorperAnimal('${a.id}');closeMdl();">🗑 حذف</button>
+    ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.length})</span><button class="btn" onclick="openDorOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>`<div class="li" style="cursor:pointer" onclick="openDorperAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}</span></div>`).join('')}</div>`:''}
+    <button class="btn-r w100 jc mt8" onclick="delDorperAnimal('${a.id}');closeMdl();">🗑 حذف</button>
   `);
   let editColor=a.color;
   mkCP('edcp',editColor,c=>editColor=c);
   window._dorEditColor=()=>editColor;
+}
+let dorOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];
+function openDorOffs(){dorOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];rDorOffs();}
+function rDorOffs(){
+  const a=db.dorperAnimals.find(x=>x.id===curDorAnimal);
+  openMdl(`مواليد ${tbadge(a.number,a.color)}`,`
+    <div class="fld"><label>تاريخ الميلاد</label><input type="date" id="dobd" value="${tod()}"></div>
+    <div id="dorows">${dorOffRows.map((r,i)=>`<div style="border:1px solid #E1D6BB;border-radius:12px;padding:11px;margin-bottom:9px"><div class="muted mb8" style="font-size:11px;font-weight:700">مولود ${i+1}</div><div class="flex gap8 mb8"><select onchange="dorOffRows[${i}].gender=this.value" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:7px;flex:1;font-size:12px"><option ${r.gender==='أنثى'?'selected':''}>أنثى</option><option ${r.gender==='ذكر'?'selected':''}>ذكر</option></select><input type="text" placeholder="الرقم" value="${r.number}" oninput="dorOffRows[${i}].number=this.value" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:7px;flex:1;font-size:12px"></div><div class="cp" id="docp${i}"></div></div>`).join('')}</div>
+    ${dorOffRows.length<3?`<button class="btn-g mb8" onclick="addDorOffRow()">＋ مولود آخر</button>`:''}
+    <div id="doerr" class="red mb8" style="font-size:12px;display:none"></div>
+    <button class="btn w100 jc" onclick="saveDorOffs()">حفظ</button>
+  `,true);
+  dorOffRows.forEach((r,i)=>mkCP('docp'+i,r.color,c=>dorOffRows[i].color=c));
+}
+function addDorOffRow(){if(dorOffRows.length>=3)return;dorOffRows.push({gender:'أنثى',number:'',color:COLORS[0].v});rDorOffs();}
+function saveDorOffs(){if(guardGuest())return;
+  const bd=document.getElementById('dobd').value||tod();
+  const rows=dorOffRows.map(r=>({...r,number:toLatinDigits(r.number.trim()),bd}));
+  const err=document.getElementById('doerr');
+  for(const r of rows){
+    if(!r.number){err.textContent='أدخل رقم';err.style.display='block';return;}
+    if(db.dorperAnimals.some(a=>a.number===r.number&&a.color===r.color)){err.textContent=`${r.number}(${r.color}) مستخدم`;err.style.display='block';return;}
+  }
+  const mid=curDorAnimal;
+  rows.forEach(r=>db.dorperAnimals.push({id:uid(),number:r.number,color:r.color,cat:'n',gender:r.gender,alive:true,birthDate:r.bd,penId:null,motherId:mid,addedAt:new Date().toISOString()}));
+  save();toast('تمت الإضافة');closeMdl();openDorperAnimal(mid);rDorperPens();
 }
 function saveDorperNum(id){
   if(guardGuest())return;
