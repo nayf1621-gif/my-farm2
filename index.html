@@ -158,6 +158,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
       <button class="btn-g" id="dg-m" style="flex:1;justify-content:center" onclick="setDorGender('ذكر')">ذكر</button>
     </div>
     <div class="fld"><select id="dnp-sel"><option value="">بدون حظيرة</option></select></div>
+    <div class="fld"><label>ملاحظات (اختياري)</label><textarea id="dnnotes"></textarea></div>
     <button class="btn" onclick="addDorperAnimal()">＋ إضافة رأس</button>
     <div id="dae" class="red mt8" style="font-size:12px;display:none"></div>
   </div>
@@ -940,8 +941,9 @@ function addDorperAnimal(){
   if(db.dorperAnimals.some(a=>a.number===num&&a.color===selDorColor)){err.textContent=`${num} (${selDorColor}) مستخدم`;err.style.display='block';return;}
   err.style.display='none';
   const penId=document.getElementById('dnp-sel').value||null;
-  db.dorperAnimals.push({id:uid(),number:num,color:selDorColor,gender:selDorGender,alive:true,penId,addedAt:new Date().toISOString()});
-  save();toast('تمت الإضافة');document.getElementById('dnn').value='';rDorperPens();
+  const notes=document.getElementById('dnnotes').value.trim();
+  db.dorperAnimals.push({id:uid(),number:num,color:selDorColor,gender:selDorGender,alive:true,penId,notes,addedAt:new Date().toISOString()});
+  save();toast('تمت الإضافة');document.getElementById('dnn').value='';document.getElementById('dnnotes').value='';rDorperPens();
 }
 function delDorperAnimal(id){
   if(!confirm('حذف هذا الرأس؟'))return;
@@ -952,8 +954,15 @@ function openDorperAnimal(id){
   const pen=db.dorperPens.find(p=>p.id===a.penId);
   openMdl(`دوربر ${tbadge(a.number,a.color)}`,`
     <div class="muted mb8" style="font-size:11px">${a.gender}${pen?' · '+pen.name:' · بدون حظيرة'}</div>
+    <div class="fld"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
+    <button class="btn w100 jc mb8" onclick="saveDorperNotes('${a.id}')">حفظ الملاحظات</button>
     <button class="btn-r w100 jc" onclick="delDorperAnimal('${a.id}');closeMdl();">🗑 حذف</button>
   `);
+}
+function saveDorperNotes(id){
+  const a=db.dorperAnimals.find(x=>x.id===id);if(!a)return;
+  a.notes=document.getElementById('dednotes').value.trim();
+  save();toast('تم الحفظ');closeMdl();rDorperPens();
 }
 let dpvPen=null,dpvMode=false,dpvSel=[];
 function openDorperPV(pid){dpvPen=pid;dpvMode=false;dpvSel=[];rDPV();}
