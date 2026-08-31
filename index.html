@@ -245,6 +245,20 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   </div>
   <div class="row" id="rtotals"></div>
   <div class="card mb10">
+    <div class="st mb8">🔍 بحث عن المواليد</div>
+    <div class="flex gap8 mb8">
+      <div class="fld" style="flex:1;margin-bottom:0"><label>من تاريخ</label><input type="date" id="bsf"></div>
+      <div class="fld" style="flex:1;margin-bottom:0"><label>إلى تاريخ</label><input type="date" id="bst"></div>
+    </div>
+    <div class="flex gap8 mb8">
+      <button class="btn-g" id="bsg-a" style="flex:1;justify-content:center" onclick="setBSGender('')">الجميع</button>
+      <button class="btn-g" id="bsg-f" style="flex:1;justify-content:center" onclick="setBSGender('أنثى')">إناث</button>
+      <button class="btn-g" id="bsg-m" style="flex:1;justify-content:center" onclick="setBSGender('ذكر')">ذكور</button>
+    </div>
+    <button class="btn w100 jc" onclick="searchBirths()">🔍 بحث</button>
+    <div id="bsresults" class="mt10"></div>
+  </div>
+  <div class="card mb10">
     <div class="sh"><span class="st">عداد الولادات</span><button class="btn-r" onclick="cfmResetBC()">🗑 تصفير</button></div>
     <div class="row" id="rbc"></div>
   </div>
@@ -1357,10 +1371,36 @@ function openEV(id){
 }
 function saveEV(id){const v=db.vax.find(x=>x.id===id);if(!v)return;v.type=document.getElementById('evt').value.trim()||v.type;v.date=document.getElementById('evd').value||v.date;v.before=Number(document.getElementById('evb').value)||0;v.notes=document.getElementById('evn').value;save();toast('تم');openVax();}
 
+let bsGender='';
+function setBSGender(g){
+  bsGender=g;
+  ['a','f','m'].forEach(k=>{const b=document.getElementById('bsg-'+k);b.style.background='';b.style.color='';});
+  const map={'':'a','أنثى':'f','ذكر':'m'};
+  const b=document.getElementById('bsg-'+map[g]);
+  b.style.background='#6E7B45';b.style.color='#fff';
+}
+function searchBirths(){
+  const from=document.getElementById('bsf').value,to=document.getElementById('bst').value;
+  const list=db.animals.filter(a=>{
+    if(a.cat!=='n'||!a.birthDate)return false;
+    if(from&&a.birthDate<from)return false;
+    if(to&&a.birthDate>to)return false;
+    if(bsGender&&a.gender!==bsGender)return false;
+    return true;
+  }).sort((x,y)=>new Date(y.birthDate)-new Date(x.birthDate));
+  const el=document.getElementById('bsresults');
+  if(!list.length){el.innerHTML='<div class="empty">لا نتائج</div>';return;}
+  el.innerHTML=`<div class="muted mb8" style="font-size:11px">${list.length} نتيجة</div>`+list.map(a=>{
+    const mother=db.animals.find(m=>m.id===a.motherId);
+    return `<div class="li"><span onclick="nav('home');openAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}${mother?' · الأم '+tbadge(mother.number,mother.color):''}</span><span style="font-size:11px;font-weight:700;color:#6E7B45">${fmt(a.birthDate)}</span></div></div>`;
+  }).join('');
+}
+
 // ====== REPORTS ======
 function rRep(){
   const from=document.getElementById('rf').value,to=document.getElementById('rt').value;
   const cat=document.getElementById('rcat').value;
+  if(document.getElementById('bsg-a'))setBSGender(bsGender);
   const inR=d=>(!from||d>=from)&&(!to||d<=to);
   const fE=db.expenses.filter(e=>inR(e.date)),fS=db.sales.filter(s=>inR(s.date));
   const tE=fE.reduce((a,b)=>a+Number(b.amount||0),0),tS=fS.reduce((a,b)=>a+Number(b.amount||0),0);
