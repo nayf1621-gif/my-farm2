@@ -200,6 +200,54 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     </div>
   </div>
 
+  <!-- Slaughtered -->
+  <div class="card mb10">
+    <div class="sh" style="cursor:pointer" onclick="togBSection('fslu-wrap','fslu-arrow')">
+      <div class="flex ac gap8">
+        <span style="font-size:20px">🔪</span>
+        <div>
+          <div class="st" style="font-size:13px">الذبائح</div>
+          <div class="muted" style="font-size:11px" id="fslu-summary">اضغط للعرض</div>
+        </div>
+      </div>
+      <div class="flex ac gap8">
+        <button class="btn-g" data-owner onclick="event.stopPropagation();openSlaughterModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
+        <span id="fslu-arrow">▼</span>
+      </div>
+    </div>
+    <div id="fslu-wrap" style="display:none;margin-top:12px">
+      <div id="fslu-list"></div>
+      <div class="sc mt8" style="text-align:center">
+        <div class="v green" id="fslu-total">0</div>
+        <div class="l">إجمالي القيمة ﷼</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset sales -->
+  <div class="card mb10">
+    <div class="sh" style="cursor:pointer" onclick="togBSection('fast-wrap','fast-arrow')">
+      <div class="flex ac gap8">
+        <span style="font-size:20px">💰</span>
+        <div>
+          <div class="st" style="font-size:13px">بيع الأصول</div>
+          <div class="muted" style="font-size:11px" id="fast-summary">اضغط للعرض</div>
+        </div>
+      </div>
+      <div class="flex ac gap8">
+        <button class="btn-g" data-owner onclick="event.stopPropagation();openAssetSaleModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
+        <span id="fast-arrow">▼</span>
+      </div>
+    </div>
+    <div id="fast-wrap" style="display:none;margin-top:12px">
+      <div id="fast-list"></div>
+      <div class="sc mt8" style="text-align:center">
+        <div class="v green" id="fast-total">0</div>
+        <div class="l">إجمالي القيمة ﷼</div>
+      </div>
+    </div>
+  </div>
+
   <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
     <span class="muted" style="font-size:11px">📅</span>
     <input type="date" id="ff" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:110px" onchange="rFin()">
@@ -425,8 +473,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[]};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[]});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[]};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[]});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -438,7 +486,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[]});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[]});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -1219,6 +1267,52 @@ function rFin(){
           </div>
         </div>`}).join('');
   }
+  // Slaughters stat
+  const slu=db.slaughters||[];
+  const totalSlu=slu.reduce((a,b)=>a+Number(b.count||0),0);
+  const totalSluVal=slu.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const sluSumEl=document.getElementById('fslu-summary');
+  const sluListEl=document.getElementById('fslu-list');
+  const sluTotEl=document.getElementById('fslu-total');
+  if(sluSumEl)sluSumEl.textContent=`${totalSlu} رأس · ${totalSluVal.toLocaleString('en-US')} ﷼`;
+  if(sluTotEl)sluTotEl.textContent=totalSluVal.toLocaleString('en-US')+' ﷼';
+  if(sluListEl){
+    sluListEl.innerHTML=slu.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
+      [...slu].reverse().map((r,ri)=>{const i=slu.length-1-ri;return`
+        <div class="li mb8">
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count} رأس</div>
+            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
+          </div>
+          <div class="flex ac gap8">
+            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
+            <button class="bi red" onclick="delSlaughter(${i})" ${gHide()}>🗑</button>
+          </div>
+        </div>`}).join('');
+  }
+  // Asset sales stat
+  const ast=db.assetSales||[];
+  const totalAst=ast.reduce((a,b)=>a+Number(b.count||0),0);
+  const totalAstVal=ast.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const astSumEl=document.getElementById('fast-summary');
+  const astListEl=document.getElementById('fast-list');
+  const astTotEl=document.getElementById('fast-total');
+  if(astSumEl)astSumEl.textContent=`${totalAst} عنصر · ${totalAstVal.toLocaleString('en-US')} ﷼`;
+  if(astTotEl)astTotEl.textContent=totalAstVal.toLocaleString('en-US')+' ﷼';
+  if(astListEl){
+    astListEl.innerHTML=ast.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
+      [...ast].reverse().map((r,ri)=>{const i=ast.length-1-ri;return`
+        <div class="li mb8">
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count}</div>
+            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
+          </div>
+          <div class="flex ac gap8">
+            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
+            <button class="bi red" onclick="delAssetSale(${i})" ${gHide()}>🗑</button>
+          </div>
+        </div>`}).join('');
+  }
 }
 function delE(id){if(!confirm('حذف هذا المصروف؟'))return;db.expenses=db.expenses.filter(e=>e.id!==id);save();rFin();}
 function delS(id){if(!confirm('حذف هذه المبيعة؟'))return;db.sales=db.sales.filter(s=>s.id!==id);save();rFin();}
@@ -1257,6 +1351,58 @@ function saveRakhal(){
 function delRakhal(i){
   if(!confirm('حذف هذا السجل؟'))return;
   db.rakhal.splice(i,1);save();rFin();
+}
+function openSlaughterModal(){
+  if(guardGuest())return;
+  openMdl('إضافة ذبيحة',`
+    <div class="fld"><label>النوع / الوصف</label><input type="text" id="sl-type" placeholder="مثال: خروف للعزيمة"></div>
+    <div class="flex gap8">
+      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="sl-count" min="1"></div>
+      <div class="fld" style="flex:1"><label>القيمة التقديرية للرأس (﷼)</label><input type="number" id="sl-price"></div>
+    </div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="sl-date" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="saveSlaughter()">حفظ</button>
+  `);
+}
+function saveSlaughter(){
+  if(guardGuest())return;
+  const type=document.getElementById('sl-type').value.trim();
+  const count=document.getElementById('sl-count').value;
+  const price=document.getElementById('sl-price').value;
+  if(!type||!count){toast('أدخل النوع والعدد',true);return;}
+  if(!db.slaughters)db.slaughters=[];
+  db.slaughters.push({id:uid(),type,count:Number(count),price:Number(price)||0,date:document.getElementById('sl-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rFin();
+}
+function delSlaughter(i){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.slaughters.splice(i,1);save();rFin();
+}
+function openAssetSaleModal(){
+  if(guardGuest())return;
+  openMdl('إضافة بيع أصل',`
+    <div class="fld"><label>النوع / الوصف</label><input type="text" id="as-type" placeholder="مثال: بيع خيمة، أدوات..."></div>
+    <div class="flex gap8">
+      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="as-count" min="1" value="1"></div>
+      <div class="fld" style="flex:1"><label>سعر الوحدة (﷼)</label><input type="number" id="as-price"></div>
+    </div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="as-date" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="saveAssetSale()">حفظ</button>
+  `);
+}
+function saveAssetSale(){
+  if(guardGuest())return;
+  const type=document.getElementById('as-type').value.trim();
+  const count=document.getElementById('as-count').value;
+  const price=document.getElementById('as-price').value;
+  if(!type||!count){toast('أدخل الوصف والعدد',true);return;}
+  if(!db.assetSales)db.assetSales=[];
+  db.assetSales.push({id:uid(),type,count:Number(count),price:Number(price)||0,date:document.getElementById('as-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rFin();
+}
+function delAssetSale(i){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.assetSales.splice(i,1);save();rFin();
 }
 function openExpModal(){
   openMdl('إضافة مصروف',`<div class="fld"><label>النوع</label><select id="ecat">${ECATS.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="fld"><label>الوصف</label><input type="text" id="edesc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="eamt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="edate" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveExp()">حفظ</button>`);
