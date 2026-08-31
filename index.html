@@ -162,6 +162,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <button class="btn" onclick="addDorperAnimal()">＋ إضافة رأس</button>
     <div id="dae" class="red mt8" style="font-size:12px;display:none"></div>
   </div>
+  <div id="dorper-sales"></div>
   <div id="dorper-unassigned"></div>
   <div id="dorper-pens-list"></div>
 </div>
@@ -923,6 +924,9 @@ function rDorperPens(){
   setDorGender(selDorGender);
   const sel=document.getElementById('dnp-sel');
   sel.innerHTML='<option value="">بدون حظيرة</option>'+db.dorperPens.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const salesTotal=(db.dorperSales||[]).reduce((s,x)=>s+Number(x.amount||0),0);
+  const sEl=document.getElementById('dorper-sales');
+  sEl.innerHTML=`<div class="card mb10" style="cursor:pointer" onclick="showDorperSales()"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">💰 مبيعات الدوربر</div><div class="muted" style="font-size:11px">${(db.dorperSales||[]).length} عملية</div></div><div style="font-size:18px;font-weight:700;color:#6E7B45">${salesTotal.toLocaleString()} ر.س</div></div></div>`;
   const unassigned=db.dorperAnimals.filter(a=>a.alive&&!a.penId);
   const uEl=document.getElementById('dorper-unassigned');
   uEl.innerHTML=unassigned.length===0?'':`<div class="card mb10"><div class="st mb8" style="font-size:13px">بدون حظيرة (${unassigned.length})</div>${unassigned.map(a=>{const uAge=(a.cat==='n'&&a.birthDate)?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;return`<div class="li"><span onclick="openDorperAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}${uAge!==null?' · '+uAge+' يوم':''}</span><button class="bi red" onclick="delDorperAnimal('${a.id}')">🗑</button></div></div>`;}).join('')}</div>`;
@@ -1043,6 +1047,19 @@ function doSellDor(){
   db.dorperSales.push({id:uid(),desc:document.getElementById('dsd').value||`بيع ${a.number}`,amount:document.getElementById('dsa').value||0,date:document.getElementById('dsdate').value||tod()});
   db.dorperAnimals=db.dorperAnimals.filter(x=>x.id!==curDorAnimal);
   save();toast('تم البيع');closeMdl();rDorperPens();
+}
+function showDorperSales(){
+  const list=(db.dorperSales||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=list.reduce((s,x)=>s+Number(x.amount||0),0);
+  openMdl(`مبيعات الدوربر (${list.length})`,`
+    <div class="db mb10" style="text-align:center"><div class="muted" style="font-size:11px">الإجمالي</div><div style="font-size:22px;font-weight:700;color:#6E7B45">${total.toLocaleString()} ر.س</div></div>
+    ${list.length===0?'<div class="empty">لا مبيعات بعد</div>':list.map(s=>`<div class="li"><div><div style="font-weight:600;font-size:13px">${s.desc}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span style="font-weight:700;color:#6E7B45">${Number(s.amount||0).toLocaleString()} ر.س</span><button class="bi red" onclick="delDorperSale('${s.id}')">🗑</button></div></div>`).join('')}
+  `);
+}
+function delDorperSale(id){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.dorperSales=(db.dorperSales||[]).filter(s=>s.id!==id);
+  save();toast('تم الحذف');showDorperSales();rDorperPens();
 }
 function openTransferDor(){
   const a=db.dorperAnimals.find(x=>x.id===curDorAnimal);
