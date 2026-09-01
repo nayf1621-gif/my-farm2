@@ -910,7 +910,9 @@ function rPens(){
   if(!db.pens.length){el.innerHTML='<div class="empty">لا توجد حظائر</div>';return;}
   el.innerHTML=db.pens.map(p=>{
     const inn=db.animals.filter(a=>a.penId===p.id&&a.alive);
-    return`<div class="card" style="cursor:pointer" onclick="openPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${inn.length} كائن · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()" ${gHide()}><button class="bi" onclick="openEditPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToPen('${p.id}')">＋</button></div></div></div>`;
+    const mCount=inn.filter(a=>a.cat==='m').length;
+    const nCount=inn.filter(a=>a.cat==='n').length;
+    return`<div class="card" style="cursor:pointer" onclick="openPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${inn.length} كائن${mCount?' · '+mCount+' أم':''}${nCount?' · '+nCount+' مولود':''} · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()" ${gHide()}><button class="bi" onclick="openEditPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToPen('${p.id}')">＋</button></div></div></div>`;
   }).join('');
 }
 
@@ -999,7 +1001,9 @@ function rDorperPens(){
   if(!db.dorperPens.length){el.innerHTML='<div class="empty">لا توجد حظائر</div>';return;}
   el.innerHTML=db.dorperPens.map(p=>{
     const inn=db.dorperAnimals.filter(a=>a.penId===p.id&&a.alive);
-    return`<div class="card" style="cursor:pointer" onclick="openDorperPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${inn.length} كائن · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()"><button class="bi" onclick="openEditDorperPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToDorperPen('${p.id}')">＋</button></div></div></div>`;
+    const mCount=inn.filter(a=>(a.cat||'m')==='m').length;
+    const nCount=inn.filter(a=>a.cat==='n').length;
+    return`<div class="card" style="cursor:pointer" onclick="openDorperPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${inn.length} كائن${mCount?' · '+mCount+' أم':''}${nCount?' · '+nCount+' مولود':''} · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()"><button class="bi" onclick="openEditDorperPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToDorperPen('${p.id}')">＋</button></div></div></div>`;
   }).join('');
 }
 function addDorperAnimal(){
