@@ -920,7 +920,7 @@ function rPV(){
   const anims=db.animals.filter(a=>a.penId===pvPen&&a.alive);
   openMdl(`${pen.name} (${anims.length})`,`
     <div class="flex jb mb8">${isGuest?'':` <button class="btn-g" onclick="togPVSel()">${pvMode?'إلغاء':'✓ تحديد'}</button>`}</div>
-    <div id="pvlist">${anims.length===0?'<div class="empty">لا كائنات</div>':anims.map(a=>{const ck=pvSel.includes(a.id);return`<div class="li" style="cursor:pointer;background:${ck?'#6E7B4514':'#F3ECDD'};border-color:${ck?'#6E7B45':'#E1D6BB'}" onclick="${pvMode?`togPVA('${a.id}')`:``}"><div class="flex ac gap8">${pvMode?`<div style="width:18px;height:18px;border:2px solid ${ck?'#6E7B45':'#ccc'};border-radius:4px;background:${ck?'#6E7B45':'transparent'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">${ck?'✓':''}</div>`:''}${pvMode?tbadge(a.number,a.color):`<span onclick="closeMdl();openAnimal('${a.id}')">${tbadge(a.number,a.color)}</span>`}</div>${(!pvMode&&!isGuest)?`<button class="bi" onclick="event.stopPropagation();rmPVA('${a.id}')">🚪</button>`:''}</div>`;}).join('')}</div>
+    <div id="pvlist">${anims.length===0?'<div class="empty">لا كائنات</div>':anims.map(a=>{const ck=pvSel.includes(a.id);const days=a.entered?Math.floor((new Date()-new Date(a.entered))/86400000):null;return`<div class="li" style="cursor:pointer;background:${ck?'#6E7B4514':'#F3ECDD'};border-color:${ck?'#6E7B45':'#E1D6BB'}" onclick="${pvMode?`togPVA('${a.id}')`:``}"><div class="flex ac gap8">${pvMode?`<div style="width:18px;height:18px;border:2px solid ${ck?'#6E7B45':'#ccc'};border-radius:4px;background:${ck?'#6E7B45':'transparent'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">${ck?'✓':''}</div>`:''}${pvMode?tbadge(a.number,a.color):`<span onclick="closeMdl();openAnimal('${a.id}')">${tbadge(a.number,a.color)}</span>`}${(!pvMode&&days!==null)?`<span class="muted" style="font-size:10px">${days} يوم</span>`:''}</div>${(!pvMode&&!isGuest)?`<button class="bi" onclick="event.stopPropagation();rmPVA('${a.id}')">🚪</button>`:''}</div>`;}).join('')}</div>
     ${(!isGuest&&pvMode&&anims.length)?`<div class="flex gap8 mt8"><button class="btn" style="flex:1;justify-content:center" onclick="bulkTr()" ${!pvSel.length?'disabled':''}>نقل (${pvSel.length})</button><button class="btn-r" style="flex:1;justify-content:center" onclick="bulkDel()" ${!pvSel.length?'disabled':''}>🗑 (${pvSel.length})</button></div>`:''}
   `);
 }
@@ -1131,8 +1131,8 @@ function openTransferDor(){
   const others=db.dorperPens.filter(p=>p.id!==a.penId);
   openMdl(`نقل ${tbadge(a.number,a.color)}`,`${a.penId?`<button class="btn-r mb8 w100 jc" onclick="removeFromDorPen('${curDorAnimal}')">🚪 إخراج من الحظيرة</button>`:''}${others.length===0?'<div class="empty">لا توجد حظائر أخرى</div>':others.map(p=>`<div class="li" style="cursor:pointer" onclick="doTransferDor('${curDorAnimal}','${p.id}')"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${p.alert!==false?`تنبيه ${p.days}y`:'بلا تنبيه'}</span></div>`).join('')}`);
 }
-function doTransferDor(aid,pid){const a=db.dorperAnimals.find(x=>x.id===aid);if(a)a.penId=pid;save();toast('تم النقل');closeMdl();rDorperPens();}
-function removeFromDorPen(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.dorperAnimals.find(x=>x.id===id);if(a)a.penId=null;save();toast('تم الإخراج');closeMdl();rDorperPens();}
+function doTransferDor(aid,pid){const a=db.dorperAnimals.find(x=>x.id===aid);if(a){a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rDorperPens();}
+function removeFromDorPen(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.dorperAnimals.find(x=>x.id===id);if(a){a.penId=null;a.entered=null;}save();toast('تم الإخراج');closeMdl();rDorperPens();}
 let dorOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];
 function openDorOffs(){dorOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];rDorOffs();}
 function rDorOffs(){
@@ -1171,19 +1171,19 @@ function rDPV(){
   const anims=db.dorperAnimals.filter(a=>a.penId===dpvPen&&a.alive);
   openMdl(`${pen.name} (${anims.length})`,`
     <div class="flex jb mb8"><button class="btn-g" onclick="togDPVSel()">${dpvMode?'إلغاء':'✓ تحديد'}</button></div>
-    <div id="dpvlist">${anims.length===0?'<div class="empty">لا كائنات</div>':anims.map(a=>{const ck=dpvSel.includes(a.id);return`<div class="li" style="cursor:pointer;background:${ck?'#6E7B4514':'#F3ECDD'};border-color:${ck?'#6E7B45':'#E1D6BB'}" onclick="${dpvMode?`togDPVA('${a.id}')`:``}"><div class="flex ac gap8">${dpvMode?`<div style="width:18px;height:18px;border:2px solid ${ck?'#6E7B45':'#ccc'};border-radius:4px;background:${ck?'#6E7B45':'transparent'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">${ck?'✓':''}</div>`:''}${dpvMode?tbadge(a.number,a.color):`<span onclick="closeMdl();openDorperAnimal('${a.id}')">${tbadge(a.number,a.color)}</span>`}</div>${(!dpvMode)?`<button class="bi" onclick="event.stopPropagation();rmDPVA('${a.id}')">🚪</button>`:''}</div>`;}).join('')}</div>
+    <div id="dpvlist">${anims.length===0?'<div class="empty">لا كائنات</div>':anims.map(a=>{const ck=dpvSel.includes(a.id);const days=a.entered?Math.floor((new Date()-new Date(a.entered))/86400000):null;return`<div class="li" style="cursor:pointer;background:${ck?'#6E7B4514':'#F3ECDD'};border-color:${ck?'#6E7B45':'#E1D6BB'}" onclick="${dpvMode?`togDPVA('${a.id}')`:``}"><div class="flex ac gap8">${dpvMode?`<div style="width:18px;height:18px;border:2px solid ${ck?'#6E7B45':'#ccc'};border-radius:4px;background:${ck?'#6E7B45':'transparent'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">${ck?'✓':''}</div>`:''}${dpvMode?tbadge(a.number,a.color):`<span onclick="closeMdl();openDorperAnimal('${a.id}')">${tbadge(a.number,a.color)}</span>`}${(!dpvMode&&days!==null)?`<span class="muted" style="font-size:10px">${days} يوم</span>`:''}</div>${(!dpvMode)?`<button class="bi" onclick="event.stopPropagation();rmDPVA('${a.id}')">🚪</button>`:''}</div>`;}).join('')}</div>
     ${(dpvMode&&anims.length)?`<div class="flex gap8 mt8"><button class="btn" style="flex:1;justify-content:center" onclick="bulkDTr()" ${!dpvSel.length?'disabled':''}>نقل (${dpvSel.length})</button><button class="btn-r" style="flex:1;justify-content:center" onclick="bulkDDel()" ${!dpvSel.length?'disabled':''}>🗑 (${dpvSel.length})</button></div>`:''}
   `);
 }
 function togDPVSel(){dpvMode=!dpvMode;dpvSel=[];rDPV();}
 function togDPVA(id){dpvSel=dpvSel.includes(id)?dpvSel.filter(x=>x!==id):[...dpvSel,id];rDPV();}
-function rmDPVA(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.dorperAnimals.find(x=>x.id===id);if(a)a.penId=null;save();rDPV();rDorperPens();}
+function rmDPVA(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.dorperAnimals.find(x=>x.id===id);if(a){a.penId=null;a.entered=null;}save();rDPV();rDorperPens();}
 function bulkDTr(){
   const others=db.dorperPens.filter(p=>p.id!==dpvPen);
   if(!others.length){toast('لا حظائر أخرى',true);return;}
   openMdl(`نقل ${dpvSel.length} إلى...`,others.map(p=>`<div class="li" style="cursor:pointer" onclick="doBDTr('${p.id}')"><span style="font-weight:700">${p.name}</span></div>`).join(''));
 }
-function doBDTr(pid){dpvSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a)a.penId=pid;});save();toast(`تم نقل ${dpvSel.length}`);closeMdl();rDorperPens();}
+function doBDTr(pid){dpvSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${dpvSel.length}`);closeMdl();rDorperPens();}
 function bulkDDel(){
   if(!confirm(`حذف ${dpvSel.length} رأس؟`))return;
   db.dorperAnimals=db.dorperAnimals.filter(a=>!dpvSel.includes(a.id));
@@ -1224,7 +1224,7 @@ function togATPDor(id,pid,el){
 }
 function saveATPDor(pid){if(guardGuest())return;
   if(!atpDorSel.length){toast('اختر رأس',true);return;}
-  atpDorSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a)a.penId=pid;});
+  atpDorSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});
   atpDorSel=[];save();toast('تمت الإضافة');closeMdl();rDorperPens();
 }
 
