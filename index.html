@@ -165,6 +165,78 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <div id="dae" class="red mt8" style="font-size:12px;display:none"></div>
   </div>
   <div id="dorper-sales"></div>
+
+  <!-- Dorper Rakhal -->
+  <div class="card mb10">
+    <div class="sh" style="cursor:pointer" onclick="togBSection('drak-wrap','drak-arrow')">
+      <div class="flex ac gap8">
+        <span style="font-size:20px">🐐</span>
+        <div>
+          <div class="st" style="font-size:13px">الرخال المضافة كأمهات</div>
+          <div class="muted" style="font-size:11px" id="drak-summary">اضغط للعرض</div>
+        </div>
+      </div>
+      <div class="flex ac gap8">
+        <button class="btn-g" data-owner onclick="event.stopPropagation();openDorRakhalModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
+        <span id="drak-arrow">▼</span>
+      </div>
+    </div>
+    <div id="drak-wrap" style="display:none;margin-top:12px">
+      <div id="drak-list"></div>
+      <div class="sc mt8" style="text-align:center">
+        <div class="v green" id="drak-total">0</div>
+        <div class="l">إجمالي القيمة ﷼</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dorper Slaughtered -->
+  <div class="card mb10">
+    <div class="sh" style="cursor:pointer" onclick="togBSection('dslu-wrap','dslu-arrow')">
+      <div class="flex ac gap8">
+        <span style="font-size:20px">🔪</span>
+        <div>
+          <div class="st" style="font-size:13px">الذبائح</div>
+          <div class="muted" style="font-size:11px" id="dslu-summary">اضغط للعرض</div>
+        </div>
+      </div>
+      <div class="flex ac gap8">
+        <button class="btn-g" data-owner onclick="event.stopPropagation();openDorSlaughterModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
+        <span id="dslu-arrow">▼</span>
+      </div>
+    </div>
+    <div id="dslu-wrap" style="display:none;margin-top:12px">
+      <div id="dslu-list"></div>
+      <div class="sc mt8" style="text-align:center">
+        <div class="v green" id="dslu-total">0</div>
+        <div class="l">إجمالي القيمة ﷼</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dorper Asset sales -->
+  <div class="card mb10">
+    <div class="sh" style="cursor:pointer" onclick="togBSection('dast-wrap','dast-arrow')">
+      <div class="flex ac gap8">
+        <span style="font-size:20px">💰</span>
+        <div>
+          <div class="st" style="font-size:13px">بيع الأصول</div>
+          <div class="muted" style="font-size:11px" id="dast-summary">اضغط للعرض</div>
+        </div>
+      </div>
+      <div class="flex ac gap8">
+        <button class="btn-g" data-owner onclick="event.stopPropagation();openDorAssetSaleModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
+        <span id="dast-arrow">▼</span>
+      </div>
+    </div>
+    <div id="dast-wrap" style="display:none;margin-top:12px">
+      <div id="dast-list"></div>
+      <div class="sc mt8" style="text-align:center">
+        <div class="v green" id="dast-total">0</div>
+        <div class="l">إجمالي القيمة ﷼</div>
+      </div>
+    </div>
+  </div>
   <div id="dorper-unassigned"></div>
   <div id="dorper-pens-list"></div>
 </div>
@@ -471,8 +543,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[]};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[]});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[]};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[]});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -484,7 +556,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[]});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[]});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -1022,6 +1094,72 @@ function rDorperPens(){
   const salesTotal=(db.dorperSales||[]).reduce((s,x)=>s+Number(x.amount||0),0);
   const sEl=document.getElementById('dorper-sales');
   sEl.innerHTML=`<div class="card mb10" style="cursor:pointer" onclick="showDorperSales()"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">💰 مبيعات الدوربر</div><div class="muted" style="font-size:11px">${(db.dorperSales||[]).length} عملية</div></div><div style="font-size:18px;font-weight:700;color:#6E7B45">${salesTotal.toLocaleString()} ر.س</div></div></div>`;
+  const rakhal=db.dorperRakhal||[];
+  const totalRak=rakhal.reduce((a,b)=>a+Number(b.count||0),0);
+  const totalRakVal=rakhal.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const drakSumEl=document.getElementById('drak-summary');
+  const drakListEl=document.getElementById('drak-list');
+  const drakTotEl=document.getElementById('drak-total');
+  if(drakSumEl)drakSumEl.textContent=`${totalRak} رأس · ${totalRakVal.toLocaleString('en-US')} ﷼`;
+  if(drakTotEl)drakTotEl.textContent=totalRakVal.toLocaleString('en-US')+' ﷼';
+  if(drakListEl){
+    drakListEl.innerHTML=rakhal.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
+      [...rakhal].reverse().map((r,ri)=>{const i=rakhal.length-1-ri;return`
+        <div class="li mb8">
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count} رأس</div>
+            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
+          </div>
+          <div class="flex ac gap8">
+            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
+            <button class="bi red" onclick="delDorRakhal(${i})">🗑</button>
+          </div>
+        </div>`}).join('');
+  }
+  const dslu=db.dorperSlaughters||[];
+  const totalDslu=dslu.reduce((a,b)=>a+Number(b.count||0),0);
+  const totalDsluVal=dslu.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const dsluSumEl=document.getElementById('dslu-summary');
+  const dsluListEl=document.getElementById('dslu-list');
+  const dsluTotEl=document.getElementById('dslu-total');
+  if(dsluSumEl)dsluSumEl.textContent=`${totalDslu} رأس · ${totalDsluVal.toLocaleString('en-US')} ﷼`;
+  if(dsluTotEl)dsluTotEl.textContent=totalDsluVal.toLocaleString('en-US')+' ﷼';
+  if(dsluListEl){
+    dsluListEl.innerHTML=dslu.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
+      [...dslu].reverse().map((r,ri)=>{const i=dslu.length-1-ri;return`
+        <div class="li mb8">
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count} رأس</div>
+            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
+          </div>
+          <div class="flex ac gap8">
+            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
+            <button class="bi red" onclick="delDorSlaughter(${i})">🗑</button>
+          </div>
+        </div>`}).join('');
+  }
+  const dast=db.dorperAssetSales||[];
+  const totalDast=dast.reduce((a,b)=>a+Number(b.count||0),0);
+  const totalDastVal=dast.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const dastSumEl=document.getElementById('dast-summary');
+  const dastListEl=document.getElementById('dast-list');
+  const dastTotEl=document.getElementById('dast-total');
+  if(dastSumEl)dastSumEl.textContent=`${totalDast} عنصر · ${totalDastVal.toLocaleString('en-US')} ﷼`;
+  if(dastTotEl)dastTotEl.textContent=totalDastVal.toLocaleString('en-US')+' ﷼';
+  if(dastListEl){
+    dastListEl.innerHTML=dast.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
+      [...dast].reverse().map((r,ri)=>{const i=dast.length-1-ri;return`
+        <div class="li mb8">
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count}</div>
+            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
+          </div>
+          <div class="flex ac gap8">
+            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
+            <button class="bi red" onclick="delDorAssetSale(${i})">🗑</button>
+          </div>
+        </div>`}).join('');
+  }
   const unassigned=db.dorperAnimals.filter(a=>a.alive&&!a.penId);
   const uEl=document.getElementById('dorper-unassigned');
   uEl.innerHTML=unassigned.length===0?'':`<details class="card mb10"><summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>بدون حظيرة (${unassigned.length})</span><span style="font-size:11px;color:#8C8064">اضغط للعرض ▾</span></summary><div class="mt8">${unassigned.map(a=>{const uAge=(a.cat==='n'&&a.birthDate)?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;return`<div class="li"><span onclick="openDorperAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}${uAge!==null?' · '+uAge+' يوم':''}</span><button class="bi red" onclick="delDorperAnimal('${a.id}')">🗑</button></div></div>`;}).join('')}</div></details>`;
@@ -1121,9 +1259,20 @@ function undoDorDeath(){
   save();toast('تم الإلغاء');openDorperAnimal(curDorAnimal);rDorperPens();
 }
 function promoteDor(){
-  if(!confirm('تحويل هذا المولود إلى أم؟'))return;
   const a=db.dorperAnimals.find(x=>x.id===curDorAnimal);if(!a)return;
-  a.cat='m';save();toast('تم التحويل');openDorperAnimal(curDorAnimal);rDorperPens();
+  openMdl(`ترقية ${tbadge(a.number,a.color)} إلى أم`,`
+    <div class="db mb8" style="font-size:11px">سيتم تحويل هذا المولود إلى أم، وتُسجَّل قيمته بسجل مستقل خاص بالدوربر.</div>
+    <div class="fld"><label>القيمة (﷼)</label><input type="number" id="promDorVal"></div>
+    <button class="btn w100 jc" onclick="doPromoteDor()">تأكيد التحويل</button>
+  `);
+}
+function doPromoteDor(){
+  const a=db.dorperAnimals.find(x=>x.id===curDorAnimal);if(!a)return;
+  const val=Number(document.getElementById('promDorVal').value)||0;
+  a.cat='m';
+  if(!db.dorperRakhal)db.dorperRakhal=[];
+  db.dorperRakhal.push({id:uid(),type:`ترقية مولود #${a.number}`,count:1,price:val,date:tod()});
+  save();toast('تم التحويل');closeMdl();openDorperAnimal(curDorAnimal);rDorperPens();
 }
 function showDorDC(){
   const offs=db.dorperAnimals.filter(x=>x.motherId===curDorAnimal);
@@ -1159,6 +1308,89 @@ function delDorperSale(id){
   if(!confirm('حذف هذا السجل؟'))return;
   db.dorperSales=(db.dorperSales||[]).filter(s=>s.id!==id);
   save();toast('تم الحذف');showDorperSales();rDorperPens();
+}
+function showDorperRakhal(){
+  const list=(db.dorperRakhal||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=list.reduce((s,x)=>s+Number(x.price||0)*Number(x.count||0),0);
+  openMdl(`الرخال المضافة كأمهات (${list.length})`,`
+    <div class="db mb10" style="text-align:center"><div class="muted" style="font-size:11px">الإجمالي</div><div style="font-size:22px;font-weight:700;color:#6E7B45">${total.toLocaleString()} ر.س</div></div>
+    ${list.length===0?'<div class="empty">لا سجلات بعد</div>':list.map(s=>`<div class="li"><div><div style="font-weight:600;font-size:13px">${s.type}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span style="font-weight:700;color:#6E7B45">${(Number(s.price||0)*Number(s.count||0)).toLocaleString()} ر.س</span></div></div>`).join('')}
+  `);
+}
+function openDorRakhalModal(){
+  if(guardGuest())return;
+  openMdl('إضافة رخال كأمهات',`
+    <div class="fld"><label>النوع</label><input type="text" id="drk-type" placeholder="مثال: نجدي"></div>
+    <div class="flex gap8">
+      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="drk-count" min="1"></div>
+      <div class="fld" style="flex:1"><label>سعر الرأس (﷼)</label><input type="number" id="drk-price"></div>
+    </div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="drk-date" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="saveDorRakhal()">حفظ</button>
+  `);
+}
+function saveDorRakhal(){
+  if(guardGuest())return;
+  const type=document.getElementById('drk-type').value.trim();
+  const count=document.getElementById('drk-count').value;
+  if(!type||!count){toast('أدخل النوع والعدد',true);return;}
+  if(!db.dorperRakhal)db.dorperRakhal=[];
+  db.dorperRakhal.push({id:uid(),type,count:Number(count),price:Number(document.getElementById('drk-price').value)||0,date:document.getElementById('drk-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rDorperPens();
+}
+function delDorRakhal(i){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.dorperRakhal.splice(i,1);save();rDorperPens();
+}
+function openDorSlaughterModal(){
+  if(guardGuest())return;
+  openMdl('إضافة ذبيحة',`
+    <div class="fld"><label>النوع / الوصف</label><input type="text" id="dsl-type" placeholder="مثال: خروف للعزيمة"></div>
+    <div class="flex gap8">
+      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="dsl-count" min="1"></div>
+      <div class="fld" style="flex:1"><label>القيمة التقديرية للرأس (﷼)</label><input type="number" id="dsl-price"></div>
+    </div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="dsl-date" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="saveDorSlaughter()">حفظ</button>
+  `);
+}
+function saveDorSlaughter(){
+  if(guardGuest())return;
+  const type=document.getElementById('dsl-type').value.trim();
+  const count=document.getElementById('dsl-count').value;
+  if(!type||!count){toast('أدخل النوع والعدد',true);return;}
+  if(!db.dorperSlaughters)db.dorperSlaughters=[];
+  db.dorperSlaughters.push({id:uid(),type,count:Number(count),price:Number(document.getElementById('dsl-price').value)||0,date:document.getElementById('dsl-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rDorperPens();
+}
+function delDorSlaughter(i){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.dorperSlaughters.splice(i,1);save();rDorperPens();
+}
+function openDorAssetSaleModal(){
+  if(guardGuest())return;
+  openMdl('إضافة بيع أصل',`
+    <div class="fld"><label>النوع / الوصف</label><input type="text" id="das-type" placeholder="مثال: بيع خيمة، أدوات..."></div>
+    <div class="flex gap8">
+      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="das-count" min="1" value="1"></div>
+      <div class="fld" style="flex:1"><label>سعر الوحدة (﷼)</label><input type="number" id="das-price"></div>
+    </div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="das-date" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="saveDorAssetSale()">حفظ</button>
+  `);
+}
+function saveDorAssetSale(){
+  if(guardGuest())return;
+  const type=document.getElementById('das-type').value.trim();
+  const count=document.getElementById('das-count').value;
+  if(!type||!count){toast('أدخل الوصف والعدد',true);return;}
+  if(!db.dorperAssetSales)db.dorperAssetSales=[];
+  db.dorperAssetSales.push({id:uid(),type,count:Number(count),price:Number(document.getElementById('das-price').value)||0,date:document.getElementById('das-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rDorperPens();
+}
+function delDorAssetSale(i){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.dorperAssetSales.splice(i,1);save();rDorperPens();
 }
 function openTransferDor(){
   const a=db.dorperAnimals.find(x=>x.id===curDorAnimal);
