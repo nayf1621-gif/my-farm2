@@ -296,30 +296,6 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     </div>
   </div>
 
-  <!-- Asset sales -->
-  <div class="card mb10">
-    <div class="sh" style="cursor:pointer" onclick="togBSection('fast-wrap','fast-arrow')">
-      <div class="flex ac gap8">
-        <span style="font-size:20px">💰</span>
-        <div>
-          <div class="st" style="font-size:13px">بيع الأصول</div>
-          <div class="muted" style="font-size:11px" id="fast-summary">اضغط للعرض</div>
-        </div>
-      </div>
-      <div class="flex ac gap8">
-        <button class="btn-g" data-owner onclick="event.stopPropagation();openAssetSaleModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
-        <span id="fast-arrow">▼</span>
-      </div>
-    </div>
-    <div id="fast-wrap" style="display:none;margin-top:12px">
-      <div id="fast-list"></div>
-      <div class="sc mt8" style="text-align:center">
-        <div class="v green" id="fast-total">0</div>
-        <div class="l">إجمالي القيمة ﷼</div>
-      </div>
-    </div>
-  </div>
-
   <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
     <span class="muted" style="font-size:11px">📅</span>
     <input type="date" id="ff" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:110px" onchange="rFin()">
@@ -926,8 +902,7 @@ function delAnote(i){
 function openSellA(){
   const a=db.animals.find(x=>x.id===curAnimal);
   const offs=a.cat==='m'?db.animals.filter(o=>o.motherId===curAnimal&&o.alive):[];
-  const notice=a.cat==='m'?'سيُحذف الكائن، وتُسجَّل قيمة البيع ضمن "بيع الأصول" (لا تُحتسب كإنتاج بالتقارير).':'سيُحذف الكائن وتُسجَّل عملية بيع.';
-  openMdl(`بيع #${a.number}`,`<div class="db red mb8" style="font-size:11px">${notice}</div>${offs.length?`<div class="db mb8"><label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="sellOffs" style="width:18px;height:18px"> إرفاق المواليد (${offs.length}) بالبيع</label></div>`:''}<div class="fld"><label>المبلغ (اختياري)</label><input type="number" id="sa"></div><div class="fld"><label>الوصف</label><input type="text" id="sd" placeholder="بيع..."></div><div class="fld"><label>التاريخ</label><input type="date" id="sdate" value="${tod()}"></div><button class="btn w100 jc" style="background:#4472A8" onclick="doSell()">تأكيد البيع</button>`);
+  openMdl(`بيع #${a.number}`,`<div class="db red mb8" style="font-size:11px">سيُحذف الكائن وتُسجَّل عملية بيع.</div>${offs.length?`<div class="db mb8"><label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="sellOffs" style="width:18px;height:18px"> إرفاق المواليد (${offs.length}) بالبيع</label></div>`:''}<div class="fld"><label>المبلغ (اختياري)</label><input type="number" id="sa"></div><div class="fld"><label>الوصف</label><input type="text" id="sd" placeholder="بيع..."></div><div class="fld"><label>التاريخ</label><input type="date" id="sdate" value="${tod()}"></div><button class="btn w100 jc" style="background:#4472A8" onclick="doSell()">تأكيد البيع</button>`);
 }
 function doSell(){
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
@@ -935,10 +910,9 @@ function doSell(){
   const desc=document.getElementById('sd').value||`بيع #${a.number}`;
   const amount=document.getElementById('sa').value||0;
   const date=document.getElementById('sdate').value||tod();
+  db.sales.push({id:uid(),desc,amount,date});
   if(a.cat==='m'){
     const attachOffs=document.getElementById('sellOffs')&&document.getElementById('sellOffs').checked;
-    if(!db.assetSales)db.assetSales=[];
-    db.assetSales.push({id:uid(),type:desc,count:1,price:Number(amount)||0,date});
     if(attachOffs){
       db.animals=db.animals.filter(x=>x.id!==curAnimal&&x.motherId!==curAnimal);
     }else{
@@ -946,7 +920,6 @@ function doSell(){
       db.animals=db.animals.filter(x=>x.id!==curAnimal);
     }
   }else{
-    db.sales.push({id:uid(),desc,amount,date});
     db.animals=db.animals.filter(x=>x.id!==curAnimal);
   }
   save();toast('تم البيع');closeMdl();rHome();
@@ -1556,29 +1529,6 @@ function rFin(){
           </div>
         </div>`}).join('');
   }
-  // Asset sales stat
-  const ast=db.assetSales||[];
-  const totalAst=ast.reduce((a,b)=>a+Number(b.count||0),0);
-  const totalAstVal=ast.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
-  const astSumEl=document.getElementById('fast-summary');
-  const astListEl=document.getElementById('fast-list');
-  const astTotEl=document.getElementById('fast-total');
-  if(astSumEl)astSumEl.textContent=`${totalAst} عنصر · ${totalAstVal.toLocaleString('en-US')} ﷼`;
-  if(astTotEl)astTotEl.textContent=totalAstVal.toLocaleString('en-US')+' ﷼';
-  if(astListEl){
-    astListEl.innerHTML=ast.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
-      [...ast].reverse().map((r,ri)=>{const i=ast.length-1-ri;return`
-        <div class="li mb8">
-          <div>
-            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count}</div>
-            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
-          </div>
-          <div class="flex ac gap8">
-            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
-            <button class="bi red" onclick="delAssetSale(${i})" ${gHide()}>🗑</button>
-          </div>
-        </div>`}).join('');
-  }
 }
 function delE(id){if(!confirm('حذف هذا المصروف؟'))return;db.expenses=db.expenses.filter(e=>e.id!==id);save();rFin();}
 function delS(id){if(!confirm('حذف هذه المبيعة؟'))return;db.sales=db.sales.filter(s=>s.id!==id);save();rFin();}
@@ -1643,32 +1593,6 @@ function saveSlaughter(){
 function delSlaughter(i){
   if(!confirm('حذف هذا السجل؟'))return;
   db.slaughters.splice(i,1);save();rFin();
-}
-function openAssetSaleModal(){
-  if(guardGuest())return;
-  openMdl('إضافة بيع أصل',`
-    <div class="fld"><label>النوع / الوصف</label><input type="text" id="as-type" placeholder="مثال: بيع خيمة، أدوات..."></div>
-    <div class="flex gap8">
-      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="as-count" min="1" value="1"></div>
-      <div class="fld" style="flex:1"><label>سعر الوحدة (﷼)</label><input type="number" id="as-price"></div>
-    </div>
-    <div class="fld"><label>التاريخ</label><input type="date" id="as-date" value="${tod()}"></div>
-    <button class="btn w100 jc" onclick="saveAssetSale()">حفظ</button>
-  `);
-}
-function saveAssetSale(){
-  if(guardGuest())return;
-  const type=document.getElementById('as-type').value.trim();
-  const count=document.getElementById('as-count').value;
-  const price=document.getElementById('as-price').value;
-  if(!type||!count){toast('أدخل الوصف والعدد',true);return;}
-  if(!db.assetSales)db.assetSales=[];
-  db.assetSales.push({id:uid(),type,count:Number(count),price:Number(price)||0,date:document.getElementById('as-date').value||tod()});
-  save();toast('تمت الإضافة');closeMdl();rFin();
-}
-function delAssetSale(i){
-  if(!confirm('حذف هذا السجل؟'))return;
-  db.assetSales.splice(i,1);save();rFin();
 }
 function openExpModal(){
   openMdl('إضافة مصروف',`<div class="fld"><label>النوع</label><select id="ecat">${ECATS.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="fld"><label>الوصف</label><input type="text" id="edesc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="eamt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="edate" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveExp()">حفظ</button>`);
