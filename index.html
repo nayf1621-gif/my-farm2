@@ -213,30 +213,6 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
       </div>
     </div>
   </div>
-
-  <!-- Dorper Asset sales -->
-  <div class="card mb10">
-    <div class="sh" style="cursor:pointer" onclick="togBSection('dast-wrap','dast-arrow')">
-      <div class="flex ac gap8">
-        <span style="font-size:20px">💰</span>
-        <div>
-          <div class="st" style="font-size:13px">بيع الأصول</div>
-          <div class="muted" style="font-size:11px" id="dast-summary">اضغط للعرض</div>
-        </div>
-      </div>
-      <div class="flex ac gap8">
-        <button class="btn-g" data-owner onclick="event.stopPropagation();openDorAssetSaleModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
-        <span id="dast-arrow">▼</span>
-      </div>
-    </div>
-    <div id="dast-wrap" style="display:none;margin-top:12px">
-      <div id="dast-list"></div>
-      <div class="sc mt8" style="text-align:center">
-        <div class="v green" id="dast-total">0</div>
-        <div class="l">إجمالي القيمة ﷼</div>
-      </div>
-    </div>
-  </div>
   <div id="dorper-unassigned"></div>
   <div id="dorper-pens-list"></div>
 </div>
@@ -1111,28 +1087,6 @@ function rDorperPens(){
           </div>
         </div>`}).join('');
   }
-  const dast=db.dorperAssetSales||[];
-  const totalDast=dast.reduce((a,b)=>a+Number(b.count||0),0);
-  const totalDastVal=dast.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
-  const dastSumEl=document.getElementById('dast-summary');
-  const dastListEl=document.getElementById('dast-list');
-  const dastTotEl=document.getElementById('dast-total');
-  if(dastSumEl)dastSumEl.textContent=`${totalDast} عنصر · ${totalDastVal.toLocaleString('en-US')} ﷼`;
-  if(dastTotEl)dastTotEl.textContent=totalDastVal.toLocaleString('en-US')+' ﷼';
-  if(dastListEl){
-    dastListEl.innerHTML=dast.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
-      [...dast].reverse().map((r,ri)=>{const i=dast.length-1-ri;return`
-        <div class="li mb8">
-          <div>
-            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count}</div>
-            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
-          </div>
-          <div class="flex ac gap8">
-            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
-            <button class="bi red" onclick="delDorAssetSale(${i})">🗑</button>
-          </div>
-        </div>`}).join('');
-  }
   const unassigned=db.dorperAnimals.filter(a=>a.alive&&!a.penId);
   const uEl=document.getElementById('dorper-unassigned');
   uEl.innerHTML=unassigned.length===0?'':`<details class="card mb10"><summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>بدون حظيرة (${unassigned.length})</span><span style="font-size:11px;color:#8C8064">اضغط للعرض ▾</span></summary><div class="mt8">${unassigned.map(a=>{const uAge=(a.cat==='n'&&a.birthDate)?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;return`<div class="li"><span onclick="openDorperAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}${uAge!==null?' · '+uAge+' يوم':''}</span><button class="bi red" onclick="delDorperAnimal('${a.id}')">🗑</button></div></div>`;}).join('')}</div></details>`;
@@ -1339,31 +1293,6 @@ function saveDorSlaughter(){
 function delDorSlaughter(i){
   if(!confirm('حذف هذا السجل؟'))return;
   db.dorperSlaughters.splice(i,1);save();rDorperPens();
-}
-function openDorAssetSaleModal(){
-  if(guardGuest())return;
-  openMdl('إضافة بيع أصل',`
-    <div class="fld"><label>النوع / الوصف</label><input type="text" id="das-type" placeholder="مثال: بيع خيمة، أدوات..."></div>
-    <div class="flex gap8">
-      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="das-count" min="1" value="1"></div>
-      <div class="fld" style="flex:1"><label>سعر الوحدة (﷼)</label><input type="number" id="das-price"></div>
-    </div>
-    <div class="fld"><label>التاريخ</label><input type="date" id="das-date" value="${tod()}"></div>
-    <button class="btn w100 jc" onclick="saveDorAssetSale()">حفظ</button>
-  `);
-}
-function saveDorAssetSale(){
-  if(guardGuest())return;
-  const type=document.getElementById('das-type').value.trim();
-  const count=document.getElementById('das-count').value;
-  if(!type||!count){toast('أدخل الوصف والعدد',true);return;}
-  if(!db.dorperAssetSales)db.dorperAssetSales=[];
-  db.dorperAssetSales.push({id:uid(),type,count:Number(count),price:Number(document.getElementById('das-price').value)||0,date:document.getElementById('das-date').value||tod()});
-  save();toast('تمت الإضافة');closeMdl();rDorperPens();
-}
-function delDorAssetSale(i){
-  if(!confirm('حذف هذا السجل؟'))return;
-  db.dorperAssetSales.splice(i,1);save();rDorperPens();
 }
 function openTransferDor(){
   const a=db.dorperAnimals.find(x=>x.id===curDorAnimal);
