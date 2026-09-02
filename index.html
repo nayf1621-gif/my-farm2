@@ -810,9 +810,20 @@ function undoDeath(){
   save();toast('تم الإلغاء');rAnimal();rHome();
 }
 function promote(){
-  if(!confirm('تحويل هذه المولودة إلى أم؟'))return;
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
-  a.cat='m';save();toast('تحويل لأم');rAnimal();rHome();
+  openMdl(`ترقية ${tbadge(a.number,a.color)} إلى أم`,`
+    <div class="db mb8" style="font-size:11px">سيتم تحويل هذه المولودة إلى أم، وتُسجَّل قيمتها ضمن "الرخال المضافة كأمهات".</div>
+    <div class="fld"><label>القيمة (﷼)</label><input type="number" id="promVal"></div>
+    <button class="btn w100 jc" onclick="doPromote()">تأكيد التحويل</button>
+  `);
+}
+function doPromote(){
+  const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
+  const val=Number(document.getElementById('promVal').value)||0;
+  a.cat='m';
+  if(!db.rakhal)db.rakhal=[];
+  db.rakhal.push({id:uid(),type:`ترقية مولود #${a.number}`,count:1,price:val,date:tod()});
+  save();toast('تحويل لأم');closeMdl();rAnimal();rHome();
 }
 function showDC(){
   const offs=db.animals.filter(x=>x.motherId===curAnimal);
@@ -844,13 +855,30 @@ function delAnote(i){
 // ====== SELL ======
 function openSellA(){
   const a=db.animals.find(x=>x.id===curAnimal);
-  openMdl(`بيع #${a.number}`,`<div class="db red mb8" style="font-size:11px">سيُحذف الكائن وتُسجَّل عملية بيع.</div><div class="fld"><label>المبلغ (اختياري)</label><input type="number" id="sa"></div><div class="fld"><label>الوصف</label><input type="text" id="sd" placeholder="بيع..."></div><div class="fld"><label>التاريخ</label><input type="date" id="sdate" value="${tod()}"></div><button class="btn w100 jc" style="background:#4472A8" onclick="doSell()">تأكيد البيع</button>`);
+  const offs=a.cat==='m'?db.animals.filter(o=>o.motherId===curAnimal&&o.alive):[];
+  const notice=a.cat==='m'?'سيُحذف الكائن، وتُسجَّل قيمة البيع ضمن "بيع الأصول" (لا تُحتسب كإنتاج بالتقارير).':'سيُحذف الكائن وتُسجَّل عملية بيع.';
+  openMdl(`بيع #${a.number}`,`<div class="db red mb8" style="font-size:11px">${notice}</div>${offs.length?`<div class="db mb8"><label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="sellOffs" style="width:18px;height:18px"> إرفاق المواليد (${offs.length}) بالبيع</label></div>`:''}<div class="fld"><label>المبلغ (اختياري)</label><input type="number" id="sa"></div><div class="fld"><label>الوصف</label><input type="text" id="sd" placeholder="بيع..."></div><div class="fld"><label>التاريخ</label><input type="date" id="sdate" value="${tod()}"></div><button class="btn w100 jc" style="background:#4472A8" onclick="doSell()">تأكيد البيع</button>`);
 }
 function doSell(){
   const a=db.animals.find(x=>x.id===curAnimal);if(!a)return;
   if(a.cat==='m'&&a.twin&&db.twinArchive>0) db.twinArchive--;
-  db.sales.push({id:uid(),desc:document.getElementById('sd').value||`بيع #${a.number}`,amount:document.getElementById('sa').value||0,date:document.getElementById('sdate').value||tod()});
-  db.animals=db.animals.filter(x=>x.id!==curAnimal);
+  const desc=document.getElementById('sd').value||`بيع #${a.number}`;
+  const amount=document.getElementById('sa').value||0;
+  const date=document.getElementById('sdate').value||tod();
+  if(a.cat==='m'){
+    const attachOffs=document.getElementById('sellOffs')&&document.getElementById('sellOffs').checked;
+    if(!db.assetSales)db.assetSales=[];
+    db.assetSales.push({id:uid(),type:desc,count:1,price:Number(amount)||0,date});
+    if(attachOffs){
+      db.animals=db.animals.filter(x=>x.id!==curAnimal&&x.motherId!==curAnimal);
+    }else{
+      db.animals.forEach(o=>{if(o.motherId===curAnimal)o.motherId=null;});
+      db.animals=db.animals.filter(x=>x.id!==curAnimal);
+    }
+  }else{
+    db.sales.push({id:uid(),desc,amount,date});
+    db.animals=db.animals.filter(x=>x.id!==curAnimal);
+  }
   save();toast('تم البيع');closeMdl();rHome();
 }
 
