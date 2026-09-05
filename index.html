@@ -600,8 +600,8 @@ function getAlerts(){
     if(now>=from){const due=new Date(v.date)<=now;list.push({id:'v'+v.id,txt:`تطعيم "${v.type}" ${due?'مستحق':'قادم – '+fmt(v.date)}`});}
   });
   (db.customAlerts||[]).forEach(c=>{
-    if(c.date&&new Date(c.date)>now)return;
-    list.push({id:'c'+c.id,customId:c.id,txt:c.text});
+    const upcoming=c.date&&new Date(c.date)>now;
+    list.push({id:'c'+c.id,customId:c.id,txt:upcoming?`${c.text} — قادم (${fmt(c.date)})`:c.text,upcoming});
   });
   return list;
 }
@@ -660,7 +660,8 @@ function rHome(){
   `;
   document.getElementById('h-twin').innerHTML=`<div class="sc"><div class="v gold">${twin.length}</div><div class="l">المتأومة</div><div class="s gold">${tpct}% من المنتجة</div></div>`;
 
-  const ab=document.getElementById('ab');ab.textContent=alerts.length;ab.style.display=alerts.length?'flex':'none';
+  const dueAlerts=alerts.filter(a=>!a.upcoming);
+  const ab=document.getElementById('ab');ab.textContent=dueAlerts.length;ab.style.display=dueAlerts.length?'flex':'none';
   const nb=document.getElementById('nb');nb.textContent=db.notes.length;nb.style.display=db.notes.length?'flex':'none';
   const vb=document.getElementById('vb');vb.textContent=db.vax.length;vb.style.display=db.vax.length?'flex':'none';
 
@@ -693,7 +694,7 @@ function togBell(){
 function renderBellList(){
   const alerts=getAlerts();
   document.getElementById('bell-list').innerHTML=alerts.length===0?'<div class="muted" style="padding:12px;text-align:center;font-size:12px">لا توجد تنبيهات</div>':
-    alerts.map(a=>`<div class="li" style="cursor:pointer" onclick="${a.animalId?`document.getElementById('bell-dd').style.display='none';openAnimal('${a.animalId}')`:''}"><span>${a.animalId?'🧱':a.customId?'📌':'💉'} <span style="font-size:12px">${a.txt}</span></span>${a.customId?`<button class="bi red" onclick="event.stopPropagation();delCustomAlert('${a.customId}')">🗑</button>`:''}</div>`).join('');
+    alerts.map(a=>`<div class="li" style="cursor:pointer;${a.upcoming?'opacity:0.6':''}" onclick="${a.animalId?`document.getElementById('bell-dd').style.display='none';openAnimal('${a.animalId}')`:''}"><span>${a.animalId?'🧱':a.customId?'📌':'💉'} <span style="font-size:12px">${a.txt}</span></span>${a.customId?`<button class="bi red" onclick="event.stopPropagation();delCustomAlert('${a.customId}')">🗑</button>`:''}</div>`).join('');
 }
 
 function addAnimal(){
