@@ -229,6 +229,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="sh"><span class="st">مالية الغنم</span><button class="btn-r" data-owner onclick="cfmResetFin()">📅 سنة جديدة</button></div>
   <div class="card mb10" style="text-align:center"><div class="muted" style="font-size:11px">الصافي</div><div id="fnet" style="font-size:30px;font-weight:700"></div></div>
   <div class="row" id="ftotals"></div>
+  <div class="row mb10" id="fsalesbreak"></div>
 
   <!-- Rakhal purchased -->
   <div class="card mb10">
@@ -919,7 +920,7 @@ function doSell(){
   const desc=document.getElementById('sd').value||`بيع #${a.number}`;
   const amount=document.getElementById('sa').value||0;
   const date=document.getElementById('sdate').value||tod();
-  db.sales.push({id:uid(),desc,amount,date});
+  db.sales.push({id:uid(),desc,amount,date,source:a.cat==='m'?'mother':'production'});
   if(a.cat==='m'){
     const attachOffs=document.getElementById('sellOffs')&&document.getElementById('sellOffs').checked;
     if(attachOffs){
@@ -1442,6 +1443,10 @@ function rFin(){
   document.getElementById('fnet').textContent=net.toLocaleString('en-US')+' ﷼';
   document.getElementById('fnet').style.color=net>=0?'#6E7B45':'#A8503A';
   document.getElementById('ftotals').innerHTML=`<div class="sc"><div class="v green">${tS.toLocaleString('en-US')}</div><div class="l">مبيعات ﷼</div></div><div class="sc"><div class="v red">${tE.toLocaleString('en-US')}</div><div class="l">مصروفات ﷼</div></div>`;
+  const motherSales=fS.filter(s=>s.source==='mother').reduce((a,b)=>a+Number(b.amount||0),0);
+  const prodSales=fS.filter(s=>s.source!=='mother').reduce((a,b)=>a+Number(b.amount||0),0);
+  const fsbEl=document.getElementById('fsalesbreak');
+  if(fsbEl)fsbEl.innerHTML=`<div class="sc"><div class="v" style="color:#4472A8">${motherSales.toLocaleString('en-US')}</div><div class="l">مبيعات الأمهات ﷼</div></div><div class="sc"><div class="v green">${prodSales.toLocaleString('en-US')}</div><div class="l">مبيعات الإنتاج ﷼</div></div>`;
   document.getElementById('exp-list').innerHTML=fE.length===0?'<div class="empty">لا مصروفات</div>':[...fE].reverse().map(e=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${e.desc||e.category}</div><div class="muted" style="font-size:10px">${e.category} · ${fmt(e.date)}</div></div><div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString('en-US')}</span><button class="bi red" onclick="delE('${e.id}')" ${gHide()}>🗑</button></div></div>`).join('');
   document.getElementById('sal-list').innerHTML=fS.length===0?'<div class="empty">لا مبيعات</div>':[...fS].reverse().map(s=>`<div class="li"><div><div style="font-size:12.5px;font-weight:600">${s.desc||'بيع'}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString('en-US')}</span><button class="bi red" onclick="delS('${s.id}')" ${gHide()}>🗑</button></div></div>`).join('');
 
