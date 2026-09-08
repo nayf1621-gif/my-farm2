@@ -1500,13 +1500,15 @@ function rFin(){
 function delE(id){if(!confirm('حذف هذا المصروف؟'))return;db.expenses=db.expenses.filter(e=>e.id!==id);save();rFin();}
 function delS(id){if(!confirm('حذف هذه المبيعة؟'))return;db.sales=db.sales.filter(s=>s.id!==id);save();rFin();}
 function cfmResetFin(){
-  if(!confirm('تصفير المصروفات والمبيعات للسنة الجديدة؟'))return;
+  if(!confirm('تصفير المصروفات والمبيعات والرخال والذبائح للسنة الجديدة؟'))return;
   const tS=db.sales.reduce((a,b)=>a+Number(b.amount||0),0);
   const tE=db.expenses.reduce((a,b)=>a+Number(b.amount||0),0);
+  const tRak=(db.rakhal||[]).reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const tSlu=(db.slaughters||[]).reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
   const year=hijriYear()||new Date().getFullYear();
   if(!db.yearlyArchive)db.yearlyArchive=[];
-  db.yearlyArchive.push({year,sales:tS,expenses:tE,net:tS-tE,date:new Date().toISOString()});
-  db.expenses=[];db.sales=[];
+  db.yearlyArchive.push({year,sales:tS,expenses:tE,net:tS-tE,rakhal:tRak,slaughters:tSlu,date:new Date().toISOString()});
+  db.expenses=[];db.sales=[];db.rakhal=[];db.slaughters=[];
   save();toast('تم التصفير وحفظ السنة');rFin();
 }
 function openRakhalModal(){
