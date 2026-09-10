@@ -647,7 +647,7 @@ function rHome(){
   const alerts=getAlerts();
   const overdueMothers=mothers.filter(m=>{
     const offs=A.filter(o=>o.motherId===m.id&&o.birthDate);
-    const lastBirth=offs.length?offs.map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null;
+    const lastBirth=m.lastBirthDate||(offs.length?offs.map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null);
     const ref=lastBirth||m.addedAt;
     if(!ref)return false;
     const days=Math.floor((new Date()-new Date(ref))/86400000);
@@ -747,7 +747,7 @@ function showOverdueMothersModal(){
   openMdl(`تأخر ولادتها (${list.length})`,settingsHtml+(list.length===0?'<div class="empty">لا توجد أمهات متأخرة</div>':
     list.map(a=>{
       const offs=db.animals.filter(o=>o.motherId===a.id&&o.birthDate);
-      const lastBirth=offs.length?offs.map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null;
+      const lastBirth=a.lastBirthDate||(offs.length?offs.map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null);
       const ref=lastBirth||a.addedAt;
       const days=ref?Math.floor((new Date()-new Date(ref))/86400000):null;
       return `<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">
@@ -805,7 +805,7 @@ function rAnimal(){
   const anotes=a.notes||[];
 
   const offsHtml=a.cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openOffs()" ${gHide()}>＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>`<div class="li" style="cursor:pointer" onclick="openAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${!o.alive?' · نافق':''}</span></div>`).join('')}</div>`:'';
-  const lastBirthDate=a.cat==='m'?offs.filter(o=>o.birthDate).map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null;
+  const lastBirthDate=a.cat==='m'?(a.lastBirthDate||(offs.filter(o=>o.birthDate).map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]||null)):null;
   const daysSinceLastBirth=lastBirthDate?Math.floor((new Date()-new Date(lastBirthDate))/86400000):null;
 
   const notesHtml=`<div class="card mt8"><div class="st mb8">📓 ملاحظات (${anotes.length})</div>${anotes.map((n,i)=>`<div class="db mb8 flex jb"><div><div style="font-size:13px">${n.text}</div><div class="muted" style="font-size:10px">${fmt(n.date)}</div></div><button class="bi red" onclick="delAnote(${i})" ${gHide()}>🗑</button></div>`).join('')}<div class="flex gap8 mt8" ${gHide()}><input type="text" id="anote" placeholder="ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:8px 10px;font-size:13px;flex:1"><button class="btn" onclick="addAnote()">＋</button></div></div>`;
@@ -972,6 +972,7 @@ function saveOffs(){if(guardGuest())return;
   const tot=db.animals.filter(a=>a.motherId===mid).length;
   const m=db.animals.find(a=>a.id===mid);
   if(m){
+    m.lastBirthDate=bd;
     if(tot>=2){
       if(!m.twin){
         m.twin=true;
