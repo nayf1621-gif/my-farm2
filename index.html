@@ -348,6 +348,10 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <div id="rcatr" class="mt8"></div>
   </div>
   <div class="card mb10"><div class="st mb8">مقارنة شهرية</div><div id="rmonth"></div></div>
+  <div class="card mb10">
+    <div class="sh"><span class="st">📌 عدد الأمهات المسجّل (مرجع)</span><button class="btn-g" onclick="openSetMotherBaseline()">تعديل</button></div>
+    <div id="rmotherbase"></div>
+  </div>
   <div class="card"><div class="st mb8">📚 أرشيف الأرباح السنوية (هجري)</div><div id="rarchive"></div></div>
 </div>
 </div>
@@ -502,8 +506,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[]};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[]});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[],motherBaseline:{count:117,date:new Date().toISOString().slice(0,10)}};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[],motherBaseline:p.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)}});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -515,7 +519,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[]});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[],motherBaseline:data.motherBaseline||db.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)}});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -1506,9 +1510,10 @@ function cfmResetFin(){
   const tE=db.expenses.reduce((a,b)=>a+Number(b.amount||0),0);
   const tRak=(db.rakhal||[]).reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
   const tSlu=(db.slaughters||[]).reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const motherCount=db.animals.filter(a=>a.alive&&a.cat==='m').length;
   const year=hijriYear()||new Date().getFullYear();
   if(!db.yearlyArchive)db.yearlyArchive=[];
-  db.yearlyArchive.push({year,sales:tS,expenses:tE,net:tS-tE,rakhal:tRak,slaughters:tSlu,date:new Date().toISOString()});
+  db.yearlyArchive.push({year,sales:tS,expenses:tE,net:tS-tE,rakhal:tRak,slaughters:tSlu,mothers:motherCount,date:new Date().toISOString()});
   db.expenses=[];db.sales=[];db.rakhal=[];db.slaughters=[];
   save();toast('تم التصفير وحفظ السنة');rFin();
 }
@@ -1736,12 +1741,27 @@ function rRep(){
     return`<div class="mb8"><div class="muted" style="font-size:11px;margin-bottom:3px">${m}</div><div style="font-size:10px" class="green">مبيعات ${ms.toLocaleString('en-US')}</div><div class="bar"><div class="bf" style="width:${Math.round(ms/maxM*100)}%;background:#6E7B45"></div></div><div style="font-size:10px;margin-top:5px" class="red">مصروفات ${me.toLocaleString('en-US')}</div><div class="bar"><div class="bf" style="width:${Math.round(me/maxM*100)}%;background:#A8503A"></div></div></div>`;
   }).join('');
 
+  // Mother baseline reference
+  const mbEl=document.getElementById('rmotherbase');
+  if(mbEl){
+    const currentM=db.animals.filter(a=>a.alive&&a.cat==='m').length;
+    if(db.motherBaseline){
+      const diff=currentM-db.motherBaseline.count;
+      mbEl.innerHTML=`<div class="flex gap8 fw"><span style="font-size:12px">مسجّل بتاريخ ${fmt(db.motherBaseline.date)}: <b>${db.motherBaseline.count}</b></span><span style="font-size:12px">الحالي: <b>${currentM}</b></span><span style="font-size:12px;font-weight:700;color:${diff>=0?'#6E7B45':'#A8503A'}">${diff>=0?'زيادة':'نقص'}: ${Math.abs(diff)}</span></div>`;
+    }else{
+      mbEl.innerHTML=`<div class="muted" style="font-size:12px">لم يُسجَّل رقم مرجعي بعد — اضغط "تعديل" لتسجيله</div>`;
+    }
+  }
   // Yearly archive
   const arch=db.yearlyArchive||[];
   const archEl=document.getElementById('rarchive');
   if(archEl){
     archEl.innerHTML=arch.length===0?'<div class="muted" style="font-size:12px">لا يوجد أرشيف بعد — يُحفظ تلقائياً عند كل سنة جديدة</div>':
-      [...arch].reverse().map(y=>`
+      arch.map((y,idx)=>{
+        const prev=idx>0?arch[idx-1]:(db.motherBaseline?{mothers:db.motherBaseline.count}:null);
+        const diff=(prev&&y.mothers!==undefined&&prev.mothers!==undefined)?y.mothers-prev.mothers:null;
+        return{y,diff};
+      }).reverse().map(({y,diff})=>`
         <div class="li mb8" style="flex-direction:column;align-items:flex-start;gap:4px">
           <div style="font-weight:700;font-size:13px">السنة ${y.year} هـ</div>
           <div class="flex gap8 fw">
@@ -1749,6 +1769,7 @@ function rRep(){
             <span class="red" style="font-size:12px">مصروفات: ${y.expenses.toLocaleString('en-US')} ﷼</span>
             <span style="font-size:12px;font-weight:700;color:${y.net>=0?'#6E7B45':'#A8503A'}">صافي: ${y.net.toLocaleString('en-US')} ﷼</span>
           </div>
+          ${y.mothers!==undefined?`<div class="flex gap8 fw"><span style="font-size:12px;color:#4472A8">عدد الأمهات: ${y.mothers}</span>${diff!==null?`<span style="font-size:12px;font-weight:700;color:${diff>=0?'#6E7B45':'#A8503A'}">${diff>=0?'زيادة':'نقص'}: ${Math.abs(diff)}</span>`:''}</div>`:''}
         </div>
       `).join('');
   }
@@ -1782,6 +1803,22 @@ function showTwinDetail(){
   );
 }
 function cfmResetBC(){if(confirm('تصفير عداد الولادات؟ لا يمكن التراجع.')){db.bc={t:[],s:[]};save();toast('تم');rRep();}}
+function openSetMotherBaseline(){
+  if(guardGuest())return;
+  const currentM=db.animals.filter(a=>a.alive&&a.cat==='m').length;
+  openMdl('تسجيل عدد الأمهات المرجعي',`
+    <div class="db mb8" style="font-size:11px">العدد الحالي الفعلي: ${currentM} أم. يمكنك تسجيله أو إدخال رقم آخر.</div>
+    <div class="fld"><label>العدد</label><input type="number" id="mbCount" value="${db.motherBaseline?db.motherBaseline.count:currentM}"></div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="mbDate" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="saveMotherBaseline()">حفظ</button>
+  `);
+}
+function saveMotherBaseline(){
+  const count=Number(document.getElementById('mbCount').value);
+  if(!count&&count!==0){toast('أدخل رقم صحيح',true);return;}
+  db.motherBaseline={count,date:document.getElementById('mbDate').value||tod()};
+  save();toast('تم الحفظ');closeMdl();rRep();
+}
 
 function togBSection(wrapId,arrowId){
   const w=document.getElementById(wrapId);
