@@ -859,7 +859,7 @@ function saveEditAnimalTag(){
   const dup=db.animals.some(x=>x.id!==curAnimal&&x.number===num&&x.color===newColor);
   if(dup){toast(`الرقم ${num} باللون ${newColor} مستخدم مسبقاً`,true);return;}
   a.number=num;a.color=newColor;
-  save();toast('تم الحفظ');closeMdl();rAnimal();
+  save();toast('تم الحفظ');rAnimal();
 }
 function showDF(){document.getElementById('df').style.display='block';}
 function cfmDeath(){
@@ -889,7 +889,7 @@ function doPromote(){
   a.cat='m';
   if(!db.rakhal)db.rakhal=[];
   db.rakhal.push({id:uid(),type:`ترقية مولود #${a.number}`,count:1,price:val,date:tod()});
-  save();toast('تحويل لأم');closeMdl();rAnimal();rHome();
+  save();toast('تحويل لأم');rAnimal();rHome();
 }
 function showDC(){
   const offs=db.animals.filter(x=>x.motherId===curAnimal);
@@ -992,7 +992,7 @@ function saveOffs(){if(guardGuest())return;
     }
     else if(!db.bc.t.includes(mid)&&!db.bc.s.includes(mid))db.bc.s.push(mid);
   }
-  save();toast('تمت الإضافة');closeMdl();rAnimal();rHome();
+  save();toast('تمت الإضافة');rAnimal();rHome();
 }
 
 // ====== PENS ======
@@ -1405,7 +1405,7 @@ function saveDorOffs(){if(guardGuest())return;
 function saveDorperNotes(id){
   const a=db.dorperAnimals.find(x=>x.id===id);if(!a)return;
   a.notes=document.getElementById('dednotes').value.trim();
-  save();toast('تم الحفظ');closeMdl();rDorperPens();
+  save();toast('تم الحفظ');openDorperAnimal(id);rDorperPens();
 }
 let dpvPen=null,dpvMode=false,dpvSel=[];
 function openDorperPV(pid){dpvPen=pid;dpvMode=false;dpvSel=[];rDPV();}
