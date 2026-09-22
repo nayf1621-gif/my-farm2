@@ -118,6 +118,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <div class="flex gap8 ac">
       <button class="bi" onclick="openNotes()" style="font-size:22px;position:relative" data-owner>📓<span id="nb" style="display:none;position:absolute;top:-3px;right:-3px;background:#6E7B45;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
       <button class="bi" onclick="openVax()" style="font-size:22px;position:relative" data-owner>💉<span id="vb" style="display:none;position:absolute;top:-3px;right:-3px;background:#4472A8;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
+      <button class="bi" onclick="openMedCases()" style="font-size:22px;position:relative" data-owner title="الحالات المرضية">🩺<span id="mcb" style="display:none;position:absolute;top:-3px;right:-3px;background:#A8503A;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center"></span></button>
       <button class="bi" onclick="fixArabicNumbers()" style="font-size:22px" data-owner title="إصلاح الأرقام العربية">🔧</button>
       <button class="bi" onclick="togBell()" style="font-size:22px;position:relative">🔔<span id="ab" style="display:none;position:absolute;top:-3px;right:-3px;background:#A8503A;color:#fff;font-size:9px;font-weight:700;border-radius:999px;min-width:15px;height:15px;align-items:center;justify-content:center;padding:0 2px"></span></button>
     </div>
@@ -512,8 +513,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[],motherBaseline:{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:[],dorperMotherBaseline:null};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[],motherBaseline:p.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:p.dorperYearlyArchive||[],dorperMotherBaseline:p.dorperMotherBaseline||null});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[],motherBaseline:{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:[],dorperMotherBaseline:null,medicalCases:[]};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[],motherBaseline:p.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:p.dorperYearlyArchive||[],dorperMotherBaseline:p.dorperMotherBaseline||null,medicalCases:p.medicalCases||[]});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -525,7 +526,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[],motherBaseline:data.motherBaseline||db.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:data.dorperYearlyArchive||[],dorperMotherBaseline:data.dorperMotherBaseline||db.dorperMotherBaseline||null});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[],motherBaseline:data.motherBaseline||db.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:data.dorperYearlyArchive||[],dorperMotherBaseline:data.dorperMotherBaseline||db.dorperMotherBaseline||null,medicalCases:data.medicalCases||[]});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -675,6 +676,7 @@ function rHome(){
   const ab=document.getElementById('ab');ab.textContent=dueAlerts.length;ab.style.display=dueAlerts.length?'flex':'none';
   const nb=document.getElementById('nb');nb.textContent=db.notes.length;nb.style.display=db.notes.length?'flex':'none';
   const vb=document.getElementById('vb');vb.textContent=db.vax.length;vb.style.display=db.vax.length?'flex':'none';
+  const mcb=document.getElementById('mcb');mcb.textContent=(db.medicalCases||[]).length;mcb.style.display=(db.medicalCases||[]).length?'flex':'none';
 
   const ps=document.getElementById('np-sel');
   ps.innerHTML='<option value="">بدون حظيرة</option>'+db.pens.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
@@ -1659,6 +1661,49 @@ function saveEditNote(i){
   db.notes[i].treatment=document.getElementById('en-treat').value;
   db.notes[i].date=document.getElementById('en-date').value||tod();
   save();toast('تم الحفظ');closeMdl();openNotes();
+}
+
+// ====== MEDICAL CASES ======
+function openMedCases(){
+  openMdl(`الحالات المرضية (${(db.medicalCases||[]).length})`,`
+    <div class="card mb8" style="background:#F3ECDD;border:none">
+      <div class="fld"><label>رقم الحيوان</label><input type="text" id="mcnum" placeholder="الرقم"></div>
+      <div class="cp mb8" id="mccp"></div>
+      <div class="fld"><label>الأعراض</label><textarea id="mcsym"></textarea></div>
+      <div class="fld"><label>العلاج</label><textarea id="mctreat"></textarea></div>
+      <div class="fld"><label>النتيجة</label><textarea id="mcres"></textarea></div>
+      <div class="fld"><label>التاريخ</label><input type="date" id="mcdate" value="${tod()}"></div>
+      <div id="mcerr" class="red mb8" style="font-size:11px;display:none"></div>
+      <button class="btn w100 jc" onclick="saveMedCase()">＋ إضافة</button>
+    </div>
+    ${(!db.medicalCases||db.medicalCases.length===0)?'<div class="empty">لا حالات مسجلة</div>':db.medicalCases.slice().reverse().map((c,ri)=>{const i=db.medicalCases.length-1-ri;return`
+      <div class="card mb8">
+        <div class="flex jb ac mb8">
+          ${tbadge(c.number,c.color)}
+          <div class="flex gap8"><span class="muted" style="font-size:10px">${fmt(c.date)}</span><button class="bi red" onclick="delMedCase(${i})">🗑</button></div>
+        </div>
+        ${c.symptoms?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">الأعراض:</b> ${c.symptoms}</div>`:''}
+        ${c.treatment?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">العلاج:</b> ${c.treatment}</div>`:''}
+        ${c.result?`<div style="font-size:12px"><b class="muted">النتيجة:</b> ${c.result}</div>`:''}
+      </div>
+    `;}).join('')}
+  `);
+  mkCP('mccp',COLORS[0].v,c=>window._mcColor=c);
+  window._mcColor=COLORS[0].v;
+}
+function saveMedCase(){
+  if(guardGuest())return;
+  const num=toLatinDigits(document.getElementById('mcnum').value.trim());
+  const err=document.getElementById('mcerr');
+  if(!num){err.textContent='أدخل رقم الحيوان';err.style.display='block';return;}
+  err.style.display='none';
+  if(!db.medicalCases)db.medicalCases=[];
+  db.medicalCases.push({id:uid(),number:num,color:window._mcColor||COLORS[0].v,symptoms:document.getElementById('mcsym').value,treatment:document.getElementById('mctreat').value,result:document.getElementById('mcres').value,date:document.getElementById('mcdate').value||tod()});
+  save();toast('تمت الإضافة');openMedCases();rHome();
+}
+function delMedCase(i){
+  if(!confirm('حذف هذه الحالة؟'))return;
+  db.medicalCases.splice(i,1);save();openMedCases();rHome();
 }
 
 // ====== VAX REMINDERS ======
