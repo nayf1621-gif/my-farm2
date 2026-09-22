@@ -1676,17 +1676,35 @@ function openMedCases(){
       <div id="mcerr" class="red mb8" style="font-size:11px;display:none"></div>
       <button class="btn w100 jc" onclick="saveMedCase()">＋ إضافة</button>
     </div>
-    ${(!db.medicalCases||db.medicalCases.length===0)?'<div class="empty">لا حالات مسجلة</div>':db.medicalCases.slice().reverse().map((c,ri)=>{const i=db.medicalCases.length-1-ri;return`
-      <div class="card mb8">
-        <div class="flex jb ac mb8">
-          ${tbadge(c.number,c.color)}
-          <div class="flex gap8"><span class="muted" style="font-size:10px">${fmt(c.date)}</span><button class="bi red" onclick="delMedCase(${i})">🗑</button></div>
-        </div>
-        ${c.symptoms?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">الأعراض:</b> ${c.symptoms}</div>`:''}
-        ${c.treatment?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">العلاج:</b> ${c.treatment}</div>`:''}
-        ${c.result?`<div style="font-size:12px"><b class="muted">النتيجة:</b> ${c.result}</div>`:''}
-      </div>
-    `;}).join('')}
+    ${(()=>{
+      const cases=db.medicalCases||[];
+      if(cases.length===0)return'<div class="empty">لا حالات مسجلة</div>';
+      const groups={};
+      cases.forEach((c,idx)=>{
+        const key=c.number+'|'+c.color;
+        if(!groups[key])groups[key]={number:c.number,color:c.color,items:[]};
+        groups[key].items.push({...c,idx});
+      });
+      const sorted=Object.values(groups).sort((a,b)=>b.items.length-a.items.length);
+      return sorted.map(g=>`
+        <details class="card mb8">
+          <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">
+            <div class="flex ac gap8">${tbadge(g.number,g.color)}<span style="font-size:11px;font-weight:700;color:#A8503A;background:#A8503A18;border-radius:999px;padding:2px 9px">${g.items.length}</span></div>
+            <span class="muted" style="font-size:11px">${g.items.length>1?'اضغط لعرض الحالات ▾':'اضغط للعرض ▾'}</span>
+          </summary>
+          <div class="mt8">
+            ${g.items.slice().reverse().map(c=>`
+              <div class="db mb8">
+                <div class="flex jb ac mb4"><span class="muted" style="font-size:10px">${fmt(c.date)}</span><button class="bi red" onclick="delMedCase(${c.idx})">🗑</button></div>
+                ${c.symptoms?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">الأعراض:</b> ${c.symptoms}</div>`:''}
+                ${c.treatment?`<div style="font-size:12px;margin-bottom:3px"><b class="muted">العلاج:</b> ${c.treatment}</div>`:''}
+                ${c.result?`<div style="font-size:12px"><b class="muted">النتيجة:</b> ${c.result}</div>`:''}
+              </div>
+            `).join('')}
+          </div>
+        </details>
+      `).join('');
+    })()}
   `);
   mkCP('mccp',COLORS[0].v,c=>window._mcColor=c);
   window._mcColor=COLORS[0].v;
