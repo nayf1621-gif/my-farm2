@@ -689,11 +689,14 @@ function rHome(){
 
   window._catLists={prod:prod.map(a=>a.id),nonprod:nonprod.map(a=>a.id),twin:twin.map(a=>a.id),dead:dead.map(a=>a.id),unassigned:unassigned.map(a=>a.id)};
   window._overdueMothers=overdueMothers.map(a=>a.id);
+  const deadMothers=dead.filter(a=>a.cat==='m').length;
+  const deadNewborns=dead.filter(a=>a.cat==='n').length;
   document.getElementById('ibar').innerHTML=`
     <button class="ibtn" onclick="showCatMdl('المنتجة',window._catLists.prod,true)"><div class="iw" style="background:#6E7B4518">❤️</div><div class="in">${prod.length}</div><div class="il">منتجة</div></button>
     <button class="ibtn" onclick="showCatMdl('غير منتجة',window._catLists.nonprod,true)"><div class="iw" style="background:#8C806418">❤️</div><div class="in">${nonprod.length}</div><div class="il">غير منتجة</div></button>
     <button class="ibtn" onclick="showTwinModal()"><div class="iw" style="background:#C79A3E18">👶</div><div class="in">${twin.length}</div><div class="il">متأومة</div></button>
-    <button class="ibtn" onclick="openDeadList()"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${dead.length}</div><div class="il">النفوق</div></button>
+    <button class="ibtn" onclick="openDeadList('n')"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${deadNewborns}</div><div class="il">نفوق المواليد</div></button>
+    <button class="ibtn" onclick="openDeadList('m')"><div class="iw" style="background:#A8503A18">💀</div><div class="in">${deadMothers}</div><div class="il">نفوق الأمهات</div></button>
     <button class="ibtn" onclick="showCatMdl('بدون حظيرة',window._catLists.unassigned,false)"><div class="iw" style="background:#4472A818">🧱</div><div class="in">${unassigned.length}</div><div class="il">بدون حظيرة</div></button>
     <button class="ibtn" onclick="showOverdueMothersModal()"><div class="iw" style="background:#A8503A18">⏰</div><div class="in">${overdueMothers.length}</div><div class="il">تأخر ولادتها</div></button>
   `;
@@ -789,9 +792,10 @@ function cfmResetTwin(){
   db.animals.forEach(a=>{if(a.cat==='m')a.twin=false;});
   save();toast('تم التصفير');closeMdl();rHome();
 }
-function openDeadList(){
-  const dead=db.animals.filter(a=>!a.alive);
-  let body='<button class="btn-r mb8 w100 jc" onclick="cfmResetDead()">🗑 تصفير سجل النفوق</button>';
+function openDeadList(cat){
+  const dead=db.animals.filter(a=>!a.alive&&(cat?a.cat===cat:true));
+  const title=cat==='n'?'نفوق المواليد':cat==='m'?'نفوق الأمهات':'النفوق';
+  let body=`<button class="btn-r mb8 w100 jc" onclick="cfmResetDead('${cat||''}')">🗑 تصفير ${title}</button>`;
   if(dead.length===0){
     body+='<div class="empty">لا يوجد نفوق</div>';
   } else {
@@ -802,9 +806,9 @@ function openDeadList(){
       return '<div class="li mb8" style="cursor:pointer" onclick="closeMdl();openAnimal(\''+a.id+'\')"><div class="flex ac gap8">'+badge+cause+'</div>'+date+'</div>';
     }).join('');
   }
-  openMdl('النفوق ('+dead.length+')',body);
+  openMdl(title+' ('+dead.length+')',body);
 }
-function cfmResetDead(){if(confirm('حذف كل سجل النفوق نهائياً؟ لا يمكن التراجع.')){db.animals=db.animals.filter(a=>a.alive);save();toast('تم');closeMdl();rHome();}}
+function cfmResetDead(cat){if(confirm('حذف سجل '+(cat==='n'?'نفوق المواليد':cat==='m'?'نفوق الأمهات':'النفوق')+' نهائياً؟ لا يمكن التراجع.')){db.animals=db.animals.filter(a=>a.alive||(cat&&a.cat!==cat));save();toast('تم');closeMdl();rHome();}}
 
 // ====== ANIMAL DETAIL ======
 function openAnimal(id){curAnimal=id;rAnimal();}
