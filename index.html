@@ -801,12 +801,29 @@ function openDeadList(cat){
   } else {
     body+=dead.map(a=>{
       const badge=tbadge(a.number,a.color);
-      const cause=a.deathCause?'<span class="red" style="font-size:11px">'+a.deathCause+'</span>':'';
+      const cause=a.deathCause?'<span class="red" style="font-size:11px">'+a.deathCause+'</span>':'<span class="muted" style="font-size:11px">بدون سبب</span>';
       const date='<span class="muted" style="font-size:10px">'+fmt(a.deathAt||'')+'</span>';
-      return '<div class="li mb8" style="cursor:pointer" onclick="closeMdl();openAnimal(\''+a.id+'\')"><div class="flex ac gap8">'+badge+cause+'</div>'+date+'</div>';
+      return '<div class="li mb8"><div class="flex ac gap8" style="cursor:pointer" onclick="closeMdl();openAnimal(\''+a.id+'\')">'+badge+cause+'</div><div class="flex ac gap8">'+date+'<button class="bi" onclick="openEditDeath(\''+a.id+'\')">✎</button></div></div>';
     }).join('');
   }
   openMdl(title+' ('+dead.length+')',body);
+  window._deadListCat=cat;
+}
+function openEditDeath(id){
+  if(guardGuest())return;
+  const a=db.animals.find(x=>x.id===id);if(!a)return;
+  openMdl(`تعديل نفوق ${tbadge(a.number,a.color)}`,`
+    <div class="fld"><label>سبب النفوق</label><textarea id="eddCause">${a.deathCause||''}</textarea></div>
+    <div class="fld"><label>تاريخ النفوق</label><input type="date" id="eddDate" value="${a.deathAt?a.deathAt.slice(0,10):tod()}"></div>
+    <button class="btn w100 jc" onclick="saveEditDeath('${id}')">حفظ</button>
+  `);
+}
+function saveEditDeath(id){
+  const a=db.animals.find(x=>x.id===id);if(!a)return;
+  a.deathCause=document.getElementById('eddCause').value||'';
+  const d=document.getElementById('eddDate').value;
+  if(d)a.deathAt=new Date(d).toISOString();
+  save();toast('تم الحفظ');openDeadList(window._deadListCat);
 }
 function cfmResetDead(cat){if(confirm('حذف سجل '+(cat==='n'?'نفوق المواليد':cat==='m'?'نفوق الأمهات':'النفوق')+' نهائياً؟ لا يمكن التراجع.')){db.animals=db.animals.filter(a=>a.alive||(cat&&a.cat!==cat));save();toast('تم');closeMdl();rHome();}}
 
