@@ -152,7 +152,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- PENS -->
 <div id="page-pens" class="page">
-  <div class="sh"><span class="st">حظائر الغنم</span><button class="btn" data-owner onclick="openAddPen()">＋ جديدة</button></div>
+  <div class="sh"><span class="st">حظائر الغنم</span><div class="flex gap8"><button class="btn-g" data-owner onclick="openReorderPens()">↕ ترتيب</button><button class="btn" data-owner onclick="openAddPen()">＋ جديدة</button></div></div>
   <div id="pens-list"></div>
 </div>
 
@@ -1031,6 +1031,30 @@ function rPens(){
     const otherCount=inn.length-mothers.length;
     return`<div class="card" style="cursor:pointer" onclick="openPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${mothers.length} أم${production?' · '+production+' إنتاج':''}${otherCount?' · '+otherCount+' مولود':''} · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()" ${gHide()}><button class="bi" onclick="openEditPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToPen('${p.id}')">＋</button></div></div></div>`;
   }).join('');
+}
+function openReorderPens(){
+  if(guardGuest())return;
+  rReorderPens();
+}
+function rReorderPens(){
+  openMdl('ترتيب الحظائر',`
+    <div class="muted mb8" style="font-size:11px">استخدم الأسهم لتحريك كل حظيرة للأعلى أو الأسفل</div>
+    ${db.pens.map((p,i)=>`
+      <div class="li mb8">
+        <span style="font-weight:700;font-size:13px">${p.name}</span>
+        <div class="flex gap8">
+          <button class="bi" onclick="movePen(${i},-1)" ${i===0?'disabled style="opacity:.3"':''}>▲</button>
+          <button class="bi" onclick="movePen(${i},1)" ${i===db.pens.length-1?'disabled style="opacity:.3"':''}>▼</button>
+        </div>
+      </div>
+    `).join('')}
+  `);
+}
+function movePen(i,dir){
+  const j=i+dir;
+  if(j<0||j>=db.pens.length)return;
+  [db.pens[i],db.pens[j]]=[db.pens[j],db.pens[i]];
+  save();rReorderPens();rPens();
 }
 
 function openPV(pid){pvPen=pid;pvMode=false;pvSel=[];rPV();}
