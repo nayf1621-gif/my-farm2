@@ -160,6 +160,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 <div id="page-dorper" class="page">
   <div class="sh"><span class="st">الدوربر</span><button class="btn" data-owner onclick="openAddDorperPen()">＋ حظيرة جديدة</button></div>
   <button class="btn-g mb10" data-owner onclick="cfmResetDorFin()" style="font-size:12px">📅 سنة جديدة</button>
+  <div class="row mb10" id="dorper-stats"></div>
   <div class="card mb10" data-owner>
     <div class="fld"><input type="text" id="dnn" placeholder="الرقم"></div>
     <div class="cp" id="dncp"></div>
@@ -1127,9 +1128,45 @@ function saveATP(pid){if(guardGuest())return;
 let selDorColor=COLORS[0].v;
 let selDorGender='أنثى';
 function setDorGender(g){selDorGender=g;document.getElementById('dg-f').style.background=g==='أنثى'?'#6E7B45':'';document.getElementById('dg-f').style.color=g==='أنثى'?'#fff':'';document.getElementById('dg-m').style.background=g==='ذكر'?'#6E7B45':'';document.getElementById('dg-m').style.color=g==='ذكر'?'#fff':'';}
+function showDorMothers(){
+  const list=(db.dorperAnimals||[]).filter(a=>a.alive&&(a.cat||'m')==='m');
+  openMdl(`الأمهات (${list.length})`,list.length===0?'<div class="empty">لا توجد أمهات</div>':
+    list.map(a=>{
+      const prod=db.dorperAnimals.filter(o=>o.motherId===a.id&&o.alive).length;
+      const pen=db.dorperPens.find(p=>p.id===a.penId);
+      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openDorperAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${prod?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${prod} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>`;
+    }).join(''));
+}
+function showDorNewborns(){
+  const list=(db.dorperAnimals||[]).filter(a=>a.alive&&a.cat==='n');
+  openMdl(`المواليد (${list.length})`,list.length===0?'<div class="empty">لا يوجد مواليد</div>':
+    list.slice().sort((a,b)=>new Date(b.birthDate||b.addedAt)-new Date(a.birthDate||a.addedAt)).map(a=>{
+      const age=a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
+      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openDorperAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${a.gender}${age!==null?' · '+age+' يوم':''}</span></div>`;
+    }).join(''));
+}
+function openDorDeadList(){
+  const dead=(db.dorperAnimals||[]).filter(a=>!a.alive);
+  openMdl(`النفوق (${dead.length})`,dead.length===0?'<div class="empty">لا يوجد نفوق</div>':
+    dead.map(a=>`<div class="li" style="cursor:pointer" onclick="closeMdl();openDorperAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${a.deathCause?`<span class="red" style="font-size:11px">${a.deathCause}</span>`:''}</div><span class="muted" style="font-size:10px">${a.deathAt?fmt(a.deathAt):''}</span></div>`).join(''));
+}
 function rDorperPens(){
   mkCP('dncp',selDorColor,c=>selDorColor=c);
   setDorGender(selDorGender);
+  const dStatsEl=document.getElementById('dorper-stats');
+  if(dStatsEl){
+    const dAll=db.dorperAnimals||[];
+    const dMothers=dAll.filter(a=>a.alive&&(a.cat||'m')==='m');
+    const dNewborns=dAll.filter(a=>a.alive&&a.cat==='n');
+    const dMales=dNewborns.filter(n=>n.gender==='ذكر').length;
+    const dFemales=dNewborns.filter(n=>n.gender==='أنثى').length;
+    const dDead=dAll.filter(a=>!a.alive);
+    dStatsEl.innerHTML=`
+      <div class="sc" style="cursor:pointer" onclick="showDorMothers()"><div class="v green">${dMothers.length}</div><div class="l">الأمهات</div></div>
+      <div class="sc" style="cursor:pointer" onclick="showDorNewborns()"><div class="v" style="color:#4472A8">${dNewborns.length}</div><div class="l">المواليد</div><div class="s muted">${dFemales} إناث · ${dMales} ذكور</div></div>
+      <div class="sc" style="cursor:pointer" onclick="openDorDeadList()"><div class="v red">${dDead.length}</div><div class="l">النفوق</div></div>
+    `;
+  }
   const sel=document.getElementById('dnp-sel');
   sel.innerHTML='<option value="">بدون حظيرة</option>'+db.dorperPens.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   const salesTotal=(db.dorperSales||[]).reduce((s,x)=>s+Number(x.amount||0),0);
