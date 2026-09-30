@@ -102,6 +102,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>حظائر الغنم</span></button>
   <button onclick="nav('dorper')"><span class="ico">🐐</span><span>الدوربر</span></button>
+  <button onclick="nav('pygmy')"><span class="ico">🐏</span><span>الماعز القزم</span></button>
   <button onclick="nav('fin')"><span class="ico">💰</span><span>مالية الغنم</span></button>
   <button onclick="nav('rep')"><span class="ico">📊</span><span>تقارير الغنم</span></button>
   <button onclick="nav('birds')"><span class="ico">🦜</span><span>طيور البيت</span></button>
@@ -229,6 +230,57 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="card mb10"><div class="st mb8">📚 أرشيف الأرباح السنوية — الدوربر (هجري)</div><div id="dorper-archive"></div></div>
   <div id="dorper-unassigned"></div>
   <div id="dorper-pens-list"></div>
+</div>
+
+<div id="page-pygmy" class="page">
+  <div class="sh"><span class="st">الماعز القزم</span><button class="btn" data-owner onclick="openAddPygmyPen()">＋ حظيرة جديدة</button></div>
+  <button class="btn-g mb10" data-owner onclick="cfmResetPgFin()" style="font-size:12px">📅 سنة جديدة</button>
+  <div class="row mb10" id="pygmy-stats"></div>
+  <div class="card mb10" data-owner>
+    <div class="fld"><input type="text" id="pgnn" placeholder="الرقم"></div>
+    <div class="cp" id="pgncp"></div>
+    <div class="flex gap8 mb8">
+      <button class="btn-g" id="pgg-f" style="flex:1;justify-content:center" onclick="setPgGender('أنثى')">أنثى</button>
+      <button class="btn-g" id="pgg-m" style="flex:1;justify-content:center" onclick="setPgGender('ذكر')">ذكر</button>
+    </div>
+    <div class="fld"><select id="pgnp-sel"><option value="">بدون حظيرة</option></select></div>
+    <div class="fld"><label>ملاحظات (اختياري)</label><textarea id="pgnnotes"></textarea></div>
+    <button class="btn" onclick="addPygmyAnimal()">＋ إضافة رأس</button>
+    <div id="pgae" class="red mt8" style="font-size:12px;display:none"></div>
+  </div>
+  <div id="pygmy-sales"></div>
+
+  <!-- Dorper Rakhal -->
+  <div class="card mb10">
+    <div class="sh" style="cursor:pointer" onclick="togBSection('pgrak-wrap','pgrak-arrow')">
+      <div class="flex ac gap8">
+        <span style="font-size:20px">🐐</span>
+        <div>
+          <div class="st" style="font-size:13px">الرخال المضافة كأمهات <span class="muted" style="font-size:10px;font-weight:400">(خارج التقارير المالية)</span></div>
+          <div class="muted" style="font-size:11px" id="pgrak-summary">اضغط للعرض</div>
+        </div>
+      </div>
+      <div class="flex ac gap8">
+        <button class="btn-g" data-owner onclick="event.stopPropagation();openPgRakhalModal()" style="font-size:11px;padding:5px 10px">＋ إضافة</button>
+        <span id="pgrak-arrow">▼</span>
+      </div>
+    </div>
+    <div id="pgrak-wrap" style="display:none;margin-top:12px">
+      <div id="pgrak-list"></div>
+      <div class="sc mt8" style="text-align:center">
+        <div class="v green" id="pgrak-total">0</div>
+        <div class="l">إجمالي القيمة ﷼</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb10">
+    <div class="sh"><span class="st">📌 عدد الأمهات المرجعي (الماعز القزم)</span><button class="btn-g" data-owner onclick="openSetPgMotherBaseline()">تعديل</button></div>
+    <div id="pygmy-motherbase"></div>
+  </div>
+  <div class="card mb10"><div class="st mb8">📚 أرشيف الأرباح السنوية — الماعز القزم (هجري)</div><div id="pygmy-archive"></div></div>
+  <div id="pygmy-unassigned"></div>
+  <div id="pygmy-pens-list"></div>
 </div>
 
 
@@ -514,8 +566,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[],motherBaseline:{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:[],dorperMotherBaseline:null,medicalCases:[]};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[],motherBaseline:p.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:p.dorperYearlyArchive||[],dorperMotherBaseline:p.dorperMotherBaseline||null,medicalCases:p.medicalCases||[]});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[],motherBaseline:{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:[],dorperMotherBaseline:null,medicalCases:[],pygmyPens:[],pygmyAnimals:[],pygmySales:[],pygmyRakhal:[],pygmyYearlyArchive:[],pygmyMotherBaseline:null};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[],motherBaseline:p.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:p.dorperYearlyArchive||[],dorperMotherBaseline:p.dorperMotherBaseline||null,medicalCases:p.medicalCases||[],pygmyPens:p.pygmyPens||[],pygmyAnimals:p.pygmyAnimals||[],pygmySales:p.pygmySales||[],pygmyRakhal:p.pygmyRakhal||[],pygmyYearlyArchive:p.pygmyYearlyArchive||[],pygmyMotherBaseline:p.pygmyMotherBaseline||null});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -527,7 +579,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[],motherBaseline:data.motherBaseline||db.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:data.dorperYearlyArchive||[],dorperMotherBaseline:data.dorperMotherBaseline||db.dorperMotherBaseline||null,medicalCases:data.medicalCases||[]});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[],motherBaseline:data.motherBaseline||db.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:data.dorperYearlyArchive||[],dorperMotherBaseline:data.dorperMotherBaseline||db.dorperMotherBaseline||null,medicalCases:data.medicalCases||[],pygmyPens:data.pygmyPens||[],pygmyAnimals:data.pygmyAnimals||[],pygmySales:data.pygmySales||[],pygmyRakhal:data.pygmyRakhal||[],pygmyYearlyArchive:data.pygmyYearlyArchive||[],pygmyMotherBaseline:data.pygmyMotherBaseline||db.pygmyMotherBaseline||null});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -570,7 +622,7 @@ function nav(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const idx={home:0,pens:1,dorper:2,fin:3,rep:4,birds:5,'farm-birds':6,finrep:7}[id];
+  const idx={home:0,pens:1,dorper:2,pygmy:3,fin:4,rep:5,birds:6,'farm-birds':7,finrep:8}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   // Update global date bar
   const gd=document.getElementById('global-date-bar');
@@ -578,6 +630,7 @@ function nav(id){
   if(id==='home')rHome();
   if(id==='pens')rPens();
   if(id==='dorper')rDorperPens();
+  if(id==='pygmy')rPygmyPens();
   if(id==='fin')rFin();
   if(id==='rep')rRep();
   if(id==='birds')rBirds();
@@ -1555,6 +1608,389 @@ function saveATPDor(pid){if(guardGuest())return;
   atpDorSel=[];save();toast('تمت الإضافة');closeMdl();rDorperPens();
 }
 
+// ====== PYGMY GOAT (الماعز القزم - independent data) ======
+let selPgColor=COLORS[0].v;
+let selPgGender='أنثى';
+function setPgGender(g){selPgGender=g;document.getElementById('pgg-f').style.background=g==='أنثى'?'#6E7B45':'';document.getElementById('pgg-f').style.color=g==='أنثى'?'#fff':'';document.getElementById('pgg-m').style.background=g==='ذكر'?'#6E7B45':'';document.getElementById('pgg-m').style.color=g==='ذكر'?'#fff':'';}
+function showPgMothers(){
+  const list=(db.pygmyAnimals||[]).filter(a=>a.alive&&(a.cat||'m')==='m');
+  openMdl(`الأمهات (${list.length})`,list.length===0?'<div class="empty">لا توجد أمهات</div>':
+    list.map(a=>{
+      const prod=db.pygmyAnimals.filter(o=>o.motherId===a.id&&o.alive).length;
+      const pen=db.pygmyPens.find(p=>p.id===a.penId);
+      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openPygmyAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${prod?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${prod} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>`;
+    }).join(''));
+}
+function showPgNewborns(){
+  const list=(db.pygmyAnimals||[]).filter(a=>a.alive&&a.cat==='n');
+  openMdl(`المواليد (${list.length})`,list.length===0?'<div class="empty">لا يوجد مواليد</div>':
+    list.slice().sort((a,b)=>new Date(b.birthDate||b.addedAt)-new Date(a.birthDate||a.addedAt)).map(a=>{
+      const age=a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
+      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openPygmyAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${a.gender}${age!==null?' · '+age+' يوم':''}</span></div>`;
+    }).join(''));
+}
+function openPgDeadList(){
+  const dead=(db.pygmyAnimals||[]).filter(a=>!a.alive);
+  openMdl(`النفوق (${dead.length})`,dead.length===0?'<div class="empty">لا يوجد نفوق</div>':
+    dead.map(a=>`<div class="li" style="cursor:pointer" onclick="closeMdl();openPygmyAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${a.deathCause?`<span class="red" style="font-size:11px">${a.deathCause}</span>`:''}</div><span class="muted" style="font-size:10px">${a.deathAt?fmt(a.deathAt):''}</span></div>`).join(''));
+}
+function rPygmyPens(){
+  mkCP('pgncp',selPgColor,c=>selPgColor=c);
+  setPgGender(selPgGender);
+  const dStatsEl=document.getElementById('pygmy-stats');
+  if(dStatsEl){
+    const dAll=db.pygmyAnimals||[];
+    const dMothers=dAll.filter(a=>a.alive&&(a.cat||'m')==='m');
+    const dNewborns=dAll.filter(a=>a.alive&&a.cat==='n');
+    const dMales=dNewborns.filter(n=>n.gender==='ذكر').length;
+    const dFemales=dNewborns.filter(n=>n.gender==='أنثى').length;
+    const dDead=dAll.filter(a=>!a.alive);
+    dStatsEl.innerHTML=`
+      <div class="sc" style="cursor:pointer" onclick="showPgMothers()"><div class="v green">${dMothers.length}</div><div class="l">الأمهات</div></div>
+      <div class="sc" style="cursor:pointer" onclick="showPgNewborns()"><div class="v" style="color:#4472A8">${dNewborns.length}</div><div class="l">المواليد</div><div class="s muted">${dFemales} إناث · ${dMales} ذكور</div></div>
+      <div class="sc" style="cursor:pointer" onclick="openPgDeadList()"><div class="v red">${dDead.length}</div><div class="l">النفوق</div></div>
+    `;
+  }
+  const sel=document.getElementById('pgnp-sel');
+  sel.innerHTML='<option value="">بدون حظيرة</option>'+db.pygmyPens.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const salesTotal=(db.pygmySales||[]).reduce((s,x)=>s+Number(x.amount||0),0);
+  const sEl=document.getElementById('pygmy-sales');
+  sEl.innerHTML=`<div class="card mb10" style="cursor:pointer" onclick="showPygmySales()"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">💰 مبيعات الماعز القزم</div><div class="muted" style="font-size:11px">${(db.pygmySales||[]).length} عملية</div></div><div style="font-size:18px;font-weight:700;color:#6E7B45">${salesTotal.toLocaleString()} ر.س</div></div></div>`;
+  const rakhal=db.pygmyRakhal||[];
+  const totalRak=rakhal.reduce((a,b)=>a+Number(b.count||0),0);
+  const totalRakVal=rakhal.reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const drakSumEl=document.getElementById('pgrak-summary');
+  const drakListEl=document.getElementById('pgrak-list');
+  const drakTotEl=document.getElementById('pgrak-total');
+  if(drakSumEl)drakSumEl.textContent=`${totalRak} رأس · ${totalRakVal.toLocaleString('en-US')} ﷼`;
+  if(drakTotEl)drakTotEl.textContent=totalRakVal.toLocaleString('en-US')+' ﷼';
+  if(drakListEl){
+    drakListEl.innerHTML=rakhal.length===0?'<div class="empty mb8">لا توجد سجلات</div>':
+      [...rakhal].reverse().map((r,ri)=>{const i=rakhal.length-1-ri;return`
+        <div class="li mb8">
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.type} — ${r.count} رأس</div>
+            <div class="muted" style="font-size:10px">${fmt(r.date)}</div>
+          </div>
+          <div class="flex ac gap8">
+            <span class="green" style="font-size:12px;font-weight:700">${(Number(r.price||0)*Number(r.count||0)).toLocaleString('en-US')} ﷼</span>
+            <button class="bi red" onclick="delPgRakhal(${i})">🗑</button>
+          </div>
+        </div>`}).join('');
+  }
+  const unassigned=db.pygmyAnimals.filter(a=>a.alive&&!a.penId);
+  const uEl=document.getElementById('pygmy-unassigned');
+  uEl.innerHTML=unassigned.length===0?'':`<details class="card mb10"><summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;justify-content:space-between;align-items:center"><span>بدون حظيرة (${unassigned.length})</span><span style="font-size:11px;color:#8C8064">اضغط للعرض ▾</span></summary><div class="mt8">${unassigned.map(a=>{const uAge=(a.cat==='n'&&a.birthDate)?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;return`<div class="li"><span onclick="openPygmyAnimal('${a.id}')" style="cursor:pointer">${tbadge(a.number,a.color)}</span><div class="flex ac gap8"><span class="muted" style="font-size:11px">${a.gender}${uAge!==null?' · '+uAge+' يوم':''}</span><button class="bi red" onclick="delPygmyAnimal('${a.id}')">🗑</button></div></div>`;}).join('')}</div></details>`;
+  const dmbEl=document.getElementById('pygmy-motherbase');
+  if(dmbEl){
+    const currentDM=db.pygmyAnimals.filter(a=>a.alive&&(a.cat||'m')==='m').length;
+    if(db.pygmyMotherBaseline){
+      const diff=currentDM-db.pygmyMotherBaseline.count;
+      dmbEl.innerHTML=`<div class="flex gap8 fw"><span style="font-size:12px">مسجّل بتاريخ ${fmt(db.pygmyMotherBaseline.date)}: <b>${db.pygmyMotherBaseline.count}</b></span><span style="font-size:12px">الحالي: <b>${currentDM}</b></span><span style="font-size:12px;font-weight:700;color:${diff>=0?'#6E7B45':'#A8503A'}">${diff>=0?'زيادة':'نقص'}: ${Math.abs(diff)}</span></div>`;
+    }else{
+      dmbEl.innerHTML=`<div class="muted" style="font-size:12px">لم يُسجَّل رقم مرجعي بعد — اضغط "تعديل" لتسجيله</div>`;
+    }
+  }
+  const darchEl=document.getElementById('pygmy-archive');
+  if(darchEl){
+    const darch=db.pygmyYearlyArchive||[];
+    darchEl.innerHTML=darch.length===0?'<div class="muted" style="font-size:12px">لا يوجد أرشيف بعد — يُحفظ تلقائياً عند كل سنة جديدة</div>':
+      darch.map((y,idx)=>{
+        const prev=idx>0?darch[idx-1]:(db.pygmyMotherBaseline?{mothers:db.pygmyMotherBaseline.count}:null);
+        const diff=(prev&&y.mothers!==undefined&&prev.mothers!==undefined)?y.mothers-prev.mothers:null;
+        return{y,diff};
+      }).reverse().map(({y,diff})=>`
+        <div class="li mb8" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="font-weight:700;font-size:13px">السنة ${y.year} هـ</div>
+          <div class="flex gap8 fw">
+            <span class="green" style="font-size:12px">مبيعات: ${y.sales.toLocaleString('en-US')} ﷼</span>
+            <span style="font-size:12px;color:#4472A8">رخال: ${y.rakhal.toLocaleString('en-US')} ﷼</span>
+          </div>
+          <div class="flex gap8 fw"><span style="font-size:12px;color:#4472A8">عدد الأمهات: ${y.mothers}</span>${diff!==null?`<span style="font-size:12px;font-weight:700;color:${diff>=0?'#6E7B45':'#A8503A'}">${diff>=0?'زيادة':'نقص'}: ${Math.abs(diff)}</span>`:''}</div>
+        </div>
+      `).join('');
+  }
+  const el=document.getElementById('pygmy-pens-list');
+  if(!db.pygmyPens.length){el.innerHTML='<div class="empty">لا توجد حظائر</div>';return;}
+  el.innerHTML=db.pygmyPens.map(p=>{
+    const inn=db.pygmyAnimals.filter(a=>a.penId===p.id&&a.alive);
+    const mothers=inn.filter(a=>(a.cat||'m')==='m');
+    const motherIds=mothers.map(a=>a.id);
+    const production=db.pygmyAnimals.filter(a=>a.cat==='n'&&a.alive&&motherIds.includes(a.motherId)).length;
+    const otherCount=inn.length-mothers.length;
+    return`<div class="card" style="cursor:pointer" onclick="openPygmyPV('${p.id}')"><div class="flex jb ac"><div><div style="font-weight:700;font-size:14px">${p.name}</div><div class="muted" style="font-size:11px">${mothers.length} أم${production?' · '+production+' إنتاج':''}${otherCount?' · '+otherCount+' مولود':''} · ${p.alert!==false?`تنبيه ${p.days} يوم`:'بلا تنبيه'}</div></div><div class="flex gap8" onclick="event.stopPropagation()"><button class="bi" onclick="openEditPygmyPen('${p.id}')">✎</button><button class="btn-g" onclick="openAddToPygmyPen('${p.id}')">＋</button></div></div></div>`;
+  }).join('');
+}
+function addPygmyAnimal(){
+  if(guardGuest())return;
+  const num=toLatinDigits(document.getElementById('pgnn').value.trim());
+  const err=document.getElementById('pgae');
+  if(!num){err.textContent='أدخل الرقم';err.style.display='block';return;}
+  if(db.pygmyAnimals.some(a=>a.number===num&&a.color===selPgColor)){err.textContent=`${num} (${selPgColor}) مستخدم`;err.style.display='block';return;}
+  err.style.display='none';
+  const penId=document.getElementById('pgnp-sel').value||null;
+  const notes=document.getElementById('pgnnotes').value.trim();
+  db.pygmyAnimals.push({id:uid(),number:num,color:selPgColor,gender:selPgGender,cat:'m',alive:true,penId,notes,addedAt:new Date().toISOString()});
+  save();toast('تمت الإضافة');document.getElementById('pgnn').value='';document.getElementById('pgnnotes').value='';rPygmyPens();
+}
+function delPygmyAnimal(id){
+  if(!confirm('حذف هذا الرأس؟'))return;
+  db.pygmyAnimals=db.pygmyAnimals.filter(a=>a.id!==id);save();toast('تم الحذف');rPygmyPens();
+}
+let curPgAnimal=null;
+function openPygmyAnimal(id){
+  curPgAnimal=id;
+  const a=db.pygmyAnimals.find(x=>x.id===id);if(!a)return;
+  const pen=db.pygmyPens.find(p=>p.id===a.penId);
+  const cat=a.cat||'m';
+  const mother=cat==='n'&&a.motherId?db.pygmyAnimals.find(x=>x.id===a.motherId):null;
+  const offs=cat==='m'?db.pygmyAnimals.filter(o=>o.motherId===a.id):[];
+  const age=cat==='n'&&a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
+  openMdl(`الماعز القزم ${tbadge(a.number,a.color)}`,`
+    <div class="flex jb ac mb10">
+      <div>
+        <div class="muted mb4" style="font-size:11px">${cat==='m'?'أم':'مولود'} · ${a.gender}${pen?' · '+pen.name:' · بدون حظيرة'}</div>
+        ${mother?`<div style="font-size:11px;margin-top:4px">الأم: <span onclick="closeMdl();openPygmyAnimal('${mother.id}')" style="cursor:pointer">${tbadge(mother.number,mother.color)}</span></div>`:''}
+        ${cat==='n'&&a.birthDate?`<div class="muted" style="font-size:11px;margin-top:4px">الميلاد: ${fmt(a.birthDate)}</div><div style="font-size:13px;font-weight:700;color:#6E7B45;margin-top:4px">🗓 العمر: ${age} يوم</div>`:''}
+        ${!a.alive&&a.deathCause?`<div class="red" style="font-size:11px;margin-top:4px">السبب: ${a.deathCause}</div>`:''}
+      </div>
+      <span class="chip ${a.alive?'cg':'cr'}">${a.alive?'حي':'نافق'}</span>
+    </div>
+    <div class="fw gap8 mb8">
+      ${a.alive?`<button class="btn-r" onclick="showPgDF()">💀 نفوق</button>`:`<button class="btn-g" onclick="undoPgDeath()">↩ إلغاء</button>`}
+      <button class="btn-g" onclick="openSellPg()">💰 بيع</button>
+      <button class="btn-g" onclick="openTransferPg()">🧱 ${pen?'نقل':'لحظيرة'}</button>
+      ${cat==='n'&&a.gender==='أنثى'?`<button class="btn-g green" onclick="promotePg()">❤️ أم</button>`:''}
+      <button class="btn-g" onclick="openEditPgTag()">✎ تعديل الرقم</button>
+      <button class="btn-r" onclick="showPgDC()">🗑 حذف</button>
+    </div>
+    <div id="ddf" style="display:none" class="db mb8"><div class="fld"><label>سبب النفوق (اختياري)</label><textarea id="ddcause"></textarea></div><div class="flex gap8"><button class="btn" style="background:#A8503A" onclick="cfmPgDeath()">تأكيد</button><button class="btn-g" onclick="document.getElementById('ddf').style.display='none'">إلغاء</button></div></div>
+    <div id="ddc" style="display:none" class="db"><div style="font-size:12px;text-align:center;margin-bottom:8px">حذف نهائي؟</div><div id="ddc-offs"></div><div class="flex gap8"><button class="btn" style="background:#A8503A;flex:1;justify-content:center" onclick="doPgDelete()">تأكيد</button><button class="btn-g" style="flex:1;justify-content:center" onclick="document.getElementById('ddc').style.display='none'">تراجع</button></div></div>
+    <div class="fld mt8"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
+    <button class="btn w100 jc mb8" onclick="savePygmyNotes('${a.id}')">حفظ الملاحظات</button>
+    ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openPgOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>{const oAge=o.birthDate?Math.floor((new Date()-new Date(o.birthDate))/86400000):null;return`<div class="li" style="cursor:pointer" onclick="openPygmyAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${oAge!==null?' · '+oAge+' يوم':''}${!o.alive?' · نافق':''}</span></div>`;}).join('')}</div>`:''}
+  `,true);
+}
+function openEditPgTag(){
+  if(guardGuest())return;
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);if(!a)return;
+  openMdl('تعديل الرقم واللون',`
+    <div class="fld"><label>الرقم الجديد</label><input type="text" id="et-pgnum" value="${a.number}"></div>
+    <div class="fld"><label>اللون</label></div>
+    <div class="cp mb10" id="et-pgcp"></div>
+    <button class="btn w100 jc" onclick="saveEditPgTag()">حفظ التعديل</button>
+  `);
+  window._etPgColor=a.color;
+  setTimeout(()=>mkCP('et-pgcp',a.color,c=>window._etPgColor=c),50);
+}
+function saveEditPgTag(){
+  if(guardGuest())return;
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);if(!a)return;
+  const num=toLatinDigits(document.getElementById('et-pgnum').value.trim());
+  if(!num){toast('أدخل الرقم',true);return;}
+  const newColor=window._etPgColor||a.color;
+  if(db.pygmyAnimals.some(x=>x.id!==curPgAnimal&&x.number===num&&x.color===newColor)){toast(`الرقم ${num} باللون ${newColor} مستخدم مسبقاً`,true);return;}
+  a.number=num;a.color=newColor;
+  save();toast('تم الحفظ');closeMdl();openPygmyAnimal(curPgAnimal);
+}
+function showPgDF(){document.getElementById('ddf').style.display='block';}
+function cfmPgDeath(){
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);if(!a)return;
+  a.alive=false;a.deathAt=new Date().toISOString();a.deathCause=document.getElementById('ddcause').value||'';
+  save();toast('تم تسجيل النفوق');closeMdl();rPygmyPens();
+}
+function undoPgDeath(){
+  if(!confirm('إلغاء تسجيل النفوق لهذا الكائن؟'))return;
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);if(!a)return;
+  a.alive=true;delete a.deathAt;delete a.deathCause;
+  save();toast('تم الإلغاء');openPygmyAnimal(curPgAnimal);rPygmyPens();
+}
+function promotePg(){
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);if(!a)return;
+  openMdl(`ترقية ${tbadge(a.number,a.color)} إلى أم`,`
+    <div class="db mb8" style="font-size:11px">سيتم تحويل هذا المولود إلى أم، وتُسجَّل قيمته بسجل مستقل خاص بالماعز القزم.</div>
+    <div class="fld"><label>القيمة (﷼)</label><input type="number" id="promDorVal"></div>
+    <button class="btn w100 jc" onclick="doPromotePg()">تأكيد التحويل</button>
+  `);
+}
+function doPromotePg(){
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);if(!a)return;
+  const val=Number(document.getElementById('promDorVal').value)||0;
+  a.cat='m';
+  if(!db.pygmyRakhal)db.pygmyRakhal=[];
+  db.pygmyRakhal.push({id:uid(),type:`ترقية مولود #${a.number}`,count:1,price:val,date:tod()});
+  save();toast('تم التحويل');closeMdl();openPygmyAnimal(curPgAnimal);rPygmyPens();
+}
+function showPgDC(){
+  const offs=db.pygmyAnimals.filter(x=>x.motherId===curPgAnimal);
+  const el=document.getElementById('ddc-offs');
+  el.innerHTML=offs.length?`<div class="db mb8"><div style="font-size:11px;font-weight:700;margin-bottom:6px">${offs.length} مولود لهذه الأم:</div><div class="fw gap8 mb8">${offs.map(o=>tbadge(o.number,o.color)).join('')}</div><label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="ddeloffs" style="width:18px;height:18px"> حذف المواليد أيضاً</label></div>`:'';
+  document.getElementById('ddc').style.display='block';
+}
+function doPgDelete(){
+  const deloffs=document.getElementById('ddeloffs')&&document.getElementById('ddeloffs').checked;
+  db.pygmyAnimals=db.pygmyAnimals.filter(a=>{if(a.id===curPgAnimal)return false;if(deloffs&&a.motherId===curPgAnimal)return false;return true;});
+  if(!deloffs)db.pygmyAnimals.forEach(a=>{if(a.motherId===curPgAnimal)a.motherId=null;});
+  save();toast('تم الحذف');closeMdl();rPygmyPens();
+}
+function openSellPg(){
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);
+  openMdl(`بيع ${tbadge(a.number,a.color)}`,`<div class="db red mb8" style="font-size:11px">سيُحذف الرأس وتُسجَّل عملية بيع مستقلة عن التقارير المالية للغنم.</div><div class="fld"><label>المبلغ (اختياري)</label><input type="number" id="pgsa"></div><div class="fld"><label>الوصف</label><input type="text" id="pgsd" placeholder="بيع..."></div><div class="fld"><label>التاريخ</label><input type="date" id="pgsdate" value="${tod()}"></div><button class="btn w100 jc" style="background:#4472A8" onclick="doSellPg()">تأكيد البيع</button>`);
+}
+function doSellPg(){
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);if(!a)return;
+  db.pygmySales.push({id:uid(),desc:document.getElementById('pgsd').value||`بيع ${a.number}`,amount:document.getElementById('pgsa').value||0,date:document.getElementById('pgsdate').value||tod()});
+  db.pygmyAnimals=db.pygmyAnimals.filter(x=>x.id!==curPgAnimal);
+  save();toast('تم البيع');closeMdl();rPygmyPens();
+}
+function showPygmySales(){
+  const list=(db.pygmySales||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=list.reduce((s,x)=>s+Number(x.amount||0),0);
+  openMdl(`مبيعات الماعز القزم (${list.length})`,`
+    <div class="db mb10" style="text-align:center"><div class="muted" style="font-size:11px">الإجمالي</div><div style="font-size:22px;font-weight:700;color:#6E7B45">${total.toLocaleString()} ر.س</div></div>
+    ${list.length===0?'<div class="empty">لا مبيعات بعد</div>':list.map(s=>`<div class="li"><div><div style="font-weight:600;font-size:13px">${s.desc}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span style="font-weight:700;color:#6E7B45">${Number(s.amount||0).toLocaleString()} ر.س</span><button class="bi red" onclick="delPygmySale('${s.id}')">🗑</button></div></div>`).join('')}
+  `);
+}
+function delPygmySale(id){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.pygmySales=(db.pygmySales||[]).filter(s=>s.id!==id);
+  save();toast('تم الحذف');showPygmySales();rPygmyPens();
+}
+function showPygmyRakhal(){
+  const list=(db.pygmyRakhal||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=list.reduce((s,x)=>s+Number(x.price||0)*Number(x.count||0),0);
+  openMdl(`الرخال المضافة كأمهات (${list.length})`,`
+    <div class="db mb10" style="text-align:center"><div class="muted" style="font-size:11px">الإجمالي</div><div style="font-size:22px;font-weight:700;color:#6E7B45">${total.toLocaleString()} ر.س</div></div>
+    ${list.length===0?'<div class="empty">لا سجلات بعد</div>':list.map(s=>`<div class="li"><div><div style="font-weight:600;font-size:13px">${s.type}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span style="font-weight:700;color:#6E7B45">${(Number(s.price||0)*Number(s.count||0)).toLocaleString()} ر.س</span></div></div>`).join('')}
+  `);
+}
+function openPgRakhalModal(){
+  if(guardGuest())return;
+  openMdl('إضافة رخال كأمهات',`
+    <div class="fld"><label>النوع</label><input type="text" id="drk-type" placeholder="مثال: نجدي"></div>
+    <div class="flex gap8">
+      <div class="fld" style="flex:1"><label>العدد</label><input type="number" id="drk-count" min="1"></div>
+      <div class="fld" style="flex:1"><label>سعر الرأس (﷼)</label><input type="number" id="drk-price"></div>
+    </div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="drk-date" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="savePgRakhal()">حفظ</button>
+  `);
+}
+function savePgRakhal(){
+  if(guardGuest())return;
+  const type=document.getElementById('drk-type').value.trim();
+  const count=document.getElementById('drk-count').value;
+  if(!type||!count){toast('أدخل النوع والعدد',true);return;}
+  if(!db.pygmyRakhal)db.pygmyRakhal=[];
+  db.pygmyRakhal.push({id:uid(),type,count:Number(count),price:Number(document.getElementById('drk-price').value)||0,date:document.getElementById('drk-date').value||tod()});
+  save();toast('تمت الإضافة');closeMdl();rPygmyPens();
+}
+function delPgRakhal(i){
+  if(!confirm('حذف هذا السجل؟'))return;
+  db.pygmyRakhal.splice(i,1);save();rPygmyPens();
+}
+function openTransferPg(){
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);
+  const others=db.pygmyPens.filter(p=>p.id!==a.penId);
+  openMdl(`نقل ${tbadge(a.number,a.color)}`,`${a.penId?`<button class="btn-r mb8 w100 jc" onclick="removeFromPgPen('${curPgAnimal}')">🚪 إخراج من الحظيرة</button>`:''}${others.length===0?'<div class="empty">لا توجد حظائر أخرى</div>':others.map(p=>`<div class="li" style="cursor:pointer" onclick="doTransferPg('${curPgAnimal}','${p.id}')"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${p.alert!==false?`تنبيه ${p.days}y`:'بلا تنبيه'}</span></div>`).join('')}`);
+}
+function doTransferPg(aid,pid){const a=db.pygmyAnimals.find(x=>x.id===aid);if(a){a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rPygmyPens();}
+function removeFromPgPen(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.pygmyAnimals.find(x=>x.id===id);if(a){a.penId=null;a.entered=null;}save();toast('تم الإخراج');closeMdl();rPygmyPens();}
+let pgOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];
+function openPgOffs(){pgOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];rPgOffs();}
+function rPgOffs(){
+  const a=db.pygmyAnimals.find(x=>x.id===curPgAnimal);
+  openMdl(`مواليد ${tbadge(a.number,a.color)}`,`
+    <div class="fld"><label>تاريخ الميلاد</label><input type="date" id="dobd" value="${tod()}"></div>
+    <div id="dorows">${pgOffRows.map((r,i)=>`<div style="border:1px solid #E1D6BB;border-radius:12px;padding:11px;margin-bottom:9px"><div class="muted mb8" style="font-size:11px;font-weight:700">مولود ${i+1}</div><div class="flex gap8 mb8"><select onchange="pgOffRows[${i}].gender=this.value" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:7px;flex:1;font-size:12px"><option ${r.gender==='أنثى'?'selected':''}>أنثى</option><option ${r.gender==='ذكر'?'selected':''}>ذكر</option></select><input type="text" placeholder="الرقم" value="${r.number}" oninput="pgOffRows[${i}].number=this.value" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:7px;flex:1;font-size:12px"></div><div class="cp" id="docp${i}"></div></div>`).join('')}</div>
+    ${pgOffRows.length<3?`<button class="btn-g mb8" onclick="addPgOffRow()">＋ مولود آخر</button>`:''}
+    <div id="doerr" class="red mb8" style="font-size:12px;display:none"></div>
+    <button class="btn w100 jc" onclick="savePgOffs()">حفظ</button>
+  `,true);
+  pgOffRows.forEach((r,i)=>mkCP('docp'+i,r.color,c=>pgOffRows[i].color=c));
+}
+function addPgOffRow(){if(pgOffRows.length>=3)return;pgOffRows.push({gender:'أنثى',number:'',color:COLORS[0].v});rPgOffs();}
+function savePgOffs(){if(guardGuest())return;
+  const bd=document.getElementById('dobd').value||tod();
+  const rows=pgOffRows.map(r=>({...r,number:toLatinDigits(r.number.trim()),bd}));
+  const err=document.getElementById('doerr');
+  for(const r of rows){
+    if(!r.number){err.textContent='أدخل رقم';err.style.display='block';return;}
+    if(db.pygmyAnimals.some(a=>a.number===r.number&&a.color===r.color)){err.textContent=`${r.number}(${r.color}) مستخدم`;err.style.display='block';return;}
+  }
+  const mid=curPgAnimal;
+  rows.forEach(r=>db.pygmyAnimals.push({id:uid(),number:r.number,color:r.color,cat:'n',gender:r.gender,alive:true,birthDate:r.bd,penId:null,motherId:mid,addedAt:new Date().toISOString()}));
+  save();toast('تمت الإضافة');closeMdl();openPygmyAnimal(mid);rPygmyPens();
+}
+function savePygmyNotes(id){
+  const a=db.pygmyAnimals.find(x=>x.id===id);if(!a)return;
+  a.notes=document.getElementById('dednotes').value.trim();
+  save();toast('تم الحفظ');openPygmyAnimal(id);rPygmyPens();
+}
+let pgvPen=null,pgvMode=false,pgvSel=[];
+function openPygmyPV(pid){pgvPen=pid;pgvMode=false;pgvSel=[];rPGV();}
+function rPGV(){
+  const pen=db.pygmyPens.find(p=>p.id===pgvPen);
+  const anims=db.pygmyAnimals.filter(a=>a.penId===pgvPen&&a.alive);
+  openMdl(`${pen.name} (${anims.length})`,`
+    <div class="flex jb mb8"><button class="btn-g" onclick="togPGVSel()">${pgvMode?'إلغاء':'✓ تحديد'}</button></div>
+    <div id="pgvlist">${anims.length===0?'<div class="empty">لا كائنات</div>':anims.map(a=>{const ck=pgvSel.includes(a.id);const days=a.entered?Math.floor((new Date()-new Date(a.entered))/86400000):(a.addedAt?Math.floor((new Date()-new Date(a.addedAt))/86400000):null);const prod=(a.cat||'m')==='m'?db.pygmyAnimals.filter(o=>o.motherId===a.id&&o.alive).length:0;return`<div class="li" style="cursor:pointer;background:${ck?'#6E7B4514':'#F3ECDD'};border-color:${ck?'#6E7B45':'#E1D6BB'}" onclick="${pgvMode?`togPGVA('${a.id}')`:``}"><div class="flex ac gap8">${pgvMode?`<div style="width:18px;height:18px;border:2px solid ${ck?'#6E7B45':'#ccc'};border-radius:4px;background:${ck?'#6E7B45':'transparent'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">${ck?'✓':''}</div>`:''}${pgvMode?tbadge(a.number,a.color):`<span onclick="closeMdl();openPygmyAnimal('${a.id}')">${tbadge(a.number,a.color)}</span>`}${(!pgvMode&&days!==null)?`<span class="muted" style="font-size:10px">${days} يوم</span>`:''}${(!pgvMode&&prod>0)?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${prod} إنتاج</span>`:''}</div>${(!pgvMode)?`<button class="bi" onclick="event.stopPropagation();rmPGVA('${a.id}')">🚪</button>`:''}</div>`;}).join('')}</div>
+    ${(pgvMode&&anims.length)?`<div class="flex gap8 mt8"><button class="btn" style="flex:1;justify-content:center" onclick="bulkPgTr()" ${!pgvSel.length?'disabled':''}>نقل (${pgvSel.length})</button><button class="btn-r" style="flex:1;justify-content:center" onclick="bulkPgDel()" ${!pgvSel.length?'disabled':''}>🗑 (${pgvSel.length})</button></div>`:''}
+  `);
+}
+function togPGVSel(){pgvMode=!pgvMode;pgvSel=[];rPGV();}
+function togPGVA(id){pgvSel=pgvSel.includes(id)?pgvSel.filter(x=>x!==id):[...pgvSel,id];rPGV();}
+function rmPGVA(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.pygmyAnimals.find(x=>x.id===id);if(a){a.penId=null;a.entered=null;}save();rPGV();rPygmyPens();}
+function bulkPgTr(){
+  const others=db.pygmyPens.filter(p=>p.id!==pgvPen);
+  if(!others.length){toast('لا حظائر أخرى',true);return;}
+  openMdl(`نقل ${pgvSel.length} إلى...`,others.map(p=>`<div class="li" style="cursor:pointer" onclick="doBPgTr('${p.id}')"><span style="font-weight:700">${p.name}</span></div>`).join(''));
+}
+function doBPgTr(pid){pgvSel.forEach(id=>{const a=db.pygmyAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${pgvSel.length}`);closeMdl();rPygmyPens();}
+function bulkPgDel(){
+  if(!confirm(`حذف ${pgvSel.length} رأس؟`))return;
+  db.pygmyAnimals=db.pygmyAnimals.filter(a=>!pgvSel.includes(a.id));
+  save();toast('تم الحذف');closeMdl();rPygmyPens();
+}
+function openAddPygmyPen(){
+  openMdl('إضافة حظيرة ماعز قزم',`<div class="fld"><label>الاسم</label><input type="text" id="dpn" placeholder="حظيرة ١"></div><div class="fld"><label>تنبيه بعد كم يوم</label><input type="number" id="dpd" value="7"></div><div class="flex jb ac mb10" style="background:#F3ECDD;border-radius:10px;padding:10px"><span style="font-size:13px">تفعيل التنبيه</span><input type="checkbox" id="dpa" checked style="width:20px;height:20px"></div><button class="btn w100 jc" onclick="savePygmyPen()">حفظ</button>`);
+}
+function savePygmyPen(){if(guardGuest())return;
+  const name=document.getElementById('dpn').value.trim();
+  if(!name){toast('أدخل الاسم',true);return;}
+  db.pygmyPens.push({id:uid(),name,days:Number(document.getElementById('dpd').value)||7,alert:document.getElementById('dpa').checked});
+  save();toast('تمت الإضافة');closeMdl();rPygmyPens();
+}
+function openEditPygmyPen(id){
+  const p=db.pygmyPens.find(x=>x.id===id);
+  openMdl('تعديل الحظيرة',`<div class="fld"><label>الاسم</label><input type="text" id="edpn" value="${p.name}"></div><div class="fld"><label>الأيام</label><input type="number" id="edpd" value="${p.days||7}"></div><div class="flex jb ac mb10" style="background:#F3ECDD;border-radius:10px;padding:10px"><span style="font-size:13px">تفعيل التنبيه</span><input type="checkbox" id="edpa" ${p.alert!==false?'checked':''} style="width:20px;height:20px"></div><button class="btn w100 jc mb8" onclick="doEditPygmyPen('${id}')">حفظ</button><button class="btn-r w100 jc" onclick="delPygmyPen('${id}')">🗑 حذف</button>`);
+}
+function doEditPygmyPen(id){if(guardGuest())return;
+  const p=db.pygmyPens.find(x=>x.id===id);if(!p)return;
+  const n=document.getElementById('edpn').value.trim();if(!n){toast('أدخل الاسم',true);return;}
+  p.name=n;p.days=Number(document.getElementById('edpd').value)||7;p.alert=document.getElementById('edpa').checked;
+  save();toast('تم الحفظ');closeMdl();rPygmyPens();
+}
+function delPygmyPen(id){
+  if(confirm('حذف الحظيرة؟')){db.pygmyAnimals.forEach(a=>{if(a.penId===id)a.penId=null;});db.pygmyPens=db.pygmyPens.filter(p=>p.id!==id);save();toast('تم');closeMdl();rPygmyPens();}
+}
+let atpPgSel=[];
+function openAddToPygmyPen(pid){
+  atpPgSel=[];
+  const free=db.pygmyAnimals.filter(a=>a.alive&&!a.penId);
+  openMdl('إضافة للحظيرة',`${free.length===0?'<div class="empty">لا رؤوس حرة</div>':free.map(a=>`<div class="li" style="cursor:pointer" id="pgatpd${a.id}" onclick="togATPPg('${a.id}','${pid}',this)"><div class="flex ac gap8"><div style="width:18px;height:18px;border:2px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px" id="pgpgatpdb${a.id}"></div>${tbadge(a.number,a.color)}</div><span class="muted" style="font-size:11px">${a.gender}</span></div>`).join('')}${free.length?`<button class="btn w100 jc mt8" onclick="saveATPPg('${pid}')">إضافة</button>`:''}`);
+}
+function togATPPg(id,pid,el){
+  const b=document.getElementById('pgpgatpdb'+id);
+  if(atpPgSel.includes(id)){atpPgSel=atpPgSel.filter(x=>x!==id);b.style.background='transparent';b.style.borderColor='#ccc';b.textContent='';el.style.background='#F3ECDD';el.style.borderColor='#E1D6BB';}
+  else{atpPgSel.push(id);b.style.background='#6E7B45';b.style.borderColor='#6E7B45';b.style.color='#fff';b.textContent='✓';el.style.background='#6E7B4514';el.style.borderColor='#6E7B45';}
+}
+function saveATPPg(pid){if(guardGuest())return;
+  if(!atpPgSel.length){toast('اختر رأس',true);return;}
+  atpPgSel.forEach(id=>{const a=db.pygmyAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});
+  atpPgSel=[];save();toast('تمت الإضافة');closeMdl();rPygmyPens();
+}
+
 // ====== FINANCE ======
 function rFin(){
   const from=document.getElementById('ff').value,to=document.getElementById('ft').value;
@@ -2028,6 +2464,35 @@ function saveDorMotherBaseline(){
   if(!count&&count!==0){toast('أدخل رقم صحيح',true);return;}
   db.dorperMotherBaseline={count,date:document.getElementById('dmbDate').value||tod()};
   save();toast('تم الحفظ');closeMdl();rDorperPens();
+}
+
+function cfmResetPgFin(){
+  if(guardGuest())return;
+  if(!confirm('تصفير مبيعات وأرخال الماعز القزم للسنة الجديدة؟'))return;
+  const tS=(db.pygmySales||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+  const tRak=(db.pygmyRakhal||[]).reduce((a,b)=>a+Number(b.price||0)*Number(b.count||0),0);
+  const motherCount=db.pygmyAnimals.filter(a=>a.alive&&(a.cat||'m')==='m').length;
+  const year=hijriYear()||new Date().getFullYear();
+  if(!db.pygmyYearlyArchive)db.pygmyYearlyArchive=[];
+  db.pygmyYearlyArchive.push({year,sales:tS,rakhal:tRak,mothers:motherCount,date:new Date().toISOString()});
+  db.pygmySales=[];db.pygmyRakhal=[];
+  save();toast('تم التصفير وحفظ السنة');rPygmyPens();
+}
+function openSetPgMotherBaseline(){
+  if(guardGuest())return;
+  const currentDM=db.pygmyAnimals.filter(a=>a.alive&&(a.cat||'m')==='m').length;
+  openMdl('تسجيل عدد أمهات الماعز القزم المرجعي',`
+    <div class="db mb8" style="font-size:11px">العدد الحالي الفعلي: ${currentDM} أم. يمكنك تسجيله أو إدخال رقم آخر.</div>
+    <div class="fld"><label>العدد</label><input type="number" id="pgmbCount" value="${db.pygmyMotherBaseline?db.pygmyMotherBaseline.count:currentDM}"></div>
+    <div class="fld"><label>التاريخ</label><input type="date" id="pgmbDate" value="${tod()}"></div>
+    <button class="btn w100 jc" onclick="savePgMotherBaseline()">حفظ</button>
+  `);
+}
+function savePgMotherBaseline(){
+  const count=Number(document.getElementById('pgmbCount').value);
+  if(!count&&count!==0){toast('أدخل رقم صحيح',true);return;}
+  db.pygmyMotherBaseline={count,date:document.getElementById('pgmbDate').value||tod()};
+  save();toast('تم الحفظ');closeMdl();rPygmyPens();
 }
 
 function togBSection(wrapId,arrowId){
@@ -2713,7 +3178,7 @@ if(savedAuth==='owner'||savedAuth==='guest'){
     applyMode();
     let last='home';
     try{last=localStorage.getItem('lastPage')||'home';}catch(e){}
-    const validPages=['home','pens','dorper','fin','rep','birds','farm-birds','finrep'];
+    const validPages=['home','pens','dorper','pygmy','fin','rep','birds','farm-birds','finrep'];
     if(!validPages.includes(last))last='home';
     nav(last);
   }
