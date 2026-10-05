@@ -603,25 +603,28 @@ function jdnToHijri(jdn){jdn=Math.floor(jdn);let l=jdn-1948440+10632;const n=Mat
 function hijriToJDN(hy,hm,hd){return hd+Math.ceil(29.5*(hm-1))+(hy-1)*354+Math.floor((3+11*hy)/30)+1948440-1;}
 function isoToHijri(iso){if(!iso)return null;const[y,m,d]=iso.split('-').map(Number);return jdnToHijri(gregToJDN(y,m,d));}
 function hijriToIso(hy,hm,hd){const g=jdnToGreg(hijriToJDN(hy,hm,hd));return g.y+'-'+String(g.m).padStart(2,'0')+'-'+String(g.d).padStart(2,'0');}
+const GREG_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 function toggleCalMode(){
   calMode=calMode==='g'?'h':'g';
   try{localStorage.setItem('calMode',calMode);}catch(e){}
   updateCalToggleBtn();
-  document.querySelectorAll('input[type="date"][data-enh]').forEach(inp=>{inp.removeAttribute('data-enh');});
-  enhanceDateInputs(document.body);
+  document.querySelectorAll('input[type="date"][data-enh]').forEach(inp=>{
+    inp.removeAttribute('data-enh');
+    if(inp._hijriRefresh)inp._hijriRefresh();
+  });
 }
 function updateCalToggleBtn(){
   const b=document.getElementById('cal-toggle');
   if(b)b.textContent=calMode==='h'?'🗓 هجري':'📅 ميلادي';
 }
 function fmtHijriShort(hy,hm,hd){return hd+' '+HIJRI_MONTHS[hm-1]+' '+hy;}
+function fmtGregShort(gy,gm,gd){return gd+' '+GREG_MONTHS[gm-1]+' '+gy;}
 function enhanceDateInputs(root){
   if(!root||!root.querySelectorAll)return;
   const inputs=root.querySelectorAll?root.matches&&root.matches('input[type="date"]')?[root]:root.querySelectorAll('input[type="date"]'):[];
   inputs.forEach(inp=>{
     if(inp.getAttribute('data-enh'))return;
     inp.setAttribute('data-enh','1');
-    if(calMode!=='h')return;
     if(inp.parentNode&&inp.parentNode.classList&&inp.parentNode.classList.contains('hwrap'))return;
     const wrap=document.createElement('span');
     wrap.className='hwrap';
@@ -631,30 +634,38 @@ function enhanceDateInputs(root){
     inp.style.cssText+=';opacity:0;position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
     const lbl=document.createElement('div');
     lbl.className='hlbl';
-    const sameStyle=inp.getAttribute('style')||'';
     lbl.setAttribute('style',(inp.className?'':'background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:9px 11px;font-size:13px;')+'cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;color:#3B3324');
     if(inp.className)lbl.className+=' '+inp.className;
     const refresh=()=>{
-      if(inp.value){const h=isoToHijri(inp.value);lbl.innerHTML='<span>'+fmtHijriShort(h.y,h.m,h.d)+'</span><span style="font-size:11px;color:#8C8064">🗓</span>';}
-      else{lbl.innerHTML='<span style="color:#8C8064">اختر تاريخ هجري</span><span style="font-size:11px;color:#8C8064">🗓</span>';}
+      if(inp.value){
+        const[y,m,d]=inp.value.split('-').map(Number);
+        if(calMode==='h'){const h=jdnToHijri(gregToJDN(y,m,d));lbl.innerHTML='<span>'+fmtHijriShort(h.y,h.m,h.d)+'</span><span style="font-size:11px;color:#8C8064">🗓</span>';}
+        else{lbl.innerHTML='<span>'+fmtGregShort(y,m,d)+'</span><span style="font-size:11px;color:#8C8064">📅</span>';}
+      }else{lbl.innerHTML='<span style="color:#8C8064">اختر تاريخ</span><span style="font-size:11px;color:#8C8064">'+(calMode==='h'?'🗓':'📅')+'</span>';}
     };
     refresh();
-    lbl.onclick=()=>openHijriPopover(inp,wrap,refresh);
+    lbl.onclick=()=>openDatePopover(inp,wrap,refresh);
     wrap.appendChild(lbl);
     inp._hijriRefresh=refresh;
   });
 }
-function openHijriPopover(inp,wrap,refresh){
+function openDatePopover(inp,wrap,refresh){
   document.querySelectorAll('.hpop').forEach(e=>e.remove());
-  const base=inp.value?isoToHijri(inp.value):(()=>{const t=new Date();return jdnToHijri(gregToJDN(t.getFullYear(),t.getMonth()+1,t.getDate()));})();
+  const isH=calMode==='h';
+  let baseY,baseM,baseD;
+  if(inp.value){const[y,m,d]=inp.value.split('-').map(Number);if(isH){const h=jdnToHijri(gregToJDN(y,m,d));baseY=h.y;baseM=h.m;baseD=h.d;}else{baseY=y;baseM=m;baseD=d;}}
+  else{const t=new Date();if(isH){const h=jdnToHijri(gregToJDN(t.getFullYear(),t.getMonth()+1,t.getDate()));baseY=h.y;baseM=h.m;baseD=h.d;}else{baseY=t.getFullYear();baseM=t.getMonth()+1;baseD=t.getDate();}}
+  const months=isH?HIJRI_MONTHS:GREG_MONTHS;
+  const dayCount=isH?30:31;
+  const yearOptions=isH?Array.from({length:60},(_,i)=>baseY+10-i):Array.from({length:80},(_,i)=>baseY+5-i);
   const pop=document.createElement('div');
   pop.className='hpop';
   pop.style.cssText='position:absolute;z-index:50;top:100%;right:0;left:0;background:#fff;border:1px solid #E1D6BB;border-radius:10px;padding:10px;margin-top:4px;box-shadow:0 4px 14px rgba(0,0,0,.15)';
   pop.innerHTML=`
     <div style="display:flex;gap:6px;margin-bottom:8px">
-      <select id="hp-d" style="flex:1;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${Array.from({length:30},(_,i)=>i+1).map(d=>`<option value="${d}" ${d===base.d?'selected':''}>${d}</option>`).join('')}</select>
-      <select id="hp-m" style="flex:2;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${HIJRI_MONTHS.map((n,i)=>`<option value="${i+1}" ${i+1===base.m?'selected':''}>${n}</option>`).join('')}</select>
-      <select id="hp-y" style="flex:1;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${Array.from({length:60},(_,i)=>base.y+10-i).map(y=>`<option value="${y}" ${y===base.y?'selected':''}>${y}</option>`).join('')}</select>
+      <select id="hp-d" style="flex:1;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${Array.from({length:dayCount},(_,i)=>i+1).map(d=>`<option value="${d}" ${d===baseD?'selected':''}>${d}</option>`).join('')}</select>
+      <select id="hp-m" style="flex:2;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${months.map((n,i)=>`<option value="${i+1}" ${i+1===baseM?'selected':''}>${n}</option>`).join('')}</select>
+      <select id="hp-y" style="flex:1;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${yearOptions.map(y=>`<option value="${y}" ${y===baseY?'selected':''}>${y}</option>`).join('')}</select>
     </div>
     <div style="display:flex;gap:8px">
       <button type="button" style="flex:1;background:#6E7B45;color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700">تم</button>
@@ -664,10 +675,11 @@ function openHijriPopover(inp,wrap,refresh){
   wrap.appendChild(pop);
   const btns=pop.querySelectorAll('button');
   btns[0].onclick=()=>{
-    const hd=Number(document.getElementById('hp-d').value);
-    const hm=Number(document.getElementById('hp-m').value);
-    const hy=Number(document.getElementById('hp-y').value);
-    inp.value=hijriToIso(hy,hm,hd);
+    const pd=Number(document.getElementById('hp-d').value);
+    const pm=Number(document.getElementById('hp-m').value);
+    const py=Number(document.getElementById('hp-y').value);
+    if(isH){inp.value=hijriToIso(py,pm,pd);}
+    else{inp.value=py+'-'+String(pm).padStart(2,'0')+'-'+String(pd).padStart(2,'0');}
     inp.dispatchEvent(new Event('input',{bubbles:true}));
     inp.dispatchEvent(new Event('change',{bubbles:true}));
     refresh();
