@@ -98,7 +98,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 <div id="app" style="display:none">
 <div id="guest-badge" style="display:none;background:#C79A3E;color:#fff;text-align:center;padding:6px;font-size:12px;font-weight:700">👁 وضع الاطلاع فقط — لا يمكن التعديل</div>
 <div id="nav-wrap">
-  <div id="global-date-bar"></div>
+  <div id="global-date-bar" style="position:relative"><span id="gd-text"></span><button id="cal-toggle" onclick="toggleCalMode()" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer"></button></div>
   <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الرئيسية</span></button>
   <button onclick="nav('pens')"><span class="ico">🧱</span><span>حظائر الغنم</span></button>
@@ -590,6 +590,99 @@ window.applyRemoteData=function(data){
 function uid(){return Math.random().toString(36).slice(2,9);}
 function tod(){return new Date().toISOString().slice(0,10);}
 function toLatinDigits(s){if(!s)return s;return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
+
+// ====== HIJRI/GREGORIAN DATE PICKER (global) ======
+const HIJRI_MONTHS=['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+let calMode='g';
+try{calMode=localStorage.getItem('calMode')||'g';}catch(e){}
+function gregToJDN(y,m,d){const a=Math.floor((14-m)/12);const y2=y+4800-a;const m2=m+12*a-3;return d+Math.floor((153*m2+2)/5)+365*y2+Math.floor(y2/4)-Math.floor(y2/100)+Math.floor(y2/400)-32045;}
+function jdnToGreg(jdn){let a=jdn+32044;let b=Math.floor((4*a+3)/146097);let c=a-Math.floor((146097*b)/4);let d=Math.floor((4*c+3)/1461);let e=c-Math.floor((1461*d)/4);let m=Math.floor((5*e+2)/153);const day=e-Math.floor((153*m+2)/5)+1;const month=m+3-12*Math.floor(m/10);const year=100*b+d-4800+Math.floor(m/10);return{y:year,m:month,d:day};}
+function jdnToHijri(jdn){jdn=Math.floor(jdn);let l=jdn-1948440+10632;const n=Math.floor((l-1)/10631);l=l-10631*n+354;const j=(Math.floor((10985-l)/5316))*(Math.floor((50*l)/17719))+(Math.floor(l/5670))*(Math.floor((43*l)/15238));l=l-(Math.floor((30-j)/15))*(Math.floor((17719*j)/50))-(Math.floor(j/16))*(Math.floor((15238*j)/43))+29;const hm=Math.floor((24*l)/709);const hd=l-Math.floor((709*hm)/24);const hy=30*n+j-30;return{y:hy,m:hm,d:hd};}
+function hijriToJDN(hy,hm,hd){return hd+Math.ceil(29.5*(hm-1))+(hy-1)*354+Math.floor((3+11*hy)/30)+1948440-1;}
+function isoToHijri(iso){if(!iso)return null;const[y,m,d]=iso.split('-').map(Number);return jdnToHijri(gregToJDN(y,m,d));}
+function hijriToIso(hy,hm,hd){const g=jdnToGreg(hijriToJDN(hy,hm,hd));return g.y+'-'+String(g.m).padStart(2,'0')+'-'+String(g.d).padStart(2,'0');}
+function toggleCalMode(){
+  calMode=calMode==='g'?'h':'g';
+  try{localStorage.setItem('calMode',calMode);}catch(e){}
+  updateCalToggleBtn();
+  document.querySelectorAll('input[type="date"][data-enh]').forEach(inp=>{inp.removeAttribute('data-enh');});
+  enhanceDateInputs(document.body);
+}
+function updateCalToggleBtn(){
+  const b=document.getElementById('cal-toggle');
+  if(b)b.textContent=calMode==='h'?'🗓 هجري':'📅 ميلادي';
+}
+function fmtHijriShort(hy,hm,hd){return hd+' '+HIJRI_MONTHS[hm-1]+' '+hy;}
+function enhanceDateInputs(root){
+  if(!root||!root.querySelectorAll)return;
+  const inputs=root.querySelectorAll?root.matches&&root.matches('input[type="date"]')?[root]:root.querySelectorAll('input[type="date"]'):[];
+  inputs.forEach(inp=>{
+    if(inp.getAttribute('data-enh'))return;
+    inp.setAttribute('data-enh','1');
+    if(calMode!=='h')return;
+    if(inp.parentNode&&inp.parentNode.classList&&inp.parentNode.classList.contains('hwrap'))return;
+    const wrap=document.createElement('span');
+    wrap.className='hwrap';
+    wrap.style.cssText='position:relative;display:inline-block;width:100%';
+    inp.parentNode.insertBefore(wrap,inp);
+    wrap.appendChild(inp);
+    inp.style.cssText+=';opacity:0;position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+    const lbl=document.createElement('div');
+    lbl.className='hlbl';
+    const sameStyle=inp.getAttribute('style')||'';
+    lbl.setAttribute('style',(inp.className?'':'background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:9px 11px;font-size:13px;')+'cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;color:#3B3324');
+    if(inp.className)lbl.className+=' '+inp.className;
+    const refresh=()=>{
+      if(inp.value){const h=isoToHijri(inp.value);lbl.innerHTML='<span>'+fmtHijriShort(h.y,h.m,h.d)+'</span><span style="font-size:11px;color:#8C8064">🗓</span>';}
+      else{lbl.innerHTML='<span style="color:#8C8064">اختر تاريخ هجري</span><span style="font-size:11px;color:#8C8064">🗓</span>';}
+    };
+    refresh();
+    lbl.onclick=()=>openHijriPopover(inp,wrap,refresh);
+    wrap.appendChild(lbl);
+    inp._hijriRefresh=refresh;
+  });
+}
+function openHijriPopover(inp,wrap,refresh){
+  document.querySelectorAll('.hpop').forEach(e=>e.remove());
+  const base=inp.value?isoToHijri(inp.value):(()=>{const t=new Date();return jdnToHijri(gregToJDN(t.getFullYear(),t.getMonth()+1,t.getDate()));})();
+  const pop=document.createElement('div');
+  pop.className='hpop';
+  pop.style.cssText='position:absolute;z-index:50;top:100%;right:0;left:0;background:#fff;border:1px solid #E1D6BB;border-radius:10px;padding:10px;margin-top:4px;box-shadow:0 4px 14px rgba(0,0,0,.15)';
+  pop.innerHTML=`
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <select id="hp-d" style="flex:1;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${Array.from({length:30},(_,i)=>i+1).map(d=>`<option value="${d}" ${d===base.d?'selected':''}>${d}</option>`).join('')}</select>
+      <select id="hp-m" style="flex:2;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${HIJRI_MONTHS.map((n,i)=>`<option value="${i+1}" ${i+1===base.m?'selected':''}>${n}</option>`).join('')}</select>
+      <select id="hp-y" style="flex:1;background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px;font-size:12px">${Array.from({length:60},(_,i)=>base.y+10-i).map(y=>`<option value="${y}" ${y===base.y?'selected':''}>${y}</option>`).join('')}</select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button type="button" style="flex:1;background:#6E7B45;color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700">تم</button>
+      <button type="button" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:8px 14px;font-size:12px">إلغاء</button>
+    </div>
+  `;
+  wrap.appendChild(pop);
+  const btns=pop.querySelectorAll('button');
+  btns[0].onclick=()=>{
+    const hd=Number(document.getElementById('hp-d').value);
+    const hm=Number(document.getElementById('hp-m').value);
+    const hy=Number(document.getElementById('hp-y').value);
+    inp.value=hijriToIso(hy,hm,hd);
+    inp.dispatchEvent(new Event('input',{bubbles:true}));
+    inp.dispatchEvent(new Event('change',{bubbles:true}));
+    refresh();
+    pop.remove();
+  };
+  btns[1].onclick=()=>pop.remove();
+  setTimeout(()=>{
+    document.addEventListener('click',function h(e){
+      if(!pop.contains(e.target)&&e.target!==inp){pop.remove();document.removeEventListener('click',h);}
+    });
+  },10);
+}
+let _calObsTimer=null;
+function _calObsCallback(){
+  if(_calObsTimer)clearTimeout(_calObsTimer);
+  _calObsTimer=setTimeout(()=>{enhanceDateInputs(document.body);},80);
+}
 function fixArabicNumbers(){
   if(guardGuest())return;
   let fixed=0;
@@ -600,18 +693,15 @@ function fixArabicNumbers(){
   if(fixed>0){save();rHome();toast(`تم إصلاح ${fixed} رقم`);}
   else toast('كل الأرقام سليمة بالفعل');
 }
-function fmt(s){if(!s)return'—';return new Date(s).toLocaleDateString('ar-SA-u-ca-islamic-nu-latn',{day:'numeric',month:'short',year:'numeric'});}
+function fmt(s){if(!s)return'—';const[y,m,d]=s.slice(0,10).split('-').map(Number);const h=jdnToHijri(gregToJDN(y,m,d));return `${h.d} ${HIJRI_MONTHS[h.m-1].slice(0,4)} ${h.y}`;}
 function getHijriDate(){
-  // Manual conversion to ensure numeric month
-  const d=new Date();
-  const parts=new Intl.DateTimeFormat('en-TN-u-ca-islamic',{day:'numeric',month:'numeric',year:'numeric'}).formatToParts(d);
-  let day='',month='',year='';
-  parts.forEach(p=>{if(p.type==='day')day=p.value;if(p.type==='month')month=p.value;if(p.type==='year')year=p.value;});
-  return `${day}/${month}/${year} هـ`;
+  const t=new Date();
+  const h=jdnToHijri(gregToJDN(t.getFullYear(),t.getMonth()+1,t.getDate()));
+  return `${h.d}/${h.m}/${h.y} هـ`;
 }
 function hijriYear(){
-  const parts=new Intl.DateTimeFormat('en-TN-u-ca-islamic',{year:'numeric'}).formatToParts(new Date());
-  return parts.find(p=>p.type==='year')?.value||new Date().getFullYear();
+  const t=new Date();
+  return jdnToHijri(gregToJDN(t.getFullYear(),t.getMonth()+1,t.getDate())).y;
 }
 function hex(c){const t=COLORS.find(x=>x.v===c);return t?t.h:'#8C8064';}
 function tbadge(n,c){const h=hex(c);return`<span class="tb"><span class="td" style="background:${h};${c==='أبيض'?'border:1px solid #ccc':''}"></span>#${n}</span>`;}
@@ -626,7 +716,7 @@ function nav(id){
   const idx={home:0,pens:1,dorper:2,pygmy:3,fin:4,rep:5,birds:6,'farm-birds':7,finrep:8}[id];
   document.querySelectorAll('#nav button')[idx].classList.add('active');
   // Update global date bar
-  const gd=document.getElementById('global-date-bar');
+  const gd=document.getElementById('gd-text');
   if(gd)gd.textContent='📅 '+getHijriDate();
   if(id==='home')rHome();
   if(id==='pens')rPens();
@@ -697,7 +787,7 @@ function rHome(){
   const hijriToday='📅 '+getHijriDate();
   const htEl=document.getElementById('hijri-today');
   if(htEl)htEl.textContent=hijriToday;
-  const gd=document.getElementById('global-date-bar');
+  const gd=document.getElementById('gd-text');
   if(gd)gd.textContent=hijriToday;
   const A=db.animals;
   const mothers=A.filter(a=>a.cat==='m'&&a.alive);
@@ -3110,7 +3200,7 @@ document.addEventListener('input',function(e){
 
 function chkPw(){
   // Fill global date bar
-  const gd=document.getElementById('global-date-bar');
+  const gd=document.getElementById('gd-text');
   if(gd)gd.textContent='📅 '+getHijriDate();
   const v=document.getElementById('pw').value;
   if(v==='Nayf1621'){
@@ -3161,7 +3251,7 @@ function guardGuest(){
 // Auto-unlock if already authenticated in this session
 const savedAuth=sessionStorage.getItem('auth');
 if(savedAuth==='owner'||savedAuth==='guest'){
-  const gd=document.getElementById('global-date-bar');
+  const gd=document.getElementById('gd-text');
   if(gd)gd.textContent='📅 '+getHijriDate();
   isGuest=savedAuth==='guest';
   document.getElementById('lock').style.display='none';
@@ -3220,6 +3310,9 @@ setInterval(checkNotifs,60000);
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
+updateCalToggleBtn();
+enhanceDateInputs(document.body);
+new MutationObserver(_calObsCallback).observe(document.body,{childList:true,subtree:true});
 </script>
 </body>
 </html>
