@@ -14,7 +14,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 summary::-webkit-details-marker{display:none}
 summary::marker{content:""}
-input[type="date"]{direction:ltr;text-align:right}
+input[type="date"]{direction:ltr!important;text-align:right;unicode-bidi:plaintext}
+input[type="date"]::-webkit-datetime-edit{direction:ltr!important;unicode-bidi:plaintext}
+input[type="date"]::-webkit-datetime-edit-fields-wrapper{direction:ltr!important}
 body{font-family:'Tajawal',sans-serif;background:#F3ECDD;color:#3B3324;padding-bottom:70px}
 #lock{position:fixed;inset:0;background:#F3ECDD;z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:24px}
 #lock h1{font-size:24px;font-weight:700}
