@@ -768,7 +768,7 @@ function getAlerts(){
   db.vax.forEach(v=>{
     if(!v.date)return;
     const from=new Date(v.date);from.setDate(from.getDate()-(v.before||0));
-    if(now>=from){const due=new Date(v.date)<=now;list.push({id:'v'+v.id,txt:`تطعيم "${v.type}" ${due?'مستحق':'قادم – '+fmt(v.date)}`});}
+    if(now>=from){const due=new Date(v.date)<=now;list.push({id:'v'+v.id,vaxId:v.id,txt:`تطعيم "${v.type}" ${due?'مستحق':'قادم – '+fmt(v.date)}`});}
   });
   (db.customAlerts||[]).forEach(c=>{
     const upcoming=c.date&&new Date(c.date)>now;
@@ -869,7 +869,7 @@ function togBell(){
 function renderBellList(){
   const alerts=getAlerts();
   document.getElementById('bell-list').innerHTML=alerts.length===0?'<div class="muted" style="padding:12px;text-align:center;font-size:12px">لا توجد تنبيهات</div>':
-    alerts.map(a=>`<div class="li" style="cursor:pointer;${a.upcoming?'opacity:0.6':''}" onclick="${a.animalId?`document.getElementById('bell-dd').style.display='none';openAnimal('${a.animalId}')`:''}"><span>${a.animalId?'🧱':a.customId?'📌':'💉'} <span style="font-size:12px">${a.txt}</span></span>${a.customId?`<button class="bi red" onclick="event.stopPropagation();delCustomAlert('${a.customId}')">🗑</button>`:''}</div>`).join('');
+    alerts.map(a=>`<div class="li" style="cursor:pointer;${a.upcoming?'opacity:0.6':''}" onclick="${a.animalId?`document.getElementById('bell-dd').style.display='none';openAnimal('${a.animalId}')`:''}"><span>${a.animalId?'🧱':a.customId?'📌':'💉'} <span style="font-size:12px">${a.txt}</span></span>${a.customId?`<button class="bi red" onclick="event.stopPropagation();delCustomAlert('${a.customId}')">🗑</button>`:a.vaxId?`<button class="bi red" onclick="event.stopPropagation();delVaxAlert('${a.vaxId}')">🗑</button>`:''}</div>`).join('');
 }
 
 function addAnimal(){
@@ -2385,6 +2385,7 @@ function openVax(){
 }
 function saveVax(){if(guardGuest())return;const t=document.getElementById('vtype').value.trim();const e=document.getElementById('verr');if(!t){e.textContent='أدخل النوع';e.style.display='block';return;}e.style.display='none';db.vax.push({id:uid(),type:t,date:document.getElementById('vdate').value||tod(),before:Number(document.getElementById('vbef').value)||0,notes:document.getElementById('vnotes').value});save();toast('تمت الإضافة');openVax();rHome();}
 function delVax(id){if(!confirm('حذف هذا الموعد؟'))return;db.vax=db.vax.filter(v=>v.id!==id);save();openVax();rHome();}
+function delVaxAlert(id){if(!confirm('حذف هذا الموعد؟'))return;db.vax=db.vax.filter(v=>v.id!==id);save();renderBellList();rHome();}
 function markVaxDone(id){
   if(guardGuest())return;
   const v=db.vax.find(x=>x.id===id);if(!v)return;
