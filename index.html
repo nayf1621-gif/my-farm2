@@ -595,6 +595,29 @@ function uid(){return Math.random().toString(36).slice(2,9);}
 function tod(){return new Date().toISOString().slice(0,10);}
 function toLatinDigits(s){if(!s)return s;return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
 
+
+// ====== BIRTH LOG (persistent per mother) ======
+function _deriveBirths(offs){
+  const g={};
+  offs.forEach(o=>{if(o.birthDate)g[o.birthDate]=(g[o.birthDate]||0)+1;});
+  return Object.keys(g).sort().map(d=>({date:d,count:g[d]}));
+}
+function addBirthRecord(m,existingOffs,date,count){
+  if(!m.births)m.births=_deriveBirths(existingOffs);
+  const same=m.births.find(b=>b.date===date);
+  if(same)same.count+=count;else m.births.push({date,count});
+}
+function birthsLogHtml(m,offs){
+  let b=m.births;
+  if(!b){
+    b=_deriveBirths(offs);
+    if(b.length&&!isGuest){m.births=b;save();}
+  }
+  const sorted=[...b].sort((x,y)=>new Date(y.date)-new Date(x.date));
+  const total=sorted.reduce((s,r)=>s+Number(r.count||0),0);
+  return `<div class="card mt8"><div class="st mb8">📜 سجل الولادات (${sorted.length}) · إجمالي الإنتاج ${total}</div>${sorted.length===0?'<div class="empty">لا توجد ولادات مسجلة</div>':sorted.map(r=>`<div class="li mb8"><span style="font-size:12px;font-weight:700">${fmt(r.date)}</span><span style="font-size:12px;font-weight:700;color:#6E7B45">${r.count} إنتاج</span></div>`).join('')}</div>`;
+}
+
 // ====== HIJRI/GREGORIAN DATE PICKER (global) ======
 const HIJRI_MONTHS=['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
 let calMode='g';
@@ -1018,7 +1041,7 @@ function rAnimal(){
     </div>
     <div id="df" style="display:none" class="db mb8"><div class="fld"><label>سبب النفوق (اختياري)</label><textarea id="dcause"></textarea></div><div class="flex gap8"><button class="btn" style="background:#A8503A" onclick="cfmDeath()">تأكيد</button><button class="btn-g" onclick="document.getElementById('df').style.display='none'">إلغاء</button></div></div>
     <div id="dc" style="display:none" class="db"><div style="font-size:12px;text-align:center;margin-bottom:8px">حذف نهائي؟</div><div id="dc-offs"></div><div class="flex gap8"><button class="btn" style="background:#A8503A;flex:1;justify-content:center" onclick="doDelete()">تأكيد</button><button class="btn-g" style="flex:1;justify-content:center" onclick="document.getElementById('dc').style.display='none'">تراجع</button></div></div>
-    ${offsHtml}${notesHtml}
+    ${offsHtml}${notesHtml}${a.cat==='m'?birthsLogHtml(a,offs):''}
   `,true);
 }
 
@@ -1162,6 +1185,8 @@ function saveOffs(){if(guardGuest())return;
     if(db.animals.some(a=>a.number===r.number&&a.color===r.color)){err.textContent=`${r.number}(${r.color}) مستخدم`;err.style.display='block';return;}
   }
   const mid=curAnimal;
+  const _m0=db.animals.find(a=>a.id===mid);
+  if(_m0)addBirthRecord(_m0,db.animals.filter(a=>a.motherId===mid),bd,rows.length);
   rows.forEach(r=>db.animals.push({id:uid(),number:r.number,color:r.color,cat:'n',gender:r.gender,alive:true,twin:false,birthDate:r.bd,penId:null,entered:null,motherId:mid,addedAt:new Date().toISOString(),notes:[]}));
   const tot=db.animals.filter(a=>a.motherId===mid).length;
   const m=db.animals.find(a=>a.id===mid);
@@ -1468,6 +1493,7 @@ function openDorperAnimal(id){
     <div class="fld mt8"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
     <button class="btn w100 jc mb8" onclick="saveDorperNotes('${a.id}')">حفظ الملاحظات</button>
     ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openDorOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>{const oAge=o.birthDate?Math.floor((new Date()-new Date(o.birthDate))/86400000):null;return`<div class="li" style="cursor:pointer" onclick="openDorperAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${oAge!==null?' · '+oAge+' يوم':''}${!o.alive?' · نافق':''}</span></div>`;}).join('')}</div>`:''}
+    ${cat==='m'?birthsLogHtml(a,offs):''}
   `,true);
 }
 function openEditDorTag(){
@@ -1643,6 +1669,8 @@ function saveDorOffs(){if(guardGuest())return;
     if(db.dorperAnimals.some(a=>a.number===r.number&&a.color===r.color)){err.textContent=`${r.number}(${r.color}) مستخدم`;err.style.display='block';return;}
   }
   const mid=curDorAnimal;
+  const _m0=db.dorperAnimals.find(a=>a.id===mid);
+  if(_m0)addBirthRecord(_m0,db.dorperAnimals.filter(a=>a.motherId===mid),bd,rows.length);
   rows.forEach(r=>db.dorperAnimals.push({id:uid(),number:r.number,color:r.color,cat:'n',gender:r.gender,alive:true,birthDate:r.bd,penId:null,motherId:mid,addedAt:new Date().toISOString()}));
   save();toast('تمت الإضافة');closeMdl();openDorperAnimal(mid);rDorperPens();
 }
@@ -1876,6 +1904,7 @@ function openPygmyAnimal(id){
     <div class="fld mt8"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
     <button class="btn w100 jc mb8" onclick="savePygmyNotes('${a.id}')">حفظ الملاحظات</button>
     ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openPgOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>{const oAge=o.birthDate?Math.floor((new Date()-new Date(o.birthDate))/86400000):null;return`<div class="li" style="cursor:pointer" onclick="openPygmyAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${oAge!==null?' · '+oAge+' يوم':''}${!o.alive?' · نافق':''}</span></div>`;}).join('')}</div>`:''}
+    ${cat==='m'?birthsLogHtml(a,offs):''}
   `,true);
 }
 function openEditPgTag(){
@@ -2026,6 +2055,8 @@ function savePgOffs(){if(guardGuest())return;
     if(db.pygmyAnimals.some(a=>a.number===r.number&&a.color===r.color)){err.textContent=`${r.number}(${r.color}) مستخدم`;err.style.display='block';return;}
   }
   const mid=curPgAnimal;
+  const _m0=db.pygmyAnimals.find(a=>a.id===mid);
+  if(_m0)addBirthRecord(_m0,db.pygmyAnimals.filter(a=>a.motherId===mid),bd,rows.length);
   rows.forEach(r=>db.pygmyAnimals.push({id:uid(),number:r.number,color:r.color,cat:'n',gender:r.gender,alive:true,birthDate:r.bd,penId:null,motherId:mid,addedAt:new Date().toISOString()}));
   save();toast('تمت الإضافة');closeMdl();openPygmyAnimal(mid);rPygmyPens();
 }
