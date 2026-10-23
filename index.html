@@ -103,11 +103,11 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div id="global-date-bar" style="position:relative"><span id="gd-text"></span><button id="cal-toggle" onclick="toggleCalMode()" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer"></button></div>
   <div id="nav">
   <button class="active" onclick="nav('home')"><span class="ico">🏠</span><span>الحري</span></button>
-  <button onclick="nav('pens')"><span class="ico">🧱</span><span>حظائر الغنم</span></button>
+  <button onclick="nav('pens')"><span class="ico">🧱</span><span>حظائر الحري</span></button>
   <button onclick="nav('dorper')"><span class="ico">🐐</span><span>الدوربر</span></button>
   <button onclick="nav('pygmy')"><span class="ico">🐏</span><span>الماعز القزم</span></button>
-  <button onclick="nav('fin')"><span class="ico">💰</span><span>مالية الغنم</span></button>
-  <button onclick="nav('rep')"><span class="ico">📊</span><span>تقارير الغنم</span></button>
+  <button onclick="nav('fin')"><span class="ico">💰</span><span>مالية الحري</span></button>
+  <button onclick="nav('rep')"><span class="ico">📊</span><span>تقارير الحري</span></button>
   <button onclick="nav('birds')"><span class="ico">🦜</span><span>طيور البيت</span></button>
   <button onclick="nav('farm-birds')"><span class="ico">🐦</span><span>طيور المزرعة</span></button>
   <button onclick="nav('finrep')"><span class="ico">📈</span><span>المقارنة</span></button>
@@ -156,7 +156,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- PENS -->
 <div id="page-pens" class="page">
-  <div class="sh"><span class="st">حظائر الغنم</span><div class="flex gap8"><button class="btn-g" data-owner onclick="openReorderPens()">↕ ترتيب</button><button class="btn" data-owner onclick="openAddPen()">＋ جديدة</button></div></div>
+  <div class="sh"><span class="st">حظائر الحري</span><div class="flex gap8"><button class="btn-g" data-owner onclick="openReorderPens()">↕ ترتيب</button><button class="btn" data-owner onclick="openAddPen()">＋ جديدة</button></div></div>
   <div id="pens-list"></div>
 </div>
 
@@ -289,7 +289,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- FINANCE -->
 <div id="page-fin" class="page">
-  <div class="sh"><span class="st">مالية الغنم</span><button class="btn-r" data-owner onclick="cfmResetFin()">📅 سنة جديدة</button></div>
+  <div class="sh"><span class="st">مالية الحري</span><button class="btn-r" data-owner onclick="cfmResetFin()">📅 سنة جديدة</button></div>
   <div class="card mb10" style="text-align:center"><div class="muted" style="font-size:11px">الصافي</div><div id="fnet" style="font-size:30px;font-weight:700"></div></div>
   <div class="row" id="ftotals"></div>
   <div class="row mb10" id="fsalesbreak"></div>
@@ -379,7 +379,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 
 <!-- REPORTS -->
 <div id="page-rep" class="page">
-  <div class="st mb10">📊 تقارير الغنم</div>
+  <div class="st mb10">📊 تقارير الحري</div>
   <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
     <input type="date" id="rf" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:110px" onchange="rRep()">
     <span class="muted" style="font-size:11px">إلى</span>
@@ -724,7 +724,7 @@ function tbadge(n,c){const h=hex(c);return`<span class="tb"><span class="td" sty
 function toast(m,e){const t=document.getElementById('tst');t.textContent=(e?'✕ ':'✓ ')+m;t.className=e?'err':'';t.style.display='block';setTimeout(()=>t.style.display='none',2500);}
 
 function nav(id){
-  if(isGuest&&id!=='pens'){toast('الاطلاع متاح على حظائر الغنم فقط',true);return;}
+  if(isGuest&&id!=='pens'){toast('الاطلاع متاح على حظائر الحري فقط',true);return;}
   try{localStorage.setItem('lastPage',id);}catch(e){}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
@@ -3186,7 +3186,7 @@ function rFinRep(){
   const total=finNet+bNet+fbNet;
 
   const data=[
-    {label:'مالية الغنم',net:finNet,sales:finSales,exp:finExp,color:'#6E7B45'},
+    {label:'مالية الحري',net:finNet,sales:finSales,exp:finExp,color:'#6E7B45'},
     {label:'طيور البيت',net:bNet,sales:bSales,exp:bExp,color:'#4472A8'},
     {label:'طيور المزرعة',net:fbNet,sales:fbSales,exp:fbExp,color:'#C79A3E'},
   ];
