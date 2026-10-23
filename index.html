@@ -429,6 +429,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <div id="bnet" style="font-size:30px;font-weight:700;margin-top:4px"></div>
   </div>
   <div class="row mb10" id="btotals"></div>
+  <div class="card mb10"><div class="st mb8">📚 أرشيف الأرباح السنوية (هجري)</div><div id="barchive"></div></div>
 
   <!-- Date filter + reset -->
   <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -481,6 +482,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
     <div id="fbnet" style="font-size:30px;font-weight:700;margin-top:4px"></div>
   </div>
   <div class="row mb10" id="fbtotals"></div>
+  <div class="card mb10"><div class="st mb8">📚 أرشيف الأرباح السنوية (هجري)</div><div id="fbarchive"></div></div>
   <div style="background:#EBE1CB;border-radius:12px;padding:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
     <span class="muted" style="font-size:11px">📅</span>
     <input type="date" id="fbff" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:6px 8px;font-size:12px;flex:1;min-width:100px" onchange="rFarmBirds()">
@@ -569,8 +571,8 @@ onSnapshot(ref,snap=>{
 const COLORS=[{v:'أحمر',h:'#C0392B'},{v:'أزرق',h:'#2E6E9E'},{v:'أصفر',h:'#D4B106'},{v:'أخضر',h:'#4C7A3D'},{v:'برتقالي',h:'#CC7A2E'},{v:'أبيض',h:'#F5F1E6'},{v:'أسود',h:'#2B2620'},{v:'وردي',h:'#C97B9C'},{v:'بنفسجي',h:'#7A5FA0'}];
 const ECATS=['حلال','مكعب','حشائش','أدوية','فيتامينات','ماء','رواتب','صيانة','بنزين','إيجار','تطعيمات','أخرى'];
 const KEY='myFarm_v3';
-function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[],motherBaseline:{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:[],dorperMotherBaseline:null,medicalCases:[],pygmyPens:[],pygmyAnimals:[],pygmySales:[],pygmyRakhal:[],pygmyYearlyArchive:[],pygmyMotherBaseline:null};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[],motherBaseline:p.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:p.dorperYearlyArchive||[],dorperMotherBaseline:p.dorperMotherBaseline||null,medicalCases:p.medicalCases||[],pygmyPens:p.pygmyPens||[],pygmyAnimals:p.pygmyAnimals||[],pygmySales:p.pygmySales||[],pygmyRakhal:p.pygmyRakhal||[],pygmyYearlyArchive:p.pygmyYearlyArchive||[],pygmyMotherBaseline:p.pygmyMotherBaseline||null});}}}catch(e){}return seed();}
+function seed(){return{animals:[],pens:[],expenses:[],sales:[],notes:[],vax:[],vaxHistory:[],bc:{t:[],s:[]},birdSales:[],birdExp:[],birdTypes:['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:[],birdNoteTypes:['مشكلة','مرض','موسم الإنتاج'],rakhal:[],yearlyArchive:[],twinArchive:0,fbSales:[],fbExp:[],fbTypes:['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:[],fbNoteTypes:['مشكلة','مرض','موسم الإنتاج'],overdueDays:150,dorperPens:[],dorperAnimals:[],dorperSales:[],slaughters:[],assetSales:[],dorperRakhal:[],dorperSlaughters:[],dorperAssetSales:[],customAlerts:[],motherBaseline:{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:[],dorperMotherBaseline:null,medicalCases:[],pygmyPens:[],pygmyAnimals:[],pygmySales:[],pygmyRakhal:[],pygmyYearlyArchive:[],pygmyMotherBaseline:null,birdYearlyArchive:[],fbYearlyArchive:[]};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.animals)){const d=seed();return Object.assign(d,p,{notes:p.notes||[],vax:p.vax||[],vaxHistory:p.vaxHistory||[],bc:p.bc&&Array.isArray(p.bc.t)?p.bc:{t:[],s:[]},birdSales:p.birdSales||[],birdExp:p.birdExp||[],birdTypes:p.birdTypes||['لوري','صن كنيور','كنيور','كايك وايت','كايك بلاك'],birdNotes:p.birdNotes||[],birdNoteTypes:p.birdNoteTypes||['مشكلة','مرض','موسم الإنتاج'],rakhal:p.rakhal||[],yearlyArchive:p.yearlyArchive||[],twinArchive:p.twinArchive||0,fbSales:p.fbSales||[],fbExp:p.fbExp||[],fbTypes:p.fbTypes||['دجاج','حمام','أوز','بط','ديك رومي'],fbNotes:p.fbNotes||[],fbNoteTypes:p.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'],overdueDays:p.overdueDays||150,dorperPens:p.dorperPens||[],dorperAnimals:p.dorperAnimals||[],dorperSales:p.dorperSales||[],slaughters:p.slaughters||[],assetSales:p.assetSales||[],dorperRakhal:p.dorperRakhal||[],dorperSlaughters:p.dorperSlaughters||[],dorperAssetSales:p.dorperAssetSales||[],customAlerts:p.customAlerts||[],motherBaseline:p.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:p.dorperYearlyArchive||[],dorperMotherBaseline:p.dorperMotherBaseline||null,medicalCases:p.medicalCases||[],pygmyPens:p.pygmyPens||[],pygmyAnimals:p.pygmyAnimals||[],pygmySales:p.pygmySales||[],pygmyRakhal:p.pygmyRakhal||[],pygmyYearlyArchive:p.pygmyYearlyArchive||[],pygmyMotherBaseline:p.pygmyMotherBaseline||null,birdYearlyArchive:p.birdYearlyArchive||[],fbYearlyArchive:p.fbYearlyArchive||[]});}}}catch(e){}return seed();}
 function save(){
   localStorage.setItem(KEY,JSON.stringify(db));
   if(!window._fbSync&&window.__fbSave)window.__fbSave(db);
@@ -582,7 +584,7 @@ let penSelMode=false,penSel=[];
 
 window.applyRemoteData=function(data){
   const d=seed();
-  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[],motherBaseline:data.motherBaseline||db.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:data.dorperYearlyArchive||[],dorperMotherBaseline:data.dorperMotherBaseline||db.dorperMotherBaseline||null,medicalCases:data.medicalCases||[],pygmyPens:data.pygmyPens||[],pygmyAnimals:data.pygmyAnimals||[],pygmySales:data.pygmySales||[],pygmyRakhal:data.pygmyRakhal||[],pygmyYearlyArchive:data.pygmyYearlyArchive||[],pygmyMotherBaseline:data.pygmyMotherBaseline||db.pygmyMotherBaseline||null});
+  Object.assign(db,d,data,{notes:data.notes||[],vax:data.vax||[],vaxHistory:data.vaxHistory||[],bc:data.bc&&Array.isArray(data.bc.t)?data.bc:{t:[],s:[]},birdSales:data.birdSales||[],birdExp:data.birdExp||[],birdTypes:data.birdTypes||db.birdTypes,birdNotes:data.birdNotes||[],birdNoteTypes:data.birdNoteTypes||db.birdNoteTypes,rakhal:data.rakhal||[],yearlyArchive:data.yearlyArchive||[],twinArchive:data.twinArchive||0,fbSales:data.fbSales||[],fbExp:data.fbExp||[],fbTypes:data.fbTypes||db.fbTypes,fbNotes:data.fbNotes||[],fbNoteTypes:data.fbNoteTypes||db.fbNoteTypes,dorperPens:data.dorperPens||[],dorperAnimals:data.dorperAnimals||[],dorperSales:data.dorperSales||[],slaughters:data.slaughters||[],assetSales:data.assetSales||[],dorperRakhal:data.dorperRakhal||[],dorperSlaughters:data.dorperSlaughters||[],dorperAssetSales:data.dorperAssetSales||[],customAlerts:data.customAlerts||[],motherBaseline:data.motherBaseline||db.motherBaseline||{count:117,date:new Date().toISOString().slice(0,10)},dorperYearlyArchive:data.dorperYearlyArchive||[],dorperMotherBaseline:data.dorperMotherBaseline||db.dorperMotherBaseline||null,medicalCases:data.medicalCases||[],pygmyPens:data.pygmyPens||[],pygmyAnimals:data.pygmyAnimals||[],pygmySales:data.pygmySales||[],pygmyRakhal:data.pygmyRakhal||[],pygmyYearlyArchive:data.pygmyYearlyArchive||[],pygmyMotherBaseline:data.pygmyMotherBaseline||db.pygmyMotherBaseline||null,birdYearlyArchive:data.birdYearlyArchive||[],fbYearlyArchive:data.fbYearlyArchive||[]});
   localStorage.setItem(KEY,JSON.stringify(db));
   const active=document.querySelector('.page.active');
   if(active){const id=active.id.replace('page-','');
@@ -2695,6 +2697,21 @@ function rBirds(){
       </div>`;
     }).join('');
   }
+  const _archEl=document.getElementById('barchive');
+  if(_archEl){
+    const _arch=db.birdYearlyArchive||[];
+    _archEl.innerHTML=_arch.length===0?'<div class="muted" style="font-size:12px">لا يوجد أرشيف بعد — يُحفظ تلقائياً عند كل سنة جديدة</div>':
+      [..._arch].reverse().map(y=>`
+        <div class="li mb8" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="font-weight:700;font-size:13px">السنة ${y.year} هـ</div>
+          <div class="flex gap8 fw">
+            <span class="green" style="font-size:12px">مبيعات: ${y.sales.toLocaleString('en-US')} ﷼</span>
+            <span class="red" style="font-size:12px">مصروفات: ${y.expenses.toLocaleString('en-US')} ﷼</span>
+            <span style="font-size:12px;font-weight:700;color:${y.net>=0?'#6E7B45':'#A8503A'}">صافي: ${y.net.toLocaleString('en-US')} ﷼</span>
+          </div>
+        </div>
+      `).join('');
+  }
 }
 
 function openBirdSaleModal(){
@@ -2916,7 +2933,16 @@ function saveBirdExp(){if(guardGuest())return;
   save();toast('تمت الإضافة');closeMdl();rBirds();
 }
 function delBirdExp(id){if(!confirm('حذف هذا المصروف؟'))return;db.birdExp=(db.birdExp||[]).filter(e=>e.id!==id);save();rBirds();}
-function cfmResetBirds(){if(confirm('تصفير مبيعات ومصاريف الطيور للسنة الجديدة؟ لا يمكن التراجع.')){db.birdSales=[];db.birdExp=[];save();toast('تم التصفير');rBirds();}}
+function cfmResetBirds(){
+  if(confirm('تصفير مبيعات ومصاريف الطيور للسنة الجديدة؟ لا يمكن التراجع.')){
+    const tS=(db.birdSales||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+    const tE=(db.birdExp||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+    const year=hijriYear()||new Date().getFullYear();
+    if(!db.birdYearlyArchive)db.birdYearlyArchive=[];
+    db.birdYearlyArchive.push({year,sales:tS,expenses:tE,net:tS-tE,date:new Date().toISOString()});
+    db.birdSales=[];db.birdExp=[];save();toast('تم التصفير وحفظ السنة');rBirds();
+  }
+}
 function openAddBirdNote(type){
   openMdl(`إضافة ملاحظة — ${type}`,`
     <div class="fld"><textarea id="bnote-input" placeholder="أضف ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;width:100%;min-height:150px;resize:none;font-family:Tajawal,sans-serif;overflow-y:hidden" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea></div>
@@ -3003,6 +3029,21 @@ function rFarmBirds(){
       return`<div class="mb8"><div class="sh" style="cursor:pointer;background:#fff;border:1px solid ${c}44;border-radius:12px;padding:10px 14px" onclick="togBSection('${sid}','${arid}')"><div class="flex ac gap8"><span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${t}</span><span class="muted" style="font-size:11px">${catNotes.length} ملاحظة</span></div><div class="flex ac gap8"><button class="btn-g" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openAddFBNote('${t}')" ${gHide()}>＋</button><span id="${arid}">▼</span></div></div><div id="${sid}" style="display:none;padding:8px 0">${catNotes.length===0?'<div class="empty mb8" style="font-size:12px">لا توجد ملاحظات</div>':catNotes.map(n=>{const i=fbNotes.indexOf(n);return`<div class="card mb8"><div class="flex jb ac mb4"><div class="muted" style="font-size:10px">${fmt(n.date)}</div><div class="flex gap8" ${gHide()}><button class="bi" onclick="editFBNote(${i})">✎</button><button class="bi red" onclick="delFBNote(${i})">🗑</button></div></div><div style="font-size:13px;white-space:pre-wrap">${n.text}</div></div>`;}).join('')}</div></div>`;
     }).join('');
   }
+  const _archEl=document.getElementById('fbarchive');
+  if(_archEl){
+    const _arch=db.fbYearlyArchive||[];
+    _archEl.innerHTML=_arch.length===0?'<div class="muted" style="font-size:12px">لا يوجد أرشيف بعد — يُحفظ تلقائياً عند كل سنة جديدة</div>':
+      [..._arch].reverse().map(y=>`
+        <div class="li mb8" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="font-weight:700;font-size:13px">السنة ${y.year} هـ</div>
+          <div class="flex gap8 fw">
+            <span class="green" style="font-size:12px">مبيعات: ${y.sales.toLocaleString('en-US')} ﷼</span>
+            <span class="red" style="font-size:12px">مصروفات: ${y.expenses.toLocaleString('en-US')} ﷼</span>
+            <span style="font-size:12px;font-weight:700;color:${y.net>=0?'#6E7B45':'#A8503A'}">صافي: ${y.net.toLocaleString('en-US')} ﷼</span>
+          </div>
+        </div>
+      `).join('');
+  }
 }
 function delFBSale(id){if(!confirm('حذف؟'))return;db.fbSales=(db.fbSales||[]).filter(s=>s.id!==id);save();rFarmBirds();}
 function editFBSale(id){
@@ -3042,7 +3083,16 @@ function saveEditFBExp(id){
   e.date=document.getElementById('efbe-date').value||e.date;
   save();toast('تم الحفظ');closeMdl();rFarmBirds();
 }
-function cfmResetFarmBirds(){if(confirm('تصفير مبيعات ومصاريف طيور المزرعة؟')){db.fbSales=[];db.fbExp=[];save();toast('تم');rFarmBirds();}}
+function cfmResetFarmBirds(){
+  if(confirm('تصفير مبيعات ومصاريف طيور المزرعة للسنة الجديدة؟ لا يمكن التراجع.')){
+    const tS=(db.fbSales||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+    const tE=(db.fbExp||[]).reduce((a,b)=>a+Number(b.amount||0),0);
+    const year=hijriYear()||new Date().getFullYear();
+    if(!db.fbYearlyArchive)db.fbYearlyArchive=[];
+    db.fbYearlyArchive.push({year,sales:tS,expenses:tE,net:tS-tE,date:new Date().toISOString()});
+    db.fbSales=[];db.fbExp=[];save();toast('تم التصفير وحفظ السنة');rFarmBirds();
+  }
+}
 function openFBSaleModal(){
   if(guardGuest())return;
   const types=db.fbTypes||[];
