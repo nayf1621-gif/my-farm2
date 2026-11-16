@@ -1041,12 +1041,13 @@ function rAnimal(){
   const a=db.animals.find(x=>x.id===curAnimal);
   if(!a)return;
   const mother=a.motherId?db.animals.find(x=>x.id===a.motherId):null;
-  const offs=db.animals.filter(x=>x.motherId===curAnimal);
+  const allOffs=db.animals.filter(x=>x.motherId===curAnimal);
+  const offs=allOffs.filter(x=>!x.detached&&!x.penId);
   const pen=a.penId?db.pens.find(p=>p.id===a.penId):null;
   const anotes=a.notes||[];
 
   const offsHtml=a.cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openOffs()" ${gHide()}>＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>`<div class="li" style="cursor:pointer" onclick="openAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${!o.alive?' · نافق':''}</span></div>`).join('')}</div>`:'';
-  const lastBirthDate=a.cat==='m'?(a.lastBirthDate||(offs.filter(o=>o.birthDate).map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]||null)):null;
+  const lastBirthDate=a.cat==='m'?(a.lastBirthDate||(allOffs.filter(o=>o.birthDate).map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]||null)):null;
   const daysSinceLastBirth=lastBirthDate?Math.floor((new Date()-new Date(lastBirthDate))/86400000):null;
 
   const notesHtml=`<div class="card mt8"><div class="st mb8">📓 ملاحظات (${anotes.length})</div>${anotes.map((n,i)=>`<div class="db mb8 flex jb"><div><div style="font-size:13px">${n.text}</div><div class="muted" style="font-size:10px">${fmt(n.date)}</div></div><button class="bi red" onclick="delAnote(${i})" ${gHide()}>🗑</button></div>`).join('')}<div class="flex gap8 mt8" ${gHide()}><input type="text" id="anote" placeholder="ملاحظة..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:8px 10px;font-size:13px;flex:1"><button class="btn" onclick="addAnote()">＋</button></div></div>`;
@@ -1065,7 +1066,7 @@ function rAnimal(){
     </div>
     <div id="df" style="display:none" class="db mb8"><div class="fld"><label>سبب النفوق (اختياري)</label><textarea id="dcause"></textarea></div><div class="flex gap8"><button class="btn" style="background:#A8503A" onclick="cfmDeath()">تأكيد</button><button class="btn-g" onclick="document.getElementById('df').style.display='none'">إلغاء</button></div></div>
     <div id="dc" style="display:none" class="db"><div style="font-size:12px;text-align:center;margin-bottom:8px">حذف نهائي؟</div><div id="dc-offs"></div><div class="flex gap8"><button class="btn" style="background:#A8503A;flex:1;justify-content:center" onclick="doDelete()">تأكيد</button><button class="btn-g" style="flex:1;justify-content:center" onclick="document.getElementById('dc').style.display='none'">تراجع</button></div></div>
-    ${offsHtml}${notesHtml}${a.cat==='m'?birthsLogHtml(a,offs):''}
+    ${offsHtml}${notesHtml}${a.cat==='m'?birthsLogHtml(a,allOffs):''}
   `,true);
 }
 
@@ -1182,7 +1183,7 @@ function openTransfer(){
   const others=db.pens.filter(p=>p.id!==a.penId);
   openMdl(`نقل #${a.number}`,`${a.penId?`<button class="btn-r mb8 w100 jc" onclick="removeFromPen('${curAnimal}')">🚪 إخراج من الحظيرة</button>`:''}${others.length===0?'<div class="empty">لا توجد حظائر أخرى</div>':others.map(p=>`<div class="li" style="cursor:pointer" onclick="doTransfer('${curAnimal}','${p.id}')"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${p.alert!==false?`تنبيه ${p.days}y`:'بلا تنبيه'}</span></div>`).join('')}`);
 }
-function doTransfer(aid,pid){const a=db.animals.find(x=>x.id===aid);if(a){a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rHome();}
+function doTransfer(aid,pid){const a=db.animals.find(x=>x.id===aid);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rHome();}
 function removeFromPen(id){if(!confirm('إخراج هذا الكائن من الحظيرة؟'))return;const a=db.animals.find(x=>x.id===id);if(a){a.penId=null;a.entered=null;}save();toast('تم الإخراج');closeMdl();rHome();}
 
 // ====== OFFSPRING ======
@@ -1285,7 +1286,7 @@ function bulkTr(){
   if(!others.length){toast('لا حظائر أخرى',true);return;}
   openMdl(`نقل ${pvSel.length} إلى...`,others.map(p=>`<div class="li" style="cursor:pointer" onclick="doBTr('${p.id}')"><span style="font-weight:700">${p.name}</span></div>`).join(''));
 }
-function doBTr(pid){pvSel.forEach(id=>{const a=db.animals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${pvSel.length}`);closeMdl();rPens();}
+function doBTr(pid){pvSel.forEach(id=>{const a=db.animals.find(x=>x.id===id);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${pvSel.length}`);closeMdl();rPens();}
 function bulkDel(){
   if(!confirm(`حذف ${pvSel.length} كائن؟`))return;
   const offs=db.animals.filter(a=>pvSel.includes(a.motherId));
@@ -1330,7 +1331,7 @@ function togATP(id,pid,el){
 }
 function saveATP(pid){if(guardGuest())return;
   if(!atpSel.length){toast('اختر كائن',true);return;}
-  atpSel.forEach(id=>{const a=db.animals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});
+  atpSel.forEach(id=>{const a=db.animals.find(x=>x.id===id);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}});
   atpSel=[];save();toast('تمت الإضافة');closeMdl();rPens();rHome();
 }
 
@@ -1342,10 +1343,11 @@ function showDorMothers(){
   const list=(db.dorperAnimals||[]).filter(a=>a.alive&&(a.cat||'m')==='m');
   openMdl(`الأمهات (${list.length})`,list.length===0?'<div class="empty">لا توجد أمهات</div>':
     list.map(a=>{
-      const kids=db.dorperAnimals.filter(o=>o.motherId===a.id&&o.alive);
+      const kidsAll=db.dorperAnimals.filter(o=>o.motherId===a.id&&o.alive);
+      const kids=kidsAll.filter(o=>!o.detached&&!o.penId);
       const pen=db.dorperPens.find(p=>p.id===a.penId);
       const kidsHtml=kids.length?`<div class="flex gap8 fw" style="padding:2px 10px 8px">${kids.map(k=>{const ag=k.birthDate?Math.floor((new Date()-new Date(k.birthDate))/86400000):null;return `<span onclick="closeMdl();openDorperAnimal('${k.id}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">${tbadge(k.number,k.color)}<span class="muted" style="font-size:10px">${k.gender}${ag!==null?' · '+ag+' يوم':''}</span></span>`;}).join('')}</div>`:'';
-      return `<div class="mb8"><div class="li" style="cursor:pointer" onclick="closeMdl();openDorperAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${kids.length?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${kids.length} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>${kidsHtml}</div>`;
+      return `<div class="mb8"><div class="li" style="cursor:pointer" onclick="closeMdl();openDorperAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${kidsAll.length?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${kidsAll.length} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>${kidsHtml}</div>`;
     }).join(''));
 }
 function showDorNewborns(){
@@ -1495,7 +1497,8 @@ function openDorperAnimal(id){
   const pen=db.dorperPens.find(p=>p.id===a.penId);
   const cat=a.cat||'m';
   const mother=cat==='n'&&a.motherId?db.dorperAnimals.find(x=>x.id===a.motherId):null;
-  const offs=cat==='m'?db.dorperAnimals.filter(o=>o.motherId===a.id):[];
+  const allOffs=cat==='m'?db.dorperAnimals.filter(o=>o.motherId===a.id):[];
+  const offs=allOffs.filter(o=>!o.detached&&!o.penId);
   const age=cat==='n'&&a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
   openMdl(`دوربر ${tbadge(a.number,a.color)}`,`
     <div class="flex jb ac mb10">
@@ -1520,7 +1523,7 @@ function openDorperAnimal(id){
     <div class="fld mt8"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
     <button class="btn w100 jc mb8" onclick="saveDorperNotes('${a.id}')">حفظ الملاحظات</button>
     ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openDorOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>{const oAge=o.birthDate?Math.floor((new Date()-new Date(o.birthDate))/86400000):null;return`<div class="li" style="cursor:pointer" onclick="openDorperAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${oAge!==null?' · '+oAge+' يوم':''}${!o.alive?' · نافق':''}</span></div>`;}).join('')}</div>`:''}
-    ${cat==='m'?birthsLogHtml(a,offs):''}
+    ${cat==='m'?birthsLogHtml(a,allOffs):''}
   `,true);
 }
 function openEditDorTag(){
@@ -1671,7 +1674,7 @@ function openTransferDor(){
   const others=db.dorperPens.filter(p=>p.id!==a.penId);
   openMdl(`نقل ${tbadge(a.number,a.color)}`,`${a.penId?`<button class="btn-r mb8 w100 jc" onclick="removeFromDorPen('${curDorAnimal}')">🚪 إخراج من الحظيرة</button>`:''}${others.length===0?'<div class="empty">لا توجد حظائر أخرى</div>':others.map(p=>`<div class="li" style="cursor:pointer" onclick="doTransferDor('${curDorAnimal}','${p.id}')"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${p.alert!==false?`تنبيه ${p.days}y`:'بلا تنبيه'}</span></div>`).join('')}`);
 }
-function doTransferDor(aid,pid){const a=db.dorperAnimals.find(x=>x.id===aid);if(a){a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rDorperPens();}
+function doTransferDor(aid,pid){const a=db.dorperAnimals.find(x=>x.id===aid);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rDorperPens();}
 function removeFromDorPen(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.dorperAnimals.find(x=>x.id===id);if(a){a.penId=null;a.entered=null;}save();toast('تم الإخراج');closeMdl();rDorperPens();}
 let dorOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];
 function openDorOffs(){dorOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];rDorOffs();}
@@ -1725,7 +1728,7 @@ function bulkDTr(){
   if(!others.length){toast('لا حظائر أخرى',true);return;}
   openMdl(`نقل ${dpvSel.length} إلى...`,others.map(p=>`<div class="li" style="cursor:pointer" onclick="doBDTr('${p.id}')"><span style="font-weight:700">${p.name}</span></div>`).join(''));
 }
-function doBDTr(pid){dpvSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${dpvSel.length}`);closeMdl();rDorperPens();}
+function doBDTr(pid){dpvSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${dpvSel.length}`);closeMdl();rDorperPens();}
 function bulkDDel(){
   if(!confirm(`حذف ${dpvSel.length} رأس؟`))return;
   db.dorperAnimals=db.dorperAnimals.filter(a=>!dpvSel.includes(a.id));
@@ -1766,7 +1769,7 @@ function togATPDor(id,pid,el){
 }
 function saveATPDor(pid){if(guardGuest())return;
   if(!atpDorSel.length){toast('اختر رأس',true);return;}
-  atpDorSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});
+  atpDorSel.forEach(id=>{const a=db.dorperAnimals.find(x=>x.id===id);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}});
   atpDorSel=[];save();toast('تمت الإضافة');closeMdl();rDorperPens();
 }
 
@@ -1778,10 +1781,11 @@ function showPgMothers(){
   const list=(db.pygmyAnimals||[]).filter(a=>a.alive&&(a.cat||'m')==='m');
   openMdl(`الأمهات (${list.length})`,list.length===0?'<div class="empty">لا توجد أمهات</div>':
     list.map(a=>{
-      const kids=db.pygmyAnimals.filter(o=>o.motherId===a.id&&o.alive);
+      const kidsAll=db.pygmyAnimals.filter(o=>o.motherId===a.id&&o.alive);
+      const kids=kidsAll.filter(o=>!o.detached&&!o.penId);
       const pen=db.pygmyPens.find(p=>p.id===a.penId);
       const kidsHtml=kids.length?`<div class="flex gap8 fw" style="padding:2px 10px 8px">${kids.map(k=>{const ag=k.birthDate?Math.floor((new Date()-new Date(k.birthDate))/86400000):null;return `<span onclick="closeMdl();openPygmyAnimal('${k.id}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">${tbadge(k.number,k.color)}<span class="muted" style="font-size:10px">${k.gender}${ag!==null?' · '+ag+' يوم':''}</span></span>`;}).join('')}</div>`:'';
-      return `<div class="mb8"><div class="li" style="cursor:pointer" onclick="closeMdl();openPygmyAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${kids.length?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${kids.length} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>${kidsHtml}</div>`;
+      return `<div class="mb8"><div class="li" style="cursor:pointer" onclick="closeMdl();openPygmyAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${kidsAll.length?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${kidsAll.length} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>${kidsHtml}</div>`;
     }).join(''));
 }
 function showPgNewborns(){
@@ -1908,7 +1912,8 @@ function openPygmyAnimal(id){
   const pen=db.pygmyPens.find(p=>p.id===a.penId);
   const cat=a.cat||'m';
   const mother=cat==='n'&&a.motherId?db.pygmyAnimals.find(x=>x.id===a.motherId):null;
-  const offs=cat==='m'?db.pygmyAnimals.filter(o=>o.motherId===a.id):[];
+  const allOffs=cat==='m'?db.pygmyAnimals.filter(o=>o.motherId===a.id):[];
+  const offs=allOffs.filter(o=>!o.detached&&!o.penId);
   const age=cat==='n'&&a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
   openMdl(`الماعز القزم ${tbadge(a.number,a.color)}`,`
     <div class="flex jb ac mb10">
@@ -1933,7 +1938,7 @@ function openPygmyAnimal(id){
     <div class="fld mt8"><label>ملاحظات</label><textarea id="dednotes">${a.notes||''}</textarea></div>
     <button class="btn w100 jc mb8" onclick="savePygmyNotes('${a.id}')">حفظ الملاحظات</button>
     ${cat==='m'?`<div class="card mt8"><div class="sh"><span class="st">المواليد (${offs.filter(o=>o.alive).length})</span><button class="btn" onclick="openPgOffs()">＋ إضافة</button></div>${offs.length===0?'<div class="empty">لا يوجد مواليد</div>':offs.map(o=>{const oAge=o.birthDate?Math.floor((new Date()-new Date(o.birthDate))/86400000):null;return`<div class="li" style="cursor:pointer" onclick="openPygmyAnimal('${o.id}')">${tbadge(o.number,o.color)}<span class="muted" style="font-size:11px">${o.gender}${o.birthDate?' · '+fmt(o.birthDate):''}${oAge!==null?' · '+oAge+' يوم':''}${!o.alive?' · نافق':''}</span></div>`;}).join('')}</div>`:''}
-    ${cat==='m'?birthsLogHtml(a,offs):''}
+    ${cat==='m'?birthsLogHtml(a,allOffs):''}
   `,true);
 }
 function openEditPgTag(){
@@ -2059,7 +2064,7 @@ function openTransferPg(){
   const others=db.pygmyPens.filter(p=>p.id!==a.penId);
   openMdl(`نقل ${tbadge(a.number,a.color)}`,`${a.penId?`<button class="btn-r mb8 w100 jc" onclick="removeFromPgPen('${curPgAnimal}')">🚪 إخراج من الحظيرة</button>`:''}${others.length===0?'<div class="empty">لا توجد حظائر أخرى</div>':others.map(p=>`<div class="li" style="cursor:pointer" onclick="doTransferPg('${curPgAnimal}','${p.id}')"><span style="font-weight:700">${p.name}</span><span class="muted" style="font-size:11px">${p.alert!==false?`تنبيه ${p.days}y`:'بلا تنبيه'}</span></div>`).join('')}`);
 }
-function doTransferPg(aid,pid){const a=db.pygmyAnimals.find(x=>x.id===aid);if(a){a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rPygmyPens();}
+function doTransferPg(aid,pid){const a=db.pygmyAnimals.find(x=>x.id===aid);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}save();toast('تم النقل');closeMdl();rPygmyPens();}
 function removeFromPgPen(id){if(!confirm('إخراج هذا الرأس من الحظيرة؟'))return;const a=db.pygmyAnimals.find(x=>x.id===id);if(a){a.penId=null;a.entered=null;}save();toast('تم الإخراج');closeMdl();rPygmyPens();}
 let pgOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];
 function openPgOffs(){pgOffRows=[{gender:'أنثى',number:'',color:COLORS[0].v}];rPgOffs();}
@@ -2113,7 +2118,7 @@ function bulkPgTr(){
   if(!others.length){toast('لا حظائر أخرى',true);return;}
   openMdl(`نقل ${pgvSel.length} إلى...`,others.map(p=>`<div class="li" style="cursor:pointer" onclick="doBPgTr('${p.id}')"><span style="font-weight:700">${p.name}</span></div>`).join(''));
 }
-function doBPgTr(pid){pgvSel.forEach(id=>{const a=db.pygmyAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${pgvSel.length}`);closeMdl();rPygmyPens();}
+function doBPgTr(pid){pgvSel.forEach(id=>{const a=db.pygmyAnimals.find(x=>x.id===id);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}});save();toast(`تم نقل ${pgvSel.length}`);closeMdl();rPygmyPens();}
 function bulkPgDel(){
   if(!confirm(`حذف ${pgvSel.length} رأس؟`))return;
   db.pygmyAnimals=db.pygmyAnimals.filter(a=>!pgvSel.includes(a.id));
@@ -2154,7 +2159,7 @@ function togATPPg(id,pid,el){
 }
 function saveATPPg(pid){if(guardGuest())return;
   if(!atpPgSel.length){toast('اختر رأس',true);return;}
-  atpPgSel.forEach(id=>{const a=db.pygmyAnimals.find(x=>x.id===id);if(a){a.penId=pid;a.entered=new Date().toISOString();}});
+  atpPgSel.forEach(id=>{const a=db.pygmyAnimals.find(x=>x.id===id);if(a){if(a.cat==='n'&&a.motherId)a.detached=true;a.penId=pid;a.entered=new Date().toISOString();}});
   atpPgSel=[];save();toast('تمت الإضافة');closeMdl();rPygmyPens();
 }
 
