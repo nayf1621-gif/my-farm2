@@ -165,6 +165,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="sh"><span class="st">الدوربر</span><button class="btn" data-owner onclick="openAddDorperPen()">＋ حظيرة جديدة</button></div>
   <button class="btn-g mb10" data-owner onclick="cfmResetDorFin()" style="font-size:12px">📅 سنة جديدة</button>
   <div class="row mb10" id="dorper-stats"></div>
+  <div class="card mb10"><div class="st mb8">🔍 بحث</div><div class="flex gap8"><input type="text" id="dsn" placeholder="الرقم" oninput="doDorSearch()" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;flex:1;min-width:100px"><select id="dsc" onchange="doDorSearch()" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;flex:1;min-width:100px"><option value="">الكل</option></select></div><div id="dsr" class="mt8"></div></div>
   <div class="card mb10" data-owner>
     <div class="fld"><input type="text" id="dnn" placeholder="الرقم"></div>
     <div class="cp" id="dncp"></div>
@@ -239,6 +240,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   <div class="sh"><span class="st">الماعز القزم</span><button class="btn" data-owner onclick="openAddPygmyPen()">＋ حظيرة جديدة</button></div>
   <button class="btn-g mb10" data-owner onclick="cfmResetPgFin()" style="font-size:12px">📅 سنة جديدة</button>
   <div class="row mb10" id="pygmy-stats"></div>
+  <div class="card mb10"><div class="st mb8">🔍 بحث</div><div class="flex gap8"><input type="text" id="pgsn" placeholder="الرقم" oninput="doPgSearch()" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;flex:1;min-width:100px"><select id="pgsc" onchange="doPgSearch()" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:10px;padding:9px 11px;font-size:13px;flex:1;min-width:100px"><option value="">الكل</option></select></div><div id="pgsr" class="mt8"></div></div>
   <div class="card mb10" data-owner>
     <div class="fld"><input type="text" id="pgnn" placeholder="الرقم"></div>
     <div class="cp" id="pgncp"></div>
@@ -616,6 +618,28 @@ function birthsLogHtml(m,offs){
   const sorted=[...b].sort((x,y)=>new Date(y.date)-new Date(x.date));
   const total=sorted.reduce((s,r)=>s+Number(r.count||0),0);
   return `<div class="card mt8"><div class="st mb8">📜 سجل الولادات (${sorted.length}) · إجمالي الإنتاج ${total}</div>${sorted.length===0?'<div class="empty">لا توجد ولادات مسجلة</div>':sorted.map(r=>`<div class="li mb8"><span style="font-size:12px;font-weight:700">${fmt(r.date)}</span><span style="font-size:12px;font-weight:700;color:#6E7B45">${r.count} إنتاج</span></div>`).join('')}</div>`;
+}
+
+
+function doDorSearch(){
+  const num=toLatinDigits(document.getElementById('dsn').value.trim());
+  const color=document.getElementById('dsc').value;
+  const r=document.getElementById('dsr');
+  if(!num&&!color){r.innerHTML='';return;}
+  const res=db.dorperAnimals.filter(a=>a.alive&&(!num||a.number===num)&&(!color||a.color===color));
+  r.innerHTML=res.length===0?'<div class="muted" style="font-size:12px">لا نتائج</div>':res.map(a=>`<div class="li" style="cursor:pointer" onclick="openDorperAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${(a.cat||'m')==='m'?'أم':'مولود'}</span></div>`).join('');
+}
+function doPgSearch(){
+  const num=toLatinDigits(document.getElementById('pgsn').value.trim());
+  const color=document.getElementById('pgsc').value;
+  const r=document.getElementById('pgsr');
+  if(!num&&!color){r.innerHTML='';return;}
+  const res=db.pygmyAnimals.filter(a=>a.alive&&(!num||a.number===num)&&(!color||a.color===color));
+  r.innerHTML=res.length===0?'<div class="muted" style="font-size:12px">لا نتائج</div>':res.map(a=>`<div class="li" style="cursor:pointer" onclick="openPygmyAnimal('${a.id}')">${tbadge(a.number,a.color)}<span class="muted" style="font-size:11px">${(a.cat||'m')==='m'?'أم':'مولود'}</span></div>`).join('');
+}
+function _fillSearchColors(id){
+  const s=document.getElementById(id);
+  if(s&&s.options.length<=1)s.innerHTML='<option value="">الكل</option>'+COLORS.map(x=>`<option value="${x.v}">${x.v}</option>`).join('');
 }
 
 // ====== HIJRI/GREGORIAN DATE PICKER (global) ======
@@ -1318,9 +1342,10 @@ function showDorMothers(){
   const list=(db.dorperAnimals||[]).filter(a=>a.alive&&(a.cat||'m')==='m');
   openMdl(`الأمهات (${list.length})`,list.length===0?'<div class="empty">لا توجد أمهات</div>':
     list.map(a=>{
-      const prod=db.dorperAnimals.filter(o=>o.motherId===a.id&&o.alive).length;
+      const kids=db.dorperAnimals.filter(o=>o.motherId===a.id&&o.alive);
       const pen=db.dorperPens.find(p=>p.id===a.penId);
-      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openDorperAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${prod?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${prod} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>`;
+      const kidsHtml=kids.length?`<div class="flex gap8 fw" style="padding:2px 10px 8px">${kids.map(k=>{const ag=k.birthDate?Math.floor((new Date()-new Date(k.birthDate))/86400000):null;return `<span onclick="closeMdl();openDorperAnimal('${k.id}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">${tbadge(k.number,k.color)}<span class="muted" style="font-size:10px">${k.gender}${ag!==null?' · '+ag+' يوم':''}</span></span>`;}).join('')}</div>`:'';
+      return `<div class="mb8"><div class="li" style="cursor:pointer" onclick="closeMdl();openDorperAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${kids.length?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${kids.length} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>${kidsHtml}</div>`;
     }).join(''));
 }
 function showDorNewborns(){
@@ -1339,6 +1364,7 @@ function openDorDeadList(){
 function rDorperPens(){
   mkCP('dncp',selDorColor,c=>selDorColor=c);
   setDorGender(selDorGender);
+  _fillSearchColors('dsc');
   const dStatsEl=document.getElementById('dorper-stats');
   if(dStatsEl){
     const dAll=db.dorperAnimals||[];
@@ -1752,9 +1778,10 @@ function showPgMothers(){
   const list=(db.pygmyAnimals||[]).filter(a=>a.alive&&(a.cat||'m')==='m');
   openMdl(`الأمهات (${list.length})`,list.length===0?'<div class="empty">لا توجد أمهات</div>':
     list.map(a=>{
-      const prod=db.pygmyAnimals.filter(o=>o.motherId===a.id&&o.alive).length;
+      const kids=db.pygmyAnimals.filter(o=>o.motherId===a.id&&o.alive);
       const pen=db.pygmyPens.find(p=>p.id===a.penId);
-      return `<div class="li" style="cursor:pointer" onclick="closeMdl();openPygmyAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${prod?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${prod} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>`;
+      const kidsHtml=kids.length?`<div class="flex gap8 fw" style="padding:2px 10px 8px">${kids.map(k=>{const ag=k.birthDate?Math.floor((new Date()-new Date(k.birthDate))/86400000):null;return `<span onclick="closeMdl();openPygmyAnimal('${k.id}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">${tbadge(k.number,k.color)}<span class="muted" style="font-size:10px">${k.gender}${ag!==null?' · '+ag+' يوم':''}</span></span>`;}).join('')}</div>`:'';
+      return `<div class="mb8"><div class="li" style="cursor:pointer" onclick="closeMdl();openPygmyAnimal('${a.id}')"><div class="flex ac gap8">${tbadge(a.number,a.color)}${kids.length?`<span style="font-size:10px;font-weight:700;color:#6E7B45">${kids.length} إنتاج</span>`:''}</div><span class="muted" style="font-size:11px">${pen?pen.name:'بدون حظيرة'}</span></div>${kidsHtml}</div>`;
     }).join(''));
 }
 function showPgNewborns(){
@@ -1773,6 +1800,7 @@ function openPgDeadList(){
 function rPygmyPens(){
   mkCP('pgncp',selPgColor,c=>selPgColor=c);
   setPgGender(selPgGender);
+  _fillSearchColors('pgsc');
   const dStatsEl=document.getElementById('pygmy-stats');
   if(dStatsEl){
     const dAll=db.pygmyAnimals||[];
