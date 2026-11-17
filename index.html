@@ -642,6 +642,28 @@ function _fillSearchColors(id){
   if(s&&s.options.length<=1)s.innerHTML='<option value="">الكل</option>'+COLORS.map(x=>`<option value="${x.v}">${x.v}</option>`).join('');
 }
 
+
+// ====== UDHIYA NOTE (يضحي / لا يضحي) ======
+function applyUdhiyaNotes(){
+  let ch=false;const cutoff='2026-11-19';
+  const txt=d=>d<=cutoff?'يضحي':'لا يضحي';
+  (db.animals||[]).forEach(a=>{
+    if(a.cat==='n'&&a.birthDate&&!a.udhiyaNoted){
+      if(!Array.isArray(a.notes))a.notes=a.notes?[{text:String(a.notes),date:tod()}]:[];
+      a.notes.push({text:txt(a.birthDate),date:tod()});
+      a.udhiyaNoted=true;ch=true;
+    }
+  });
+  [db.dorperAnimals,db.pygmyAnimals].forEach(arr=>(arr||[]).forEach(a=>{
+    if(a.cat==='n'&&a.birthDate&&!a.udhiyaNoted){
+      const t=txt(a.birthDate);
+      a.notes=a.notes?(a.notes+'\n'+t):t;
+      a.udhiyaNoted=true;ch=true;
+    }
+  }));
+  return ch;
+}
+
 // ====== HIJRI/GREGORIAN DATE PICKER (global) ======
 const HIJRI_MONTHS=['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
 let calMode='g';
@@ -846,6 +868,7 @@ function delCustomAlert(id){
 }
 
 function rHome(){
+  if(!isGuest&&applyUdhiyaNotes())save();
   // Hijri date
   const hijriToday='📅 '+getHijriDate();
   const htEl=document.getElementById('hijri-today');
@@ -1226,6 +1249,7 @@ function saveOffs(){if(guardGuest())return;
     }
     else if(!db.bc.t.includes(mid)&&!db.bc.s.includes(mid))db.bc.s.push(mid);
   }
+  applyUdhiyaNotes();
   save();toast('تمت الإضافة');rAnimal();rHome();
 }
 
@@ -1702,7 +1726,7 @@ function saveDorOffs(){if(guardGuest())return;
   const _m0=db.dorperAnimals.find(a=>a.id===mid);
   if(_m0)addBirthRecord(_m0,db.dorperAnimals.filter(a=>a.motherId===mid),bd,rows.length);
   rows.forEach(r=>db.dorperAnimals.push({id:uid(),number:r.number,color:r.color,cat:'n',gender:r.gender,alive:true,birthDate:r.bd,penId:null,motherId:mid,addedAt:new Date().toISOString()}));
-  save();toast('تمت الإضافة');closeMdl();openDorperAnimal(mid);rDorperPens();
+  applyUdhiyaNotes();save();toast('تمت الإضافة');closeMdl();openDorperAnimal(mid);rDorperPens();
 }
 function saveDorperNotes(id){
   const a=db.dorperAnimals.find(x=>x.id===id);if(!a)return;
@@ -2092,7 +2116,7 @@ function savePgOffs(){if(guardGuest())return;
   const _m0=db.pygmyAnimals.find(a=>a.id===mid);
   if(_m0)addBirthRecord(_m0,db.pygmyAnimals.filter(a=>a.motherId===mid),bd,rows.length);
   rows.forEach(r=>db.pygmyAnimals.push({id:uid(),number:r.number,color:r.color,cat:'n',gender:r.gender,alive:true,birthDate:r.bd,penId:null,motherId:mid,addedAt:new Date().toISOString()}));
-  save();toast('تمت الإضافة');closeMdl();openPygmyAnimal(mid);rPygmyPens();
+  applyUdhiyaNotes();save();toast('تمت الإضافة');closeMdl();openPygmyAnimal(mid);rPygmyPens();
 }
 function savePygmyNotes(id){
   const a=db.pygmyAnimals.find(x=>x.id===id);if(!a)return;
