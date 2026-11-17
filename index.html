@@ -996,8 +996,9 @@ function showOverdueMothersModal(){
       const lastBirth=a.lastBirthDate||(offs.length?offs.map(o=>o.birthDate).sort((x,y)=>new Date(y)-new Date(x))[0]:null);
       const ref=lastBirth||a.addedAt;
       const days=ref?Math.floor((new Date()-new Date(ref))/86400000):null;
+      const _pen=a.penId?db.pens.find(p=>p.id===a.penId):null;
       return `<div class="li" style="cursor:pointer" onclick="closeMdl();openAnimal('${a.id}')">
-        ${tbadge(a.number,a.color)}
+        <div class="flex ac gap8">${tbadge(a.number,a.color)}<span style="font-size:11px;font-weight:700;color:#6E7B45">🧱 ${_pen?_pen.name:'بدون حظيرة'}</span></div>
         <span class="muted" style="font-size:11px">${lastBirth?'آخر ولادة: '+fmt(lastBirth):'لم تلد بعد'}${days!==null?' · مضى '+days+' يوم':''}</span>
       </div>`;
     }).join('')));
