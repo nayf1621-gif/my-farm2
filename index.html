@@ -1066,7 +1066,7 @@ function rAnimal(){
   if(!a)return;
   const mother=a.motherId?db.animals.find(x=>x.id===a.motherId):null;
   const allOffs=db.animals.filter(x=>x.motherId===curAnimal);
-  const offs=allOffs.filter(x=>!x.detached&&!x.penId);
+  const offs=allOffs.filter(x=>x.alive&&!x.detached&&!x.penId);
   const pen=a.penId?db.pens.find(p=>p.id===a.penId):null;
   const anotes=a.notes||[];
 
@@ -1523,7 +1523,7 @@ function openDorperAnimal(id){
   const cat=a.cat||'m';
   const mother=cat==='n'&&a.motherId?db.dorperAnimals.find(x=>x.id===a.motherId):null;
   const allOffs=cat==='m'?db.dorperAnimals.filter(o=>o.motherId===a.id):[];
-  const offs=allOffs.filter(o=>!o.detached&&!o.penId);
+  const offs=allOffs.filter(o=>o.alive&&!o.detached&&!o.penId);
   const age=cat==='n'&&a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
   openMdl(`دوربر ${tbadge(a.number,a.color)}`,`
     <div class="flex jb ac mb10">
@@ -1938,7 +1938,7 @@ function openPygmyAnimal(id){
   const cat=a.cat||'m';
   const mother=cat==='n'&&a.motherId?db.pygmyAnimals.find(x=>x.id===a.motherId):null;
   const allOffs=cat==='m'?db.pygmyAnimals.filter(o=>o.motherId===a.id):[];
-  const offs=allOffs.filter(o=>!o.detached&&!o.penId);
+  const offs=allOffs.filter(o=>o.alive&&!o.detached&&!o.penId);
   const age=cat==='n'&&a.birthDate?Math.floor((new Date()-new Date(a.birthDate))/86400000):null;
   openMdl(`الماعز القزم ${tbadge(a.number,a.color)}`,`
     <div class="flex jb ac mb10">
