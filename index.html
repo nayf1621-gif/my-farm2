@@ -82,7 +82,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 </style>
 </head>
 <body>
-<div id="lock">
+<div id="lock" style="display:none">
   <div style="font-size:48px">🌿</div>
   <h1>my farm</h1>
   <p>أدخل كلمة المرور للمتابعة</p>
@@ -495,7 +495,8 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   </div>
   <div class="sh" style="cursor:pointer" onclick="togBSection('fbsales-wrap','fbsales-arrow')">
     <span class="st">المبيعات <span id="fbsales-arrow">▼</span></span>
-    <div class="flex gap8 ac" onclick="event.stopPropagation()">
+    <div class="flex gap8 ac" onclick="event.stopPropagation()" style="flex-wrap:wrap;justify-content:flex-end">
+      <select id="fbst" onchange="rFarmBirds()" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 6px;font-size:11px;max-width:105px"><option value="">كل الأنواع</option></select>
       <button class="btn-g" onclick="openManageTypes('fb')" data-owner style="font-size:11px">⚙ الأنواع</button>
       <button class="btn" onclick="openFBSaleModal()" data-owner>＋ إضافة</button>
     </div>
@@ -505,7 +506,8 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
   </div>
   <div class="sh" style="cursor:pointer" onclick="togBSection('fbexp-wrap','fbexp-arrow')">
     <span class="st">المصاريف <span id="fbexp-arrow">▼</span></span>
-    <div class="flex gap8 ac" onclick="event.stopPropagation()">
+    <div class="flex gap8 ac" onclick="event.stopPropagation()" style="flex-wrap:wrap;justify-content:flex-end">
+      <select id="fbet" onchange="rFarmBirds()" style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 6px;font-size:11px;max-width:105px"><option value="">كل الأنواع</option></select>
       <input type="text" id="fbef" placeholder="بحث..." style="background:#F3ECDD;border:1px solid #E1D6BB;border-radius:8px;padding:5px 8px;font-size:11px;width:80px" oninput="rFarmBirds()">
       <button class="btn" onclick="openFBExpModal()" data-owner>＋ إضافة</button>
     </div>
@@ -662,6 +664,26 @@ function applyUdhiyaNotes(){
     }
   }));
   return ch;
+}
+
+
+// ====== FARM BIRDS: expense types + type filters ======
+function fbExpTypesList(){
+  const base=(Array.isArray(db.fbExpTypes)&&db.fbExpTypes.length)?db.fbExpTypes:['علف','أدوية','عمالة','صيانة','مياه','أخرى'];
+  const out=[...base];
+  (db.fbExp||[]).forEach(e=>{if(e.item&&!out.includes(e.item))out.push(e.item);});
+  return out;
+}
+function ensureFbExpTypes(){
+  if(!Array.isArray(db.fbExpTypes))db.fbExpTypes=fbExpTypesList();
+  return db.fbExpTypes;
+}
+function _fillTypeSelect(id,list,allLabel){
+  const s=document.getElementById(id);if(!s)return '';
+  const cur=s.value;
+  s.innerHTML='<option value="">'+allLabel+'</option>'+list.map(t=>'<option value="'+String(t).replace(/"/g,'&quot;')+'">'+t+'</option>').join('');
+  if(list.includes(cur))s.value=cur;
+  return s.value;
 }
 
 // ====== HIJRI/GREGORIAN DATE PICKER (global) ======
@@ -3093,10 +3115,13 @@ function editBirdNoteType(old){
 let fbSelTypes=[];
 function rFarmBirds(){
   const from=document.getElementById('fbff').value,to=document.getElementById('fbft').value;
+  const _saleTypes=[...(db.fbTypes||[])];(db.fbSales||[]).forEach(s=>{if(s.type&&!_saleTypes.includes(s.type))_saleTypes.push(s.type);});
+  const fbSaleType=_fillTypeSelect('fbst',_saleTypes,'كل الأنواع');
+  const fbExpType=_fillTypeSelect('fbet',fbExpTypesList(),'كل الأنواع');
   const expSearch=document.getElementById('fbef')?document.getElementById('fbef').value.trim().toLowerCase():'';
   const inR=d=>(!from||d>=from)&&(!to||d<=to);
-  const fS=(db.fbSales||[]).filter(s=>inR(s.date)&&(fbSelTypes.length===0||fbSelTypes.includes(s.type)));
-  const fE=(db.fbExp||[]).filter(e=>inR(e.date)&&(!expSearch||((e.desc||'').toLowerCase().includes(expSearch)||(e.item||'').toLowerCase().includes(expSearch))));
+  const fS=(db.fbSales||[]).filter(s=>inR(s.date)&&(fbSelTypes.length===0||fbSelTypes.includes(s.type))&&(!fbSaleType||s.type===fbSaleType));
+  const fE=(db.fbExp||[]).filter(e=>inR(e.date)&&(!fbExpType||(e.item||'')===fbExpType)&&(!expSearch||((e.desc||'').toLowerCase().includes(expSearch)||(e.item||'').toLowerCase().includes(expSearch))));
   const tS=fS.reduce((a,b)=>a+Number(b.amount||0),0);
   const tE=fE.reduce((a,b)=>a+Number(b.amount||0),0);
   const net=tS-tE;
@@ -3105,6 +3130,14 @@ function rFarmBirds(){
   document.getElementById('fbtotals').innerHTML=`<div class="sc"><div class="v green">${tS.toLocaleString('en-US')}</div><div class="l">مبيعات ﷼</div></div><div class="sc"><div class="v red">${tE.toLocaleString('en-US')}</div><div class="l">مصاريف ﷼</div></div>`;
   document.getElementById('fbsales-list').innerHTML=fS.length===0?'<div class="empty mb10">لا توجد مبيعات</div>':[...fS].reverse().map(s=>`<div class="li mb8"><div><div style="font-size:12.5px;font-weight:600">${s.type}${s.desc?' — '+s.desc:''}</div><div class="muted" style="font-size:10px">${fmt(s.date)}</div></div><div class="flex ac gap8"><span class="green" style="font-weight:700;font-size:12px">+${Number(s.amount||0).toLocaleString('en-US')}</span><button class="bi" onclick="editFBSale('${s.id}')" ${gHide()}>✎</button><button class="bi red" onclick="delFBSale('${s.id}')" ${gHide()}>🗑</button></div></div>`).join('');
   document.getElementById('fbexp-list').innerHTML=fE.length===0?'<div class="empty">لا توجد مصاريف</div>':[...fE].reverse().map(e=>`<div class="li mb8"><div><div style="font-size:12.5px;font-weight:600">${e.desc||e.item}</div><div class="muted" style="font-size:10px">${e.item} · ${fmt(e.date)}</div></div><div class="flex ac gap8"><span class="red" style="font-weight:700;font-size:12px">-${Number(e.amount||0).toLocaleString('en-US')}</span><button class="bi" onclick="editFBExp('${e.id}')" ${gHide()}>✎</button><button class="bi red" onclick="delFBExp('${e.id}')" ${gHide()}>🗑</button></div></div>`).join('');
+  if(fbSaleType){
+    const w=document.getElementById('fbsales-wrap');if(w&&w.style.display==='none')togBSection('fbsales-wrap','fbsales-arrow');
+    if(fS.length)document.getElementById('fbsales-list').insertAdjacentHTML('afterbegin','<div class="db mb8" style="font-size:12px;font-weight:700">'+fbSaleType+': '+fS.length+' عملية · '+tS.toLocaleString('en-US')+' ﷼</div>');
+  }
+  if(fbExpType){
+    const w=document.getElementById('fbexp-wrap');if(w&&w.style.display==='none')togBSection('fbexp-wrap','fbexp-arrow');
+    if(fE.length)document.getElementById('fbexp-list').insertAdjacentHTML('afterbegin','<div class="db mb8" style="font-size:12px;font-weight:700">'+fbExpType+': '+fE.length+' عملية · '+tE.toLocaleString('en-US')+' ﷼</div>');
+  }
   // Notes
   const fbNotes=db.fbNotes||[];
   const fbNoteTypes=db.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'];
@@ -3158,16 +3191,20 @@ function delFBExp(id){if(!confirm('حذف؟'))return;db.fbExp=(db.fbExp||[]).fil
 function editFBExp(id){
   if(guardGuest())return;
   const e=db.fbExp.find(x=>x.id===id);if(!e)return;
+  const types=fbExpTypesList();if(e.item&&!types.includes(e.item))types.push(e.item);
   openMdl('تعديل مصروف',`
-    <div class="fld"><label>البند</label><input type="text" id="efbe-item" value="${e.item||''}"></div>
+    <div class="fld"><label>نوع المصروف</label><select id="efbe-item">${types.map(t=>`<option ${t===e.item?'selected':''}>${t}</option>`).join('')}<option value="__new__">＋ نوع جديد...</option></select></div><div id="efbe-new" class="fld" style="display:none"><label>نوع جديد</label><input type="text" id="efbe-new-val"></div>
     <div class="fld"><label>الوصف</label><input type="text" id="efbe-desc" value="${e.desc||''}"></div>
     <div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="efbe-amt" value="${e.amount}"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="efbe-date" value="${e.date}"></div></div>
     <button class="btn w100 jc" onclick="saveEditFBExp('${id}')">حفظ</button>
   `);
+  document.getElementById('efbe-item').onchange=function(){document.getElementById('efbe-new').style.display=this.value==='__new__'?'block':'none';};
 }
 function saveEditFBExp(id){
   const e=db.fbExp.find(x=>x.id===id);if(!e)return;
-  e.item=document.getElementById('efbe-item').value.trim()||e.item;
+  let _it=document.getElementById('efbe-item').value;
+  if(_it==='__new__'){const nv=document.getElementById('efbe-new-val').value.trim();if(!nv){toast('أدخل نوع المصروف',true);return;}const tl=ensureFbExpTypes();if(!tl.includes(nv))tl.push(nv);_it=nv;}
+  e.item=_it||e.item;
   e.desc=document.getElementById('efbe-desc').value;
   e.amount=document.getElementById('efbe-amt').value||e.amount;
   e.date=document.getElementById('efbe-date').value||e.date;
@@ -3200,12 +3237,15 @@ function saveFBSale(){
 }
 function openFBExpModal(){
   if(guardGuest())return;
-  openMdl('إضافة مصروف — طيور المزرعة',`<div class="fld"><label>البند</label><input type="text" id="fbe-item" placeholder="علف، أدوية..."></div><div class="fld"><label>الوصف</label><input type="text" id="fbe-desc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="fbe-amt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="fbe-date" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveFBExp()">حفظ</button>`);
+  const types=fbExpTypesList();
+  openMdl('إضافة مصروف — طيور المزرعة',`<div class="fld"><label>نوع المصروف</label><select id="fbe-item">${types.map(t=>`<option>${t}</option>`).join('')}<option value="__new__">＋ نوع جديد...</option></select></div><div id="fbe-new" class="fld" style="display:none"><label>نوع جديد</label><input type="text" id="fbe-new-val"></div><div class="fld"><label>الوصف</label><input type="text" id="fbe-desc"></div><div class="flex gap8"><div class="fld" style="flex:1"><label>المبلغ</label><input type="number" id="fbe-amt"></div><div class="fld" style="flex:1"><label>التاريخ</label><input type="date" id="fbe-date" value="${tod()}"></div></div><button class="btn w100 jc" onclick="saveFBExp()">حفظ</button>`);
+  document.getElementById('fbe-item').onchange=function(){document.getElementById('fbe-new').style.display=this.value==='__new__'?'block':'none';};
 }
 function saveFBExp(){
   if(guardGuest())return;
-  const item=document.getElementById('fbe-item').value.trim();const amt=document.getElementById('fbe-amt').value;
-  if(!item||!amt){toast('أدخل البند والمبلغ',true);return;}
+  let item=document.getElementById('fbe-item').value;const amt=document.getElementById('fbe-amt').value;
+  if(item==='__new__'){const nv=document.getElementById('fbe-new-val').value.trim();if(!nv){toast('أدخل نوع المصروف',true);return;}const tl=ensureFbExpTypes();if(!tl.includes(nv))tl.push(nv);item=nv;}
+  if(!item||!amt){toast('أدخل نوع المصروف والمبلغ',true);return;}
   if(!db.fbExp)db.fbExp=[];
   db.fbExp.push({id:uid(),item,desc:document.getElementById('fbe-desc').value,amount:amt,date:document.getElementById('fbe-date').value||tod()});
   save();toast('تمت الإضافة');closeMdl();rFarmBirds();
@@ -3404,7 +3444,8 @@ function guardGuest(){
   return false;
 }
 // Auto-unlock if already authenticated in this session
-const savedAuth=sessionStorage.getItem('auth');
+try{sessionStorage.setItem('auth','owner');}catch(e){}
+const savedAuth='owner';
 if(savedAuth==='owner'||savedAuth==='guest'){
   const gd=document.getElementById('gd-text');
   if(gd)gd.textContent='📅 '+getHijriDate();
