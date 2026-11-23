@@ -3149,7 +3149,7 @@ function rFarmBirds(){
       const catNotes=fbNotes.filter(n=>n.type===t);
       const sid='fbcat-'+t.replace(/\s/g,'_');
       const arid='fbcar-'+t.replace(/\s/g,'_');
-      return`<div class="mb8"><div class="sh" style="cursor:pointer;background:#fff;border:1px solid ${c}44;border-radius:12px;padding:10px 14px" onclick="togBSection('${sid}','${arid}')"><div class="flex ac gap8"><span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${t}</span><span class="muted" style="font-size:11px">${catNotes.length} ملاحظة</span></div><div class="flex ac gap8"><button class="btn-g" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openAddFBNote('${t}')" ${gHide()}>＋</button><span id="${arid}">▼</span></div></div><div id="${sid}" style="display:none;padding:8px 0">${catNotes.length===0?'<div class="empty mb8" style="font-size:12px">لا توجد ملاحظات</div>':catNotes.map(n=>{const i=fbNotes.indexOf(n);return`<div class="card mb8"><div class="flex jb ac mb4"><div class="muted" style="font-size:10px">${fmt(n.date)}</div><div class="flex gap8" ${gHide()}><button class="bi" onclick="editFBNote(${i})">✎</button><button class="bi red" onclick="delFBNote(${i})">🗑</button></div></div><div style="font-size:13px;white-space:pre-wrap">${n.text}</div></div>`;}).join('')}</div></div>`;
+      return`<div class="mb8"><div class="sh" style="cursor:pointer;background:#fff;border:1px solid ${c}44;border-radius:12px;padding:10px 14px" onclick="togBSection('${sid}','${arid}')"><div class="flex ac gap8"><span class="chip" style="background:${c}20;color:${c};border:1px solid ${c}44">${t}</span><span class="muted" style="font-size:11px">${catNotes.length} ملاحظة</span></div><div class="flex ac gap8"><button class="btn-g" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openAddFBNote('${t}')" ${gHide()}>＋</button><button class="bi red" onclick="event.stopPropagation();delFBNoteType('${t}')" ${gHide()}>🗑</button><span id="${arid}">▼</span></div></div><div id="${sid}" style="display:none;padding:8px 0">${catNotes.length===0?'<div class="empty mb8" style="font-size:12px">لا توجد ملاحظات</div>':catNotes.map(n=>{const i=fbNotes.indexOf(n);return`<div class="card mb8"><div class="flex jb ac mb4"><div class="muted" style="font-size:10px">${fmt(n.date)}</div><div class="flex gap8" ${gHide()}><button class="bi" onclick="editFBNote(${i})">✎</button><button class="bi red" onclick="delFBNote(${i})">🗑</button></div></div><div style="font-size:13px;white-space:pre-wrap">${n.text}</div></div>`;}).join('')}</div></div>`;
     }).join('');
   }
   const _archEl=document.getElementById('fbarchive');
@@ -3271,6 +3271,15 @@ function saveEditFBNote(i){
   save();toast('تم');closeMdl();rFarmBirds();
 }
 function delFBNote(i){if(!confirm('حذف؟'))return;db.fbNotes.splice(i,1);save();rFarmBirds();}
+function delFBNoteType(t){
+  if(guardGuest())return;
+  const n=(db.fbNotes||[]).filter(x=>x.type===t).length;
+  if(!confirm('حذف التصنيف «'+t+'»'+(n?' مع ملاحظاته ('+n+')':'')+'؟'))return;
+  const types=db.fbNoteTypes||['مشكلة','مرض','موسم الإنتاج'];
+  db.fbNoteTypes=types.filter(x=>x!==t);
+  db.fbNotes=(db.fbNotes||[]).filter(x=>x.type!==t);
+  save();toast('تم الحذف');rFarmBirds();
+}
 function addFBNoteType(){
   if(guardGuest())return;
   const name=prompt('اسم التصنيف الجديد:');if(!name||!name.trim())return;
