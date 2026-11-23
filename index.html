@@ -82,7 +82,7 @@ input,select,textarea{font-family:'Tajawal',sans-serif}
 </style>
 </head>
 <body>
-<div id="lock" style="display:none">
+<div id="lock">
   <div style="font-size:48px">🌿</div>
   <h1>my farm</h1>
   <p>أدخل كلمة المرور للمتابعة</p>
@@ -3444,8 +3444,7 @@ function guardGuest(){
   return false;
 }
 // Auto-unlock if already authenticated in this session
-try{sessionStorage.setItem('auth','owner');}catch(e){}
-const savedAuth='owner';
+const savedAuth=sessionStorage.getItem('auth');
 if(savedAuth==='owner'||savedAuth==='guest'){
   const gd=document.getElementById('gd-text');
   if(gd)gd.textContent='📅 '+getHijriDate();
